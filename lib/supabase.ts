@@ -1,6 +1,38 @@
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const PLACEHOLDER = ['your-project', 'your-anon'];
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+let browserClient: SupabaseClient | null = null;
+
+export function isSupabaseBrowserConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+  return (
+    url.startsWith('https://') &&
+    !PLACEHOLDER.some((p) => url.includes(p) || key.includes(p)) &&
+    key.length > 20
+  );
+}
+
+export function getSupabaseBrowserClient(): SupabaseClient {
+  if (!isSupabaseBrowserConfigured()) {
+    throw new Error('Supabase browser client is not configured');
+  }
+
+  if (!browserClient) {
+    browserClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+  }
+
+  return browserClient;
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, property, receiver) {
+    return Reflect.get(getSupabaseBrowserClient(), property, receiver);
+  },
+});
