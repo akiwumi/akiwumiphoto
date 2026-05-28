@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { Reorder } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import type { Video } from '@/types';
 
@@ -9,6 +10,7 @@ export default function VideosTab() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const reorderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchVideos = useCallback(async () => {
     setLoading(true);
@@ -18,6 +20,16 @@ export default function VideosTab() {
   }, []);
 
   useEffect(() => { fetchVideos(); }, [fetchVideos]);
+
+  const handleReorder = useCallback((newOrder: Video[]) => {
+    setVideos(newOrder);
+    if (reorderTimer.current) clearTimeout(reorderTimer.current);
+    reorderTimer.current = setTimeout(async () => {
+      await Promise.all(
+        newOrder.map((v, i) => supabase.from('videos').update({ sort_order: i }).eq('id', v.id))
+      );
+    }, 600);
+  }, []);
 
   const handleCreate = async () => {
     const { data } = await supabase
@@ -50,22 +62,42 @@ export default function VideosTab() {
             + Add Video
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <Reorder.Group
+          as="div"
+          axis="y"
+          values={videos}
+          onReorder={handleReorder}
+          className="flex-1 overflow-y-auto"
+          style={{ padding: 0, margin: 0 }}
+        >
           {loading && <p className="text-grey-mid text-xs p-3">Loading…</p>}
           {videos.map((v) => (
-            <button
+            <Reorder.Item
               key={v.id}
-              onClick={() => setSelectedId(v.id)}
-              className="w-full text-left px-3 py-3 border-b border-white/5 hover:bg-white/5 transition-colors"
-              style={{ background: selectedId === v.id ? 'rgba(255,255,255,0.07)' : 'transparent', fontFamily: 'inherit' }}
+              value={v}
+              as="div"
+              className="border-b border-white/5"
+              style={{ listStyle: 'none', cursor: 'grab' }}
+              whileDrag={{ backgroundColor: 'rgba(255,255,255,0.10)', zIndex: 10 }}
             >
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v.published ? '#22c55e' : '#666' }} />
-                <span className="text-white text-xs truncate">{v.title}</span>
-              </div>
-            </button>
+              <button
+                onClick={() => setSelectedId(v.id)}
+                className="w-full text-left px-3 py-3 hover:bg-white/5 transition-colors"
+                style={{ background: selectedId === v.id ? 'rgba(255,255,255,0.07)' : 'transparent', fontFamily: 'inherit', cursor: 'inherit' }}
+              >
+                <div className="flex items-center gap-2">
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="#444" className="flex-shrink-0">
+                    <circle cx="2" cy="2" r="1.2" /><circle cx="6" cy="2" r="1.2" />
+                    <circle cx="2" cy="6" r="1.2" /><circle cx="6" cy="6" r="1.2" />
+                    <circle cx="2" cy="10" r="1.2" /><circle cx="6" cy="10" r="1.2" />
+                  </svg>
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v.published ? '#22c55e' : '#666' }} />
+                  <span className="text-white text-xs truncate">{v.title}</span>
+                </div>
+              </button>
+            </Reorder.Item>
           ))}
-        </div>
+        </Reorder.Group>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">

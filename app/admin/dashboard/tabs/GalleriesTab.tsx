@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { Reorder } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { DEMO_GALLERIES, DEMO_IMAGES } from '@/lib/demo-data';
 import type { Gallery, GalleryImage } from '@/types';
@@ -22,6 +23,7 @@ export default function GalleriesTab() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const reorderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchGalleries = useCallback(async () => {
     setLoading(true);
@@ -47,6 +49,16 @@ export default function GalleriesTab() {
   }, []);
 
   useEffect(() => { fetchGalleries(); }, [fetchGalleries]);
+
+  const handleReorder = useCallback((newOrder: Gallery[]) => {
+    setGalleries(newOrder);
+    if (reorderTimer.current) clearTimeout(reorderTimer.current);
+    reorderTimer.current = setTimeout(async () => {
+      await Promise.all(
+        newOrder.map((g, i) => supabase.from('galleries').update({ sort_order: i }).eq('id', g.id))
+      );
+    }, 600);
+  }, []);
 
   const selectedGallery = galleries.find((g) => g.id === selectedId) || null;
 
@@ -156,33 +168,54 @@ export default function GalleriesTab() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <Reorder.Group
+            as="div"
+            axis="y"
+            values={galleries}
+            onReorder={handleReorder}
+            className="flex-1 overflow-y-auto"
+            style={{ padding: 0, margin: 0 }}
+          >
             {loading && <p className="text-grey-mid text-xs p-3">Loading…</p>}
             {galleries.map((g) => (
-              <button
+              <Reorder.Item
                 key={g.id}
-                onClick={() => setSelectedId(g.id)}
-                className="w-full text-left px-3 py-3 border-b border-white/5 hover:bg-white/5 transition-colors"
-                style={{
-                  background: selectedId === g.id ? 'rgba(255,255,255,0.07)' : 'transparent',
-                  fontFamily: 'inherit',
-                }}
+                value={g}
+                as="div"
+                className="border-b border-white/5"
+                style={{ listStyle: 'none', cursor: 'grab' }}
+                whileDrag={{ backgroundColor: 'rgba(255,255,255,0.10)', zIndex: 10 }}
               >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: g.published ? '#22c55e' : '#666' }}
-                  />
-                  <span className="text-white text-xs truncate">{g.title}</span>
-                  {isDemoMode && (
-                    <span className="text-xs flex-shrink-0" style={{ color: '#E8001C', fontSize: '0.6rem' }}>
-                      DEMO
-                    </span>
-                  )}
-                </div>
-              </button>
+                <button
+                  onClick={() => setSelectedId(g.id)}
+                  className="w-full text-left px-3 py-3 hover:bg-white/5 transition-colors"
+                  style={{
+                    background: selectedId === g.id ? 'rgba(255,255,255,0.07)' : 'transparent',
+                    fontFamily: 'inherit',
+                    cursor: 'inherit',
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="8" height="12" viewBox="0 0 8 12" fill="#444" className="flex-shrink-0">
+                      <circle cx="2" cy="2" r="1.2" /><circle cx="6" cy="2" r="1.2" />
+                      <circle cx="2" cy="6" r="1.2" /><circle cx="6" cy="6" r="1.2" />
+                      <circle cx="2" cy="10" r="1.2" /><circle cx="6" cy="10" r="1.2" />
+                    </svg>
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ background: g.published ? '#22c55e' : '#666' }}
+                    />
+                    <span className="text-white text-xs truncate">{g.title}</span>
+                    {isDemoMode && (
+                      <span className="text-xs flex-shrink-0" style={{ color: '#E8001C', fontSize: '0.6rem' }}>
+                        DEMO
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </Reorder.Item>
             ))}
-          </div>
+          </Reorder.Group>
 
           <div className="p-2 border-t border-white/10 text-grey-mid text-xs">
             <span className="block">● published</span>
