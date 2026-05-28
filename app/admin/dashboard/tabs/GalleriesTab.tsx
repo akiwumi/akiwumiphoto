@@ -298,10 +298,10 @@ function GalleryEditor({
       const safeName = `${Date.now()}-${i}.${ext}`;
       const path = `galleries/${gallery.id}/${safeName}`;
       const { data: uploadData, error } = await supabase.storage
-        .from('photography')
+        .from('gallery-images')
         .upload(path, file, { cacheControl: '3600', upsert: false });
       if (!error && uploadData) {
-        const { data: urlData } = supabase.storage.from('photography').getPublicUrl(uploadData.path);
+        const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(uploadData.path);
         await supabase.from('gallery_images').insert({
           gallery_id: gallery.id,
           storage_path: urlData.publicUrl,
@@ -332,6 +332,13 @@ function GalleryEditor({
 
   const handleDeleteImage = async (imageId: string) => {
     if (isDemoMode) return;
+    const img = images.find((i) => i.id === imageId);
+    if (img) {
+      // Extract storage path from the full public URL
+      const url = new URL(img.storage_path);
+      const storagePath = url.pathname.split('/object/public/gallery-images/')[1];
+      if (storagePath) await supabase.storage.from('gallery-images').remove([storagePath]);
+    }
     await supabase.from('gallery_images').delete().eq('id', imageId);
     fetchImages();
   };
