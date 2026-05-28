@@ -14,6 +14,8 @@ export default function PagesTab() {
   const [msg, setMsg] = useState('');
   const [uploadingPortrait, setUploadingPortrait] = useState(false);
   const portraitInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingSplashBg, setUploadingSplashBg] = useState(false);
+  const splashBgInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -43,6 +45,26 @@ export default function PagesTab() {
     setSaving(false);
     setMsg('Saved.');
     setTimeout(() => setMsg(''), 2000);
+  };
+
+  const handleSplashBgUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+      setMsg('Only JPG and PNG files are supported.');
+      return;
+    }
+    setUploadingSplashBg(true);
+    const ext = file.type === 'image/png' ? 'png' : 'jpg';
+    const path = `splash/${Date.now()}.${ext}`;
+    const { data, error } = await supabase.storage.from('photography').upload(path, file, { cacheControl: '3600', upsert: false });
+    if (!error && data) {
+      const { data: urlData } = supabase.storage.from('photography').getPublicUrl(data.path);
+      set('splash', 'bg_image', urlData.publicUrl);
+    } else if (error) {
+      setMsg(`Upload failed: ${error.message}`);
+    }
+    setUploadingSplashBg(false);
   };
 
   const handlePortraitUpload = async (files: FileList | null) => {
@@ -132,6 +154,18 @@ export default function PagesTab() {
             <label style={LABEL}>Title Text</label>
             <input style={INPUT} value={get('splash', 'title')} onChange={(e) => set('splash', 'title', e.target.value)} />
           </div>
+          <div>
+            <label style={LABEL}>Background Image</label>
+            {get('splash', 'bg_image') && (
+              <div className="relative mb-2" style={{ aspectRatio: '16/9', maxWidth: 280 }}>
+                <Image src={get('splash', 'bg_image')} alt="Splash background" fill className="object-cover" sizes="280px" unoptimized />
+              </div>
+            )}
+            <input type="file" ref={splashBgInputRef} className="hidden" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={(e) => handleSplashBgUpload(e.target.files)} />
+            <button onClick={() => splashBgInputRef.current?.click()} disabled={uploadingSplashBg} className="px-4 h-8 text-xs uppercase text-grey-mid border border-white/20 hover:border-white/40 transition-colors" style={{ fontFamily: 'inherit', letterSpacing: '0.1em' }}>
+              {uploadingSplashBg ? 'Uploading…' : 'Upload Background Image'}
+            </button>
+          </div>
           <div className="flex items-center gap-3">
             <label style={{ ...LABEL, margin: 0 }}>Ambient Music</label>
             <button
@@ -142,7 +176,7 @@ export default function PagesTab() {
               <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: get('splash', 'music_enabled') === 'true' ? 'calc(100% - 22px)' : 2 }} />
             </button>
           </div>
-          <button onClick={() => save('splash', { title: get('splash', 'title'), music_enabled: get('splash', 'music_enabled') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
+          <button onClick={() => save('splash', { title: get('splash', 'title'), music_enabled: get('splash', 'music_enabled'), bg_image: get('splash', 'bg_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
