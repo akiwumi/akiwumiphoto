@@ -26,7 +26,7 @@ type LightboxMode = 'room' | 'photo';
 
 export default function Lightbox({ images, initialIndex, onClose }: Props) {
   const [current, setCurrent] = useState(initialIndex);
-  const [mode, setMode] = useState<LightboxMode>('room');
+  const [mode, setMode] = useState<LightboxMode>('photo');
   const [selectedRoomId, setSelectedRoomId] = useState(DEFAULT_ROOM_PREVIEW_TEMPLATE_ID);
   const [selectedSize, setSelectedSize] = useState<RoomPreviewSize>(DEFAULT_ROOM_PREVIEW_SIZE);
   const [selectedFrame, setSelectedFrame] = useState<RoomPreviewFrame>(DEFAULT_ROOM_PREVIEW_FRAME);
