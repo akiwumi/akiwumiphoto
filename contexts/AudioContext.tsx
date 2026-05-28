@@ -6,12 +6,16 @@ interface AudioContextValue {
   isPlaying: boolean;
   toggle: () => void;
   start: () => void;
+  pauseForVideo: () => void;
+  resumeAfterVideo: () => void;
 }
 
 const AudioCtx = createContext<AudioContextValue>({
   isPlaying: false,
   toggle: () => {},
   start: () => {},
+  pauseForVideo: () => {},
+  resumeAfterVideo: () => {},
 });
 
 export function AudioProvider({ children }: { children: ReactNode }) {
@@ -82,6 +86,27 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   }, [ensureAudio, isPlaying]);
 
+  const pauseForVideo = useCallback(() => {
+    if (!audioRef.current || !gainRef.current || !audioCtxRef.current) return;
+    const ctx = audioCtxRef.current;
+    const gain = gainRef.current;
+    gain.gain.cancelScheduledValues(ctx.currentTime);
+    gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+    setTimeout(() => audioRef.current?.pause(), 800);
+  }, []);
+
+  const resumeAfterVideo = useCallback(() => {
+    if (!isPlaying || !audioRef.current || !gainRef.current || !audioCtxRef.current) return;
+    const ctx = audioCtxRef.current;
+    const gain = gainRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+    audioRef.current.play().catch(() => {});
+    gain.gain.cancelScheduledValues(ctx.currentTime);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 1.5);
+  }, [isPlaying]);
+
   // Auto-start on first user interaction anywhere in the app
   useEffect(() => {
     const handler = () => {
@@ -103,7 +128,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [start]);
 
   return (
-    <AudioCtx.Provider value={{ isPlaying, toggle, start }}>
+    <AudioCtx.Provider value={{ isPlaying, toggle, start, pauseForVideo, resumeAfterVideo }}>
       {children}
     </AudioCtx.Provider>
   );

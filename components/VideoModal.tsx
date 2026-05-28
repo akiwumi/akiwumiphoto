@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAudio } from '@/contexts/AudioContext';
 import type { Video } from '@/types';
 
 interface Props {
@@ -22,18 +23,21 @@ function getEmbedUrl(url: string): string {
 
 export default function VideoModal({ video, onClose }: Props) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const { pauseForVideo, resumeAfterVideo } = useAudio();
   const embedUrl = getEmbedUrl(video.video_url);
   const isDirect = !embedUrl.includes('youtube') && !embedUrl.includes('vimeo');
 
   useEffect(() => {
+    pauseForVideo();
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handleKey);
     document.body.style.overflow = 'hidden';
     return () => {
+      resumeAfterVideo();
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = '';
     };
-  }, [onClose]);
+  }, [onClose, pauseForVideo, resumeAfterVideo]);
 
   const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientY);
   const handleTouchEnd = (e: React.TouchEvent) => {

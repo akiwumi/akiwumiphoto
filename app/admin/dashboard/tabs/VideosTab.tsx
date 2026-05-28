@@ -117,13 +117,20 @@ function VideoEditor({ video, onSave, onDelete }: { video: Video; onSave: () => 
 
   const handleThumbUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    setUploadingThumb(true);
     const file = files[0];
-    const path = `videos/${video.id}/${Date.now()}-${file.name}`;
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+      setMsg('Only JPG and PNG files are supported.');
+      return;
+    }
+    setUploadingThumb(true);
+    const ext = file.type === 'image/png' ? 'png' : 'jpg';
+    const path = `videos/${video.id}/${Date.now()}.${ext}`;
     const { data, error } = await supabase.storage.from('photography').upload(path, file, { cacheControl: '3600', upsert: false });
     if (!error && data) {
       const { data: urlData } = supabase.storage.from('photography').getPublicUrl(data.path);
       setThumbnail(urlData.publicUrl);
+    } else if (error) {
+      setMsg(`Upload failed: ${error.message}`);
     }
     setUploadingThumb(false);
   };
@@ -160,7 +167,7 @@ function VideoEditor({ video, onSave, onDelete }: { video: Video; onSave: () => 
               <Image src={thumbnail} alt="Thumbnail" fill className="object-cover" sizes="280px" />
             </div>
           )}
-          <input type="file" ref={thumbInputRef} className="hidden" accept="image/*" onChange={(e) => handleThumbUpload(e.target.files)} />
+          <input type="file" ref={thumbInputRef} className="hidden" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={(e) => handleThumbUpload(e.target.files)} />
           <button onClick={() => thumbInputRef.current?.click()} disabled={uploadingThumb} className="px-4 h-8 text-xs uppercase text-grey-mid border border-white/20 hover:border-white/40 transition-colors" style={{ fontFamily: 'inherit', letterSpacing: '0.1em' }}>
             {uploadingThumb ? 'Uploading…' : 'Upload Thumbnail'}
           </button>
