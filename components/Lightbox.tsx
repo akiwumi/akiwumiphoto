@@ -1,9 +1,20 @@
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import RoomPreview from '@/components/RoomPreview';
 import type { GalleryImage } from '@/types';
+import {
+  DEFAULT_ROOM_PREVIEW_FRAME,
+  DEFAULT_ROOM_PREVIEW_SIZE,
+  DEFAULT_ROOM_PREVIEW_TEMPLATE_ID,
+  ROOM_PREVIEW_FRAME_PRESETS,
+  ROOM_PREVIEW_SIZE_PRESETS,
+  ROOM_PREVIEW_TEMPLATES,
+  type RoomPreviewFrame,
+  type RoomPreviewSize,
+} from '@/lib/room-preview-templates';
 
 interface Props {
   images: GalleryImage[];
@@ -11,24 +22,71 @@ interface Props {
   onClose: () => void;
 }
 
+type LightboxMode = 'room' | 'photo';
+
 export default function Lightbox({ images, initialIndex, onClose }: Props) {
   const [current, setCurrent] = useState(initialIndex);
+  const [mode, setMode] = useState<LightboxMode>('room');
+  const [selectedRoomId, setSelectedRoomId] = useState(DEFAULT_ROOM_PREVIEW_TEMPLATE_ID);
+  const [selectedSize, setSelectedSize] = useState<RoomPreviewSize>(DEFAULT_ROOM_PREVIEW_SIZE);
+  const [selectedFrame, setSelectedFrame] = useState<RoomPreviewFrame>(DEFAULT_ROOM_PREVIEW_FRAME);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
 
   const prev = useCallback(() => setCurrent((c) => (c > 0 ? c - 1 : images.length - 1)), [images.length]);
   const next = useCallback(() => setCurrent((c) => (c < images.length - 1 ? c + 1 : 0)), [images.length]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') prev();
-      if (e.key === 'ArrowRight') next();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        prev();
+        return;
+      }
+
+      if (e.key === 'ArrowRight') {
+        next();
+        return;
+      }
+
+      if (e.key !== 'Tab' || !dialogRef.current) return;
+
+      const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
     };
+
+    previouslyFocusedElementRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousBodyOverflow = document.body.style.overflow;
+
     document.addEventListener('keydown', handleKey);
     document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => {
+      dialogRef.current?.querySelector<HTMLElement>('button')?.focus();
+    });
+
     return () => {
       document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousBodyOverflow;
+      previouslyFocusedElementRef.current?.focus();
     };
   }, [onClose, prev, next]);
 
@@ -40,24 +98,42 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
     if (!touchStart) return;
     const dx = e.changedTouches[0].clientX - touchStart.x;
     const dy = e.changedTouches[0].clientY - touchStart.y;
-    if (Math.abs(dy) > Math.abs(dx) && dy > 60) { onClose(); return; }
-    if (Math.abs(dx) > 40) { dx < 0 ? next() : prev(); }
+    if (Math.abs(dy) > Math.abs(dx) && dy > 60) {
+      onClose();
+      return;
+    }
+    if (Math.abs(dx) > 40) {
+      if (dx < 0) {
+        next();
+      } else {
+        prev();
+      }
+    }
     setTouchStart(null);
   };
 
   const image = images[current];
+  const selectedRoom = useMemo(
+    () => ROOM_PREVIEW_TEMPLATES.find((room) => room.id === selectedRoomId) ?? ROOM_PREVIEW_TEMPLATES[0],
+    [selectedRoomId],
+  );
+  const selectedSizePreset = useMemo(
+    () => ROOM_PREVIEW_SIZE_PRESETS.find((size) => size.id === selectedSize) ?? ROOM_PREVIEW_SIZE_PRESETS[0],
+    [selectedSize],
+  );
+  const selectedFramePreset = useMemo(
+    () => ROOM_PREVIEW_FRAME_PRESETS.find((frame) => frame.id === selectedFrame) ?? ROOM_PREVIEW_FRAME_PRESETS[0],
+    [selectedFrame],
+  );
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[300] flex flex-col items-center justify-center"
-        style={{
-          background: 'rgba(0,0,0,0.92)',
-          backdropFilter: 'blur(12px)',
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          height: '100dvh',
-        }}
+        ref={dialogRef}
+        className="lightbox-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Gallery preview"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -65,22 +141,28 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-6 right-6 w-11 h-11 flex items-center justify-center text-red hover:scale-110 transition-transform"
-          aria-label="Close lightbox"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        <div className="lightbox-topbar">
+          <div className="lightbox-mode-toggle" aria-label="Preview mode">
+            <button type="button" aria-pressed={mode === 'room'} onClick={() => setMode('room')}>
+              Room
+            </button>
+            <button type="button" aria-pressed={mode === 'photo'} onClick={() => setMode('photo')}>
+              Photo
+            </button>
+          </div>
 
-        {/* Prev arrow — desktop */}
+          <button type="button" onClick={onClose} className="lightbox-close" aria-label="Close lightbox">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
         <button
+          type="button"
           onClick={prev}
-          className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center text-white hover:text-red transition-colors"
+          className="lightbox-arrow lightbox-arrow-prev"
           aria-label="Previous image"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -88,43 +170,93 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
           </svg>
         </button>
 
-        {/* Image */}
         <motion.div
-          key={current}
-          className="relative"
-          style={{ maxWidth: '90vw', maxHeight: '75vh', width: '100%', height: '100%' }}
+          key={`${mode}-${current}-${selectedRoom.id}-${selectedSize}-${selectedFrame}`}
+          className="lightbox-preview"
           initial={{ scale: 0.94, opacity: 0, filter: 'blur(4px)' }}
           animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
           exit={{ scale: 0.94, opacity: 0, filter: 'blur(4px)' }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
-          <Image
-            src={image.storage_path}
-            alt={image.title || `Image ${current + 1}`}
-            fill
-            className="object-contain"
-            sizes="90vw"
-            priority
-          />
+          {mode === 'room' ? (
+            <RoomPreview image={image} room={selectedRoom} size={selectedSizePreset} frame={selectedFramePreset} />
+          ) : (
+            <div className="lightbox-photo-stage">
+              <Image
+                src={image.storage_path}
+                alt={image.title || `Image ${current + 1}`}
+                fill
+                unoptimized
+                className="lightbox-photo"
+                sizes="90vw"
+                priority
+              />
+            </div>
+          )}
         </motion.div>
 
-        {/* Caption */}
-        <div className="mt-4 text-center px-6 max-w-[600px]">
-          {image.title && (
-            <p className="text-white font-bold text-base mb-1 uppercase" style={{ letterSpacing: '0.08em' }}>
-              {image.title}
-            </p>
+        <div className="lightbox-footer">
+          <div className="lightbox-caption">
+            {image.title && <p className="lightbox-title">{image.title}</p>}
+            {image.description && <p className="lightbox-description">{image.description}</p>}
+            <p className="lightbox-count">{current + 1} / {images.length}</p>
+          </div>
+
+          {mode === 'room' && (
+            <div className="lightbox-controls" aria-label="Room preview controls">
+              <div className="lightbox-control-group" aria-label="Artwork size">
+                <span>Size</span>
+                {ROOM_PREVIEW_SIZE_PRESETS.map((size) => (
+                  <button
+                    key={size.id}
+                    type="button"
+                    aria-pressed={selectedSize === size.id}
+                    onClick={() => setSelectedSize(size.id)}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="lightbox-control-group lightbox-room-group" aria-label="Room template">
+                <span>Room</span>
+                {ROOM_PREVIEW_TEMPLATES.map((room) => (
+                  <button
+                    key={room.id}
+                    type="button"
+                    aria-pressed={selectedRoomId === room.id}
+                    onClick={() => {
+                      setSelectedRoomId(room.id);
+                      setSelectedFrame(room.defaultFrame);
+                    }}
+                  >
+                    {room.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="lightbox-frame-group" aria-label="Frame style">
+                <span>Frame</span>
+                {ROOM_PREVIEW_FRAME_PRESETS.map((frame) => (
+                  <button
+                    key={frame.id}
+                    type="button"
+                    className="lightbox-frame-swatch"
+                    style={{ backgroundColor: frame.frameColor }}
+                    aria-label={`${frame.label} frame`}
+                    aria-pressed={selectedFrame === frame.id}
+                    onClick={() => setSelectedFrame(frame.id)}
+                  />
+                ))}
+              </div>
+            </div>
           )}
-          {image.description && (
-            <p className="text-white/75 text-sm overflow-y-auto max-h-20">{image.description}</p>
-          )}
-          <p className="text-grey-mid text-xs mt-2">{current + 1} / {images.length}</p>
         </div>
 
-        {/* Next arrow — desktop */}
         <button
+          type="button"
           onClick={next}
-          className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center text-white hover:text-red transition-colors"
+          className="lightbox-arrow lightbox-arrow-next"
           aria-label="Next image"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
