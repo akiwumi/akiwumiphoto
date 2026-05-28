@@ -54,7 +54,7 @@ export default function GalleriesTab() {
     if (isDemoMode) return;
     const { data } = await supabase
       .from('galleries')
-      .insert({ title: 'New Gallery', slug: `gallery-${Date.now()}`, sort_order: galleries.length })
+      .insert({ title: 'New Gallery', slug: `gallery-${Date.now()}`, sort_order: galleries.length, published: true })
       .select()
       .single();
     if (data) {
