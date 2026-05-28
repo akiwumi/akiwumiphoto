@@ -11,7 +11,7 @@ interface Props {
 
 async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images: GalleryImage[] } | null> {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     const { data: gallery, error: galleryError } = await supabase
       .from('galleries')

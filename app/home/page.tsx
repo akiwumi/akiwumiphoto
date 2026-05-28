@@ -6,7 +6,7 @@ import type { Gallery } from '@/types';
 
 async function getGalleries(): Promise<Gallery[]> {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data, error } = await supabase
       .from('galleries')
       .select('id, title, slug, description, cover_image, sort_order, published, created_at, updated_at')

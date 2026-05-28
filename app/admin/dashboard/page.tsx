@@ -5,7 +5,7 @@ import { createServerClient } from '@/lib/supabase-server';
 export default async function DashboardPage() {
   // Verify session server-side
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) redirect('/admin');
   } catch {

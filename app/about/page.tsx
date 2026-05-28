@@ -6,7 +6,7 @@ import Reveal from '@/components/Reveal';
 
 async function getBio(): Promise<string> {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data } = await supabase
       .from('page_content')
       .select('value')

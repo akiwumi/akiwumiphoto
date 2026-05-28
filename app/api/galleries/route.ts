@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase-server';
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data, error } = await supabase
       .from('galleries')
       .select('id, title, slug, description, cover_image, sort_order')

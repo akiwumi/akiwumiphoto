@@ -6,7 +6,7 @@ import type { Video } from '@/types';
 
 async function getVideos(): Promise<Video[]> {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data, error } = await supabase
       .from('videos')
       .select('*')
