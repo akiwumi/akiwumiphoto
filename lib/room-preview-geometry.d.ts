@@ -6,6 +6,7 @@ export interface CalculateArtworkFitInput {
   maxWidth: number;
   maxHeight: number;
   sizeScale: number;
+  stageAspectRatio?: number;
 }
 
 export function classifyOrientation(width: number, height: number): RoomPreviewOrientation;

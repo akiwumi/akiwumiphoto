@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import type { GalleryImage } from '@/types';
@@ -37,8 +37,25 @@ export default function RoomPreview({ image, room, size, frame }: Props) {
   const [naturalDimensions, setNaturalDimensions] = useState<NaturalDimensions | null>(null);
   const activeNaturalDimensions = naturalDimensions?.src === image.storage_path ? naturalDimensions : null;
 
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageAspectRatio, setStageAspectRatio] = useState(16 / 10);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        const { width, height } = entry.contentRect;
+        if (height > 0) setStageAspectRatio(width / height);
+      }
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
   const artworkFit = useMemo(() => {
-    const dimensions = activeNaturalDimensions ?? { width: 4, height: 3 };
+    const dimensions = activeNaturalDimensions ?? { width: 1, height: 1 };
 
     return calculateArtworkFit({
       imageWidth: dimensions.width,
@@ -46,8 +63,9 @@ export default function RoomPreview({ image, room, size, frame }: Props) {
       maxWidth: room.wall.maxWidthPercent,
       maxHeight: room.wall.maxHeightPercent,
       sizeScale: size.scale,
+      stageAspectRatio,
     });
-  }, [activeNaturalDimensions, room.wall.maxHeightPercent, room.wall.maxWidthPercent, size.scale]);
+  }, [activeNaturalDimensions, room.wall.maxHeightPercent, room.wall.maxWidthPercent, size.scale, stageAspectRatio]);
 
   const previewStyle: RoomPreviewStyle = {
     '--room-art-left': `${room.wall.centerXPercent}%`,
@@ -59,7 +77,7 @@ export default function RoomPreview({ image, room, size, frame }: Props) {
   };
 
   return (
-    <div className="room-preview-stage" style={previewStyle} aria-label={`${image.title || 'Selected photograph'} in ${room.name}`}>
+    <div ref={stageRef} className="room-preview-stage" style={previewStyle} aria-label={`${image.title || 'Selected photograph'} in ${room.name}`}>
       <Image
         src={room.imagePath}
         alt=""
