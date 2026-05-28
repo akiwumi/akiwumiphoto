@@ -82,32 +82,6 @@ export const ROOM_PREVIEW_TEMPLATES: RoomPreviewTemplate[] = [
     defaultFrame: 'oak',
     supportedOrientations: ['portrait', 'landscape', 'square'],
   },
-  {
-    id: 'quiet-lounge',
-    name: 'Quiet Lounge',
-    imagePath: '/images/rooms/room-5.jpg',
-    wall: {
-      centerXPercent: 43,
-      centerYPercent: 31,
-      maxWidthPercent: 34,
-      maxHeightPercent: 34,
-    },
-    defaultFrame: 'oak',
-    supportedOrientations: ['portrait', 'landscape', 'square'],
-  },
-  {
-    id: 'arched-window-room',
-    name: 'Arched Window Room',
-    imagePath: '/images/rooms/room-6.jpg',
-    wall: {
-      centerXPercent: 50,
-      centerYPercent: 29,
-      maxWidthPercent: 33,
-      maxHeightPercent: 35,
-    },
-    defaultFrame: 'oak',
-    supportedOrientations: ['portrait', 'landscape', 'square'],
-  },
 ];
 
 export const ROOM_PREVIEW_SIZE_PRESETS: RoomPreviewSizePreset[] = [
