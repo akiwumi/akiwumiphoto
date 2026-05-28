@@ -47,16 +47,16 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     gain.connect(ctx.destination);
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (startedRef.current) return;
     startedRef.current = true;
 
     ensureAudio();
 
     const ctx = audioCtxRef.current!;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended') await ctx.resume();
 
-    audioRef.current!.play().catch(() => {});
+    await audioRef.current!.play().catch(() => {});
     const gain = gainRef.current!;
     gain.gain.cancelScheduledValues(ctx.currentTime);
     gain.gain.setValueAtTime(0, ctx.currentTime);
@@ -64,7 +64,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setIsPlaying(true);
   }, [ensureAudio]);
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback(async () => {
     ensureAudio();
     if (!audioRef.current) return;
 
@@ -80,8 +80,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       startedRef.current = false;
     } else {
       startedRef.current = true;
-      if (ctx.state === 'suspended') ctx.resume();
-      audioRef.current.play().catch(() => {});
+      if (ctx.state === 'suspended') await ctx.resume();
+      await audioRef.current.play().catch(() => {});
       gain.gain.cancelScheduledValues(ctx.currentTime);
       gain.gain.setValueAtTime(0, ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 2);

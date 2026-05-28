@@ -34,18 +34,18 @@ export default function SplashPage() {
   const handleEnter = () => {
     start();
     setExiting(true);
-    setTimeout(() => router.push('/home'), 900);
+    setTimeout(() => router.push('/home'), 800);
   };
 
   return (
     <AnimatePresence>
-      {!exiting ? (
+      {!exiting && (
         <motion.main
           key="splash"
           className="full-screen bg-black flex flex-col items-center justify-center relative overflow-hidden"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: 'blur(20px)', scale: 1.05 }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
           {/* Full-screen background image — fades in with the title */}
           {bgImage && (
@@ -54,6 +54,7 @@ export default function SplashPage() {
               style={{ zIndex: 0 }}
               initial={{ opacity: 0, scale: 1.06 }}
               animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
             >
               <Image
@@ -64,12 +65,11 @@ export default function SplashPage() {
                 sizes="100vw"
                 priority
               />
-              {/* Overlay to keep title legible */}
               <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.45)' }} />
             </motion.div>
           )}
 
-          {/* Title — starts huge and close, recedes into position while coming into focus */}
+          {/* Title — zooms in from blur, eases out on exit */}
           <motion.h1
             className="text-white text-center uppercase px-5 leading-none select-none"
             style={{
@@ -82,6 +82,7 @@ export default function SplashPage() {
             }}
             initial={{ opacity: 0, scale: 2.4, filter: 'blur(32px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.96, filter: 'blur(12px)' }}
             transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
           >
             WELCOME TO
@@ -89,7 +90,7 @@ export default function SplashPage() {
             AKIWUMI PHOTO
           </motion.h1>
 
-          {/* ENTER button — fades in after text settles */}
+          {/* ENTER button — fades in after text settles, pinned to bottom */}
           <AnimatePresence>
             {showButton && (
               <motion.button
@@ -101,7 +102,6 @@ export default function SplashPage() {
                   fontSize: '0.875rem',
                   border: 'none',
                   paddingBottom: 'env(safe-area-inset-bottom)',
-                  position: 'relative',
                   zIndex: 1,
                 }}
                 initial={{ opacity: 0 }}
@@ -116,14 +116,6 @@ export default function SplashPage() {
             )}
           </AnimatePresence>
         </motion.main>
-      ) : (
-        <motion.div
-          key="fade"
-          className="full-screen bg-white"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        />
       )}
     </AnimatePresence>
   );
