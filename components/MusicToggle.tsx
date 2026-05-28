@@ -1,9 +1,13 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useAudio } from '@/contexts/AudioContext';
 
 export default function MusicToggle() {
   const { isPlaying, toggle } = useAudio();
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/admin')) return null;
 
   return (
     <button
