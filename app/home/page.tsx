@@ -1,7 +1,6 @@
 import NavBar from '@/components/NavBar';
 import GalleryCarousel from '@/components/GalleryCarousel';
 import { createServerClient } from '@/lib/supabase-server';
-import { DEMO_GALLERIES } from '@/lib/demo-data';
 import type { Gallery } from '@/types';
 
 async function getGalleries(): Promise<Gallery[]> {
@@ -14,10 +13,9 @@ async function getGalleries(): Promise<Gallery[]> {
       .order('sort_order', { ascending: true });
 
     if (error) throw error;
-    const result = data || [];
-    return result.length > 0 ? result : DEMO_GALLERIES;
+    return data || [];
   } catch {
-    return DEMO_GALLERIES;
+    return [];
   }
 }
 

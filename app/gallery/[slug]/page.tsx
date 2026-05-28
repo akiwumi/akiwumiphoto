@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import GalleryPageClient from './GalleryPageClient';
 import { createServerClient } from '@/lib/supabase-server';
-import { getDemoGalleryBySlug, getDemoImagesForGallery } from '@/lib/demo-data';
 import type { Gallery, GalleryImage } from '@/types';
 
 interface Props {
@@ -20,11 +19,7 @@ async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images:
       .eq('published', true)
       .single();
 
-    if (galleryError || !gallery) {
-      const demoGallery = getDemoGalleryBySlug(slug);
-      if (demoGallery) return { gallery: demoGallery, images: getDemoImagesForGallery(demoGallery.id) };
-      return null;
-    }
+    if (galleryError || !gallery) return null;
 
     const { data: images, error: imagesError } = await supabase
       .from('gallery_images')
@@ -36,8 +31,6 @@ async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images:
 
     return { gallery, images: images || [] };
   } catch {
-    const demoGallery = getDemoGalleryBySlug(slug);
-    if (demoGallery) return { gallery: demoGallery, images: getDemoImagesForGallery(demoGallery.id) };
     return null;
   }
 }

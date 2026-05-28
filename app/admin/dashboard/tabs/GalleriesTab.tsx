@@ -281,12 +281,22 @@ function GalleryEditor({
     onSave();
   };
 
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0 || isDemoMode) return;
+    const invalid = Array.from(files).filter((f) => !ALLOWED_TYPES.includes(f.type));
+    if (invalid.length > 0) {
+      alert(`Only JPG and PNG files are allowed. Rejected: ${invalid.map((f) => f.name).join(', ')}`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     setUploading(true);
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const path = `galleries/${gallery.id}/${Date.now()}-${file.name}`;
+      const ext = file.type === 'image/png' ? 'png' : 'jpg';
+      const safeName = `${Date.now()}-${i}.${ext}`;
+      const path = `galleries/${gallery.id}/${safeName}`;
       const { data: uploadData, error } = await supabase.storage
         .from('photography')
         .upload(path, file, { cacheControl: '3600', upsert: false });
@@ -453,7 +463,7 @@ function GalleryEditor({
               ref={fileInputRef}
               className="hidden"
               multiple
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={(e) => handleUpload(e.target.files)}
             />
             <button
@@ -462,7 +472,7 @@ function GalleryEditor({
               className="w-full h-16 flex items-center justify-center gap-2 text-grey-mid text-sm uppercase border-2 border-dashed border-white/20 hover:border-white/40 transition-colors mb-4"
               style={{ fontFamily: 'inherit', letterSpacing: '0.1em' }}
             >
-              {uploading ? 'Uploading…' : '+ Upload / Drop Images'}
+              {uploading ? 'Uploading…' : '+ Upload Images (JPG / PNG)'}
             </button>
           </>
         )}
