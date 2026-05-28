@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useRef, useState, useCallback, useEffect, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface AudioContextValue {
   isPlaying: boolean;
@@ -19,6 +20,8 @@ const AudioCtx = createContext<AudioContextValue>({
 });
 
 export function AudioProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith('/admin');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const gainRef = useRef<GainNode | null>(null);
@@ -107,8 +110,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 1.5);
   }, [isPlaying]);
 
-  // Auto-start on first user interaction anywhere in the app
+  // Auto-start on first user interaction — disabled on admin routes
   useEffect(() => {
+    if (isAdmin) return;
+
     const handler = () => {
       start();
       window.removeEventListener('click', handler);
@@ -125,7 +130,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('keydown', handler);
       window.removeEventListener('touchstart', handler);
     };
-  }, [start]);
+  }, [start, isAdmin]);
 
   return (
     <AudioCtx.Provider value={{ isPlaying, toggle, start, pauseForVideo, resumeAfterVideo }}>

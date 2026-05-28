@@ -96,6 +96,10 @@ export default function PagesTab() {
         <div className="max-w-lg flex flex-col gap-4">
           <h3 className="text-white font-bold uppercase text-sm" style={{ letterSpacing: '0.08em' }}>About Page</h3>
           <div>
+            <label style={LABEL}>Heading</label>
+            <input style={INPUT} value={get('about', 'heading')} onChange={(e) => set('about', 'heading', e.target.value)} placeholder="e.g. Filmmaker & Photographer" />
+          </div>
+          <div>
             <label style={LABEL}>Bio Text</label>
             <textarea
               style={{ ...INPUT, minHeight: 160, resize: 'vertical' }}
@@ -115,7 +119,7 @@ export default function PagesTab() {
               {uploadingPortrait ? 'Uploading…' : 'Upload Portrait'}
             </button>
           </div>
-          <button onClick={() => save('about', { bio: get('about', 'bio'), portrait_image: get('about', 'portrait_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
+          <button onClick={() => save('about', { heading: get('about', 'heading'), bio: get('about', 'bio'), portrait_image: get('about', 'portrait_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>

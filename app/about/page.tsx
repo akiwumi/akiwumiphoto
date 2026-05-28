@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { createServerClient } from '@/lib/supabase-server';
 import Reveal from '@/components/Reveal';
 
-async function getAboutContent(): Promise<{ bio: string; portrait: string | null }> {
+async function getAboutContent(): Promise<{ heading: string; bio: string; portrait: string | null }> {
   try {
     const supabase = await createServerClient();
     const { data } = await supabase
@@ -11,16 +11,17 @@ async function getAboutContent(): Promise<{ bio: string; portrait: string | null
       .select('key, value')
       .eq('page', 'about');
     const rows = data || [];
+    const heading = rows.find((r) => r.key === 'heading')?.value || '';
     const bio = rows.find((r) => r.key === 'bio')?.value || '';
     const portrait = rows.find((r) => r.key === 'portrait_image')?.value || null;
-    return { bio, portrait };
+    return { heading, bio, portrait };
   } catch {
-    return { bio: '', portrait: null };
+    return { heading: '', bio: '', portrait: null };
   }
 }
 
 export default async function AboutPage() {
-  const { bio, portrait } = await getAboutContent();
+  const { heading, bio, portrait } = await getAboutContent();
 
   return (
     <main className="full-screen bg-white flex flex-col overflow-hidden">
@@ -66,6 +67,14 @@ export default async function AboutPage() {
           {/* Bio */}
           <Reveal delay={0.18}>
             <div className="flex flex-col justify-center overflow-hidden h-full">
+              {heading && (
+                <h2
+                  className="text-black font-bold uppercase mb-4"
+                  style={{ fontSize: 'clamp(1rem, 1.8vw, 1.4rem)', letterSpacing: '0.08em' }}
+                >
+                  {heading}
+                </h2>
+              )}
               <div
                 className="text-black text-sm leading-relaxed space-y-4"
                 style={{ whiteSpace: 'pre-wrap' }}
