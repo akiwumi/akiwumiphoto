@@ -24,107 +24,119 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const isAdmin = pathname.startsWith('/admin');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const gainRef = useRef<GainNode | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const startedRef = useRef(false);
+  const fadeRafRef = useRef<number | null>(null);
 
   const ensureAudio = useCallback(() => {
     if (audioRef.current) return;
-
     const audio = new Audio('/audio/ambient.mp3');
     audio.loop = true;
+    audio.volume = 0;
     audioRef.current = audio;
-
-    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    audioCtxRef.current = ctx;
-
-    const gain = ctx.createGain();
-    gain.gain.value = 0;
-    gainRef.current = gain;
-
-    const source = ctx.createMediaElementSource(audio);
-    source.connect(gain);
-    gain.connect(ctx.destination);
   }, []);
+
+  const cancelFade = useCallback(() => {
+    if (fadeRafRef.current !== null) {
+      cancelAnimationFrame(fadeRafRef.current);
+      fadeRafRef.current = null;
+    }
+  }, []);
+
+  const fadeIn = useCallback((durationMs = 2000) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    cancelFade();
+    const startTime = performance.now();
+    const fromVol = audio.volume;
+    const toVol = 0.35;
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / durationMs, 1);
+      audio.volume = fromVol + (toVol - fromVol) * t;
+      if (t < 1) fadeRafRef.current = requestAnimationFrame(tick);
+      else fadeRafRef.current = null;
+    };
+    fadeRafRef.current = requestAnimationFrame(tick);
+  }, [cancelFade]);
+
+  const fadeOut = useCallback((durationMs = 1500, onDone?: () => void) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    cancelFade();
+    const startTime = performance.now();
+    const fromVol = audio.volume;
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / durationMs, 1);
+      audio.volume = fromVol * (1 - t);
+      if (t < 1) {
+        fadeRafRef.current = requestAnimationFrame(tick);
+      } else {
+        fadeRafRef.current = null;
+        audio.pause();
+        onDone?.();
+      }
+    };
+    fadeRafRef.current = requestAnimationFrame(tick);
+  }, [cancelFade]);
 
   const start = useCallback(async () => {
     if (startedRef.current) return;
     startedRef.current = true;
-
     ensureAudio();
-
-    const ctx = audioCtxRef.current!;
-    if (ctx.state === 'suspended') await ctx.resume();
-
-    await audioRef.current!.play().catch(() => {});
-    const gain = gainRef.current!;
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 2);
-    setIsPlaying(true);
-  }, [ensureAudio]);
+    const audio = audioRef.current!;
+    audio.volume = 0;
+    try {
+      await audio.play();
+      fadeIn(2000);
+      setIsPlaying(true);
+    } catch {
+      // Autoplay blocked — reset so the toggle button can retry
+      startedRef.current = false;
+    }
+  }, [ensureAudio, fadeIn]);
 
   const toggle = useCallback(async () => {
     ensureAudio();
-    if (!audioRef.current) return;
-
-    const ctx = audioCtxRef.current!;
-    const gain = gainRef.current!;
-
+    const audio = audioRef.current;
+    if (!audio) return;
     if (isPlaying) {
-      gain.gain.cancelScheduledValues(ctx.currentTime);
-      gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
-      setTimeout(() => audioRef.current?.pause(), 1500);
       setIsPlaying(false);
       startedRef.current = false;
+      fadeOut(1500);
     } else {
       startedRef.current = true;
-      if (ctx.state === 'suspended') await ctx.resume();
-      await audioRef.current.play().catch(() => {});
-      gain.gain.cancelScheduledValues(ctx.currentTime);
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 2);
-      setIsPlaying(true);
+      audio.volume = 0;
+      try {
+        await audio.play();
+        fadeIn(2000);
+        setIsPlaying(true);
+      } catch {
+        startedRef.current = false;
+      }
     }
-  }, [ensureAudio, isPlaying]);
+  }, [ensureAudio, isPlaying, fadeIn, fadeOut]);
 
   const pauseForVideo = useCallback(() => {
-    if (!audioRef.current || !gainRef.current || !audioCtxRef.current) return;
-    const ctx = audioCtxRef.current;
-    const gain = gainRef.current;
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-    setTimeout(() => audioRef.current?.pause(), 800);
-  }, []);
+    if (!audioRef.current) return;
+    fadeOut(800);
+  }, [fadeOut]);
 
-  const resumeAfterVideo = useCallback(() => {
-    if (!isPlaying || !audioRef.current || !gainRef.current || !audioCtxRef.current) return;
-    const ctx = audioCtxRef.current;
-    const gain = gainRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
-    audioRef.current.play().catch(() => {});
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 1.5);
-  }, [isPlaying]);
+  const resumeAfterVideo = useCallback(async () => {
+    if (!isPlaying || !audioRef.current) return;
+    const audio = audioRef.current;
+    audio.volume = 0;
+    try {
+      await audio.play();
+      fadeIn(1500);
+    } catch { /* ignore */ }
+  }, [isPlaying, fadeIn]);
 
   // Auto-start on first user interaction — disabled on admin routes
   useEffect(() => {
     if (isAdmin) return;
-
-    const handler = () => {
-      start();
-      window.removeEventListener('click', handler);
-      window.removeEventListener('keydown', handler);
-      window.removeEventListener('touchstart', handler);
-    };
-
+    const handler = () => { start(); };
     window.addEventListener('click', handler, { once: true });
     window.addEventListener('keydown', handler, { once: true });
     window.addEventListener('touchstart', handler, { once: true });
-
     return () => {
       window.removeEventListener('click', handler);
       window.removeEventListener('keydown', handler);
