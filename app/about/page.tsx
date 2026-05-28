@@ -1,32 +1,26 @@
 import NavBar from '@/components/NavBar';
 import Image from 'next/image';
 import { createServerClient } from '@/lib/supabase-server';
-import portraitSrc from '@/public/images/portrait.jpg';
 import Reveal from '@/components/Reveal';
 
-async function getBio(): Promise<string> {
+async function getAboutContent(): Promise<{ bio: string; portrait: string | null }> {
   try {
     const supabase = await createServerClient();
     const { data } = await supabase
       .from('page_content')
-      .select('value')
-      .eq('page', 'about')
-      .eq('key', 'bio')
-      .single();
-    return data?.value || DEFAULT_BIO;
+      .select('key, value')
+      .eq('page', 'about');
+    const rows = data || [];
+    const bio = rows.find((r) => r.key === 'bio')?.value || '';
+    const portrait = rows.find((r) => r.key === 'portrait_image')?.value || null;
+    return { bio, portrait };
   } catch {
-    return DEFAULT_BIO;
+    return { bio: '', portrait: null };
   }
 }
 
-const DEFAULT_BIO = `Eugene "Pebbles" Akiwumi is a filmmaker and photographer whose work is shaped by a life lived across continents. Born in Nigeria and having called London, Lagos, and cities across Europe and North America home, his lens reflects the restlessness of a genuinely global perspective — the textures of place, the weight of movement, and the quiet intensity of people caught between worlds.
-
-His photography moves between documentary portraiture and fine-art landscape, grounded in the belief that the most honest images come from proximity and patience. As a filmmaker, he brings the same instinct — long observation, precise timing, and an ear for the story underneath the story.
-
-Akiwumi's work has been shown internationally, and his prints are held in private collections across three continents. He is available for commissions, editorial projects, and creative collaboration.`;
-
 export default async function AboutPage() {
-  const bio = await getBio();
+  const { bio, portrait } = await getAboutContent();
 
   return (
     <main className="full-screen bg-white flex flex-col overflow-hidden">
@@ -53,21 +47,23 @@ export default async function AboutPage() {
             minHeight: 0,
           }}
         >
-          {/* Portrait — reveals with image-reveal scale effect */}
+          {/* Portrait */}
           <Reveal delay={0.05}>
             <div className="gallery-tile" style={{ position: 'relative', overflow: 'hidden', height: '100%' }}>
-              <Image
-                src={portraitSrc}
-                alt="Akiwumi — photographer portrait"
-                fill
-                className="object-cover object-center media-zoom"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
+              {portrait && (
+                <Image
+                  src={portrait}
+                  alt="Akiwumi — photographer portrait"
+                  fill
+                  className="object-cover object-center media-zoom"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                />
+              )}
             </div>
           </Reveal>
 
-          {/* Bio — staggered after portrait */}
+          {/* Bio */}
           <Reveal delay={0.18}>
             <div className="flex flex-col justify-center overflow-hidden h-full">
               <div

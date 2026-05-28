@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 type PageKey = 'about' | 'splash' | 'prints';
@@ -11,6 +12,8 @@ export default function PagesTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [uploadingPortrait, setUploadingPortrait] = useState(false);
+  const portraitInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -40,6 +43,26 @@ export default function PagesTab() {
     setSaving(false);
     setMsg('Saved.');
     setTimeout(() => setMsg(''), 2000);
+  };
+
+  const handlePortraitUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+      setMsg('Only JPG and PNG files are supported.');
+      return;
+    }
+    setUploadingPortrait(true);
+    const ext = file.type === 'image/png' ? 'png' : 'jpg';
+    const path = `portrait/${Date.now()}.${ext}`;
+    const { data, error } = await supabase.storage.from('about-images').upload(path, file, { cacheControl: '3600', upsert: false });
+    if (!error && data) {
+      const { data: urlData } = supabase.storage.from('about-images').getPublicUrl(data.path);
+      set('about', 'portrait_image', urlData.publicUrl);
+    } else if (error) {
+      setMsg(`Upload failed: ${error.message}`);
+    }
+    setUploadingPortrait(false);
   };
 
   const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '0.875rem', outline: 'none', width: '100%' };
@@ -81,8 +104,16 @@ export default function PagesTab() {
             />
           </div>
           <div>
-            <label style={LABEL}>Portrait Image URL</label>
-            <input style={INPUT} value={get('about', 'portrait_image')} onChange={(e) => set('about', 'portrait_image', e.target.value)} placeholder="https://..." />
+            <label style={LABEL}>Portrait Image</label>
+            {get('about', 'portrait_image') && (
+              <div className="relative mb-2" style={{ aspectRatio: '3/4', maxWidth: 160 }}>
+                <Image src={get('about', 'portrait_image')} alt="Portrait" fill className="object-cover" sizes="160px" unoptimized />
+              </div>
+            )}
+            <input type="file" ref={portraitInputRef} className="hidden" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={(e) => handlePortraitUpload(e.target.files)} />
+            <button onClick={() => portraitInputRef.current?.click()} disabled={uploadingPortrait} className="px-4 h-8 text-xs uppercase text-grey-mid border border-white/20 hover:border-white/40 transition-colors" style={{ fontFamily: 'inherit', letterSpacing: '0.1em' }}>
+              {uploadingPortrait ? 'Uploading…' : 'Upload Portrait'}
+            </button>
           </div>
           <button onClick={() => save('about', { bio: get('about', 'bio'), portrait_image: get('about', 'portrait_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
             {saving ? 'Saving…' : 'Save'}
