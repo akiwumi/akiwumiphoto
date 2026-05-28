@@ -1,4 +1,4 @@
-import { createServerClient as createSSRServerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient as createSSRServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 const PLACEHOLDER = ['your-project', 'your-anon', 'your-service'];
