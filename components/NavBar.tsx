@@ -38,7 +38,7 @@ export default function NavBar() {
           paddingTop: 'env(safe-area-inset-top)',
           background: navBg,
           borderBottom: navBorder,
-          transition: 'background 0.2s, color 0.2s',
+          transition: 'background-color 0.35s ease, border-color 0.35s ease',
         }}
       >
         {/* Wordmark — links to splash */}

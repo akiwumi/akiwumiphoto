@@ -17,12 +17,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
 
   return (
     <>
-      <motion.div
-        className="flex-1 flex flex-col overflow-y-auto"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-      >
+      <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Header — aligned to the same 60px inset as the gallery grid */}
         <div style={{ padding: '14px 60px 10px' }}>
           <Link
@@ -74,7 +69,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
             <p className="text-grey-mid text-sm uppercase tracking-[0.15em]">No images yet</p>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {lightboxIndex !== null && (
         <Lightbox
@@ -92,15 +87,15 @@ function ImageTile({ image, priority, index, onClick }: { image: GalleryImage; p
     <motion.div
       className="gallery-tile group relative overflow-hidden bg-grey-dark cursor-pointer"
       style={{ aspectRatio: '4/5' }}
-      initial={{ opacity: 0, y: 22, filter: 'blur(3px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.985 }}
       transition={{
-        duration: 0.55,
+        duration: 0.4,
         ease: [0.22, 1, 0.36, 1],
-        delay: (index % 3) * 0.07,
+        delay: (index % 3) * 0.04,
       }}
       onClick={onClick}
     >

@@ -8,15 +8,14 @@ import type { Gallery } from '@/types';
 const FLIGHT_EASE = [0.22, 1, 0.36, 1] as const;
 
 const TILE_VARIANTS = {
-  hidden: { opacity: 0, y: 22, filter: 'blur(3px)' },
+  hidden: { opacity: 0, y: 10 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     transition: {
-      duration: 0.55,
+      duration: 0.45,
       ease: FLIGHT_EASE,
-      delay: i * 0.07,
+      delay: i * 0.05,
     },
   }),
 };

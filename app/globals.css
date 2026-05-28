@@ -166,13 +166,13 @@ img {
 
 /* --- ANIMATION SYSTEM (inspired by flightlyceum.com) --- */
 
-/* Page-enter: every page slides up + fades in */
+/* Page-enter: subtle fade-up for content within a page */
 @keyframes page-enter {
-  0%   { opacity: 0; transform: translateY(12px); }
+  0%   { opacity: 0; transform: translateY(6px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 .page-enter {
-  animation: page-enter 0.48s var(--ease-flight) both;
+  animation: page-enter 0.38s var(--ease-flight) both;
 }
 
 /* Image reveal: subtle zoom-in as images appear */

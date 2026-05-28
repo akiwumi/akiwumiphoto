@@ -3,6 +3,7 @@ import { Space_Grotesk, Bebas_Neue } from 'next/font/google';
 import './globals.css';
 import { AudioProvider } from '@/contexts/AudioContext';
 import MusicToggle from '@/components/MusicToggle';
+import LayoutTransition from '@/components/LayoutTransition';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${spaceGrotesk.variable} ${bebasNeue.variable}`}>
       <body className="bg-black text-white min-h-dvh antialiased" style={{ fontFamily: 'var(--font-space-grotesk), Helvetica Neue, Arial, sans-serif' }}>
         <AudioProvider>
-          {children}
+          <LayoutTransition>
+            {children}
+          </LayoutTransition>
           <MusicToggle />
         </AudioProvider>
       </body>

@@ -15,7 +15,7 @@ export default function VideographyClient({ videos }: Props) {
 
   return (
     <>
-      <div className="flex-1 flex flex-col overflow-y-auto page-enter">
+      <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Header */}
         <div style={{ padding: '14px 60px 10px' }}>
           <h1
@@ -65,15 +65,15 @@ function VideoCard({ video, priority, index, onClick }: { video: Video; priority
   return (
     <motion.div
       className="group cursor-pointer motion-card"
-      initial={{ opacity: 0, y: 22, filter: 'blur(3px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.985 }}
       transition={{
-        duration: 0.55,
+        duration: 0.4,
         ease: [0.22, 1, 0.36, 1],
-        delay: (index % 3) * 0.07,
+        delay: (index % 3) * 0.04,
       }}
       onClick={onClick}
     >
