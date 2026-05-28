@@ -32,18 +32,13 @@ export default function GalleriesTab() {
       return;
     }
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('galleries')
         .select('*')
         .order('sort_order', { ascending: true });
-      const result = data || [];
-      if (result.length === 0) {
-        setGalleries(DEMO_GALLERIES);
-        setIsDemoMode(true);
-      } else {
-        setGalleries(result);
-        setIsDemoMode(false);
-      }
+      if (error) throw error;
+      setGalleries(data || []);
+      setIsDemoMode(false);
     } catch {
       setGalleries(DEMO_GALLERIES);
       setIsDemoMode(true);
