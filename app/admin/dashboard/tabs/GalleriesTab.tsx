@@ -261,7 +261,8 @@ function GalleryEditor({
     published: gallery.published,
   });
   const [images, setImages] = useState<GalleryImage[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -316,17 +317,19 @@ function GalleryEditor({
 
   const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
-  const handleUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0 || isDemoMode) return;
-    const invalid = Array.from(files).filter((f) => !ALLOWED_TYPES.includes(f.type));
+  const handleUpload = async (files: FileList | File[] | null) => {
+    if (!files || (files as FileList | File[]).length === 0 || isDemoMode) return;
+    const fileArr = Array.from(files as FileList);
+    const invalid = fileArr.filter((f) => !ALLOWED_TYPES.includes(f.type));
     if (invalid.length > 0) {
       alert(`Only JPG and PNG files are allowed. Rejected: ${invalid.map((f) => f.name).join(', ')}`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
-    setUploading(true);
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const valid = fileArr.filter((f) => ALLOWED_TYPES.includes(f.type));
+    setUploadProgress({ done: 0, total: valid.length });
+    for (let i = 0; i < valid.length; i++) {
+      const file = valid[i];
       const ext = file.type === 'image/png' ? 'png' : 'jpg';
       const safeName = `${Date.now()}-${i}.${ext}`;
       const path = `galleries/${gallery.id}/${safeName}`;
@@ -341,6 +344,7 @@ function GalleryEditor({
           sort_order: images.length + i,
         });
       }
+      setUploadProgress({ done: i + 1, total: valid.length });
     }
     await fetchImages();
     if (!gallery.cover_image && images.length === 0) {
@@ -353,8 +357,16 @@ function GalleryEditor({
         .single();
       if (first) await supabase.from('galleries').update({ cover_image: first.storage_path }).eq('id', gallery.id);
     }
-    setUploading(false);
+    setUploadProgress(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     onSave();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (isDemoMode) return;
+    handleUpload(e.dataTransfer.files);
   };
 
   const handleSetCover = async (imagePath: string) => {
@@ -506,14 +518,50 @@ function GalleryEditor({
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={(e) => handleUpload(e.target.files)}
             />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-full h-16 flex items-center justify-center gap-2 text-grey-mid text-sm uppercase border-2 border-dashed border-white/20 hover:border-white/40 transition-colors mb-4"
-              style={{ fontFamily: 'inherit', letterSpacing: '0.1em' }}
+            <div
+              onClick={() => !uploadProgress && fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed transition-colors mb-4"
+              style={{
+                minHeight: 96,
+                borderColor: dragOver ? '#E8001C' : uploadProgress ? '#444' : 'rgba(255,255,255,0.2)',
+                background: dragOver ? 'rgba(232,0,28,0.06)' : 'transparent',
+                cursor: uploadProgress ? 'default' : 'pointer',
+                padding: '20px 16px',
+              }}
             >
-              {uploading ? 'Uploading…' : '+ Upload Images (JPG / PNG)'}
-            </button>
+              {uploadProgress ? (
+                <>
+                  <div className="w-full max-w-xs bg-white/10 rounded-full overflow-hidden" style={{ height: 3 }}>
+                    <div
+                      className="h-full transition-all"
+                      style={{
+                        width: `${Math.round((uploadProgress.done / uploadProgress.total) * 100)}%`,
+                        background: '#E8001C',
+                      }}
+                    />
+                  </div>
+                  <span className="text-grey-mid text-xs uppercase" style={{ letterSpacing: '0.1em' }}>
+                    Uploading {uploadProgress.done} of {uploadProgress.total}…
+                  </span>
+                </>
+              ) : (
+                <>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="17,8 12,3 7,8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span className="text-grey-mid text-xs uppercase text-center" style={{ letterSpacing: '0.1em' }}>
+                    Drop images here or click to browse
+                    <br />
+                    <span style={{ opacity: 0.5 }}>JPG · PNG · Select multiple</span>
+                  </span>
+                </>
+              )}
+            </div>
           </>
         )}
       </div>

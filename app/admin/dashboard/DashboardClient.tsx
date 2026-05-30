@@ -61,7 +61,7 @@ export default function DashboardClient() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" style={{ paddingLeft: 50 }}>
         {activeTab === 'galleries' && <GalleriesTab />}
         {activeTab === 'videos' && <VideosTab />}
         {activeTab === 'pages' && <PagesTab />}
