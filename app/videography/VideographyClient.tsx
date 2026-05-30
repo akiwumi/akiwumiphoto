@@ -84,6 +84,7 @@ function VideoCard({ video, priority, index, onClick }: { video: Video; priority
             alt={video.title}
             fill
             unoptimized
+            draggable={false}
             className="object-cover media-zoom group-hover:brightness-75"
             sizes="33vw"
             priority={priority}
@@ -91,6 +92,7 @@ function VideoCard({ video, priority, index, onClick }: { video: Video; priority
         ) : (
           <div className="absolute inset-0 bg-grey-dark" />
         )}
+        <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.92 }} transition={{ duration: 0.2 }}>
             <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E8001C" strokeWidth="1.5" strokeLinecap="round">

@@ -105,12 +105,14 @@ function ImageTile({ image, priority, index, onClick }: { image: GalleryImage; p
           alt={image.title || 'Gallery image'}
           fill
           unoptimized
+          draggable={false}
           className="object-cover media-zoom"
           sizes="33vw"
           priority={priority}
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent motion-overlay" />
+      <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
       <div className="absolute bottom-0 left-0 right-0 p-3">
         {image.title && (
           <p className="text-white font-bold text-sm uppercase" style={{ letterSpacing: '0.08em' }}>

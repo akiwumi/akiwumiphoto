@@ -181,16 +181,21 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
           {mode === 'room' ? (
             <RoomPreview image={image} room={selectedRoom} size={selectedSizePreset} frame={selectedFramePreset} />
           ) : (
-            <div className="lightbox-photo-stage">
+            <div
+              className="lightbox-photo-stage"
+              onContextMenu={(e) => e.preventDefault()}
+            >
               <Image
                 src={image.storage_path}
                 alt={image.title || `Image ${current + 1}`}
                 fill
                 unoptimized
+                draggable={false}
                 className="lightbox-photo"
                 sizes="90vw"
                 priority
               />
+              <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
             </div>
           )}
         </motion.div>

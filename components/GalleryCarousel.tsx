@@ -75,6 +75,7 @@ function GalleryTile({ gallery, priority, index }: { gallery: Gallery; priority?
             alt={gallery.title}
             fill
             unoptimized
+            draggable={false}
             sizes="33vw"
             className="object-cover media-zoom"
             priority={priority}
@@ -84,6 +85,7 @@ function GalleryTile({ gallery, priority, index }: { gallery: Gallery; priority?
             <span className="text-grey-mid text-xs uppercase tracking-[0.15em]">No Image</span>
           </div>
         )}
+        <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent motion-overlay" />
 

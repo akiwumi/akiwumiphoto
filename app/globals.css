@@ -65,6 +65,19 @@ ul, ol {
 
 img {
   -webkit-user-drag: none;
+  -webkit-touch-callout: none; /* iOS long-press save sheet */
+  user-select: none;
+  pointer-events: none; /* right-click on <img> itself is blocked */
+}
+
+/* Transparent overlay placed over protected images captures all pointer
+   events so right-click / drag never reaches the underlying <img>. */
+.img-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: all;
+  -webkit-touch-callout: none;
   user-select: none;
 }
 
