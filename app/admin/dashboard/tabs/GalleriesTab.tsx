@@ -3,6 +3,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Reorder } from 'framer-motion';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { supabase } from '@/lib/supabase';
 import { DEMO_GALLERIES, DEMO_IMAGES } from '@/lib/demo-data';
 import type { Gallery, GalleryImage } from '@/types';
@@ -393,6 +408,29 @@ function GalleryEditor({
     await supabase.from('gallery_images').update({ [field]: value }).eq('id', imageId);
   };
 
+  const imgReorderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleImageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = images.findIndex((img) => img.id === active.id);
+    const newIndex = images.findIndex((img) => img.id === over.id);
+    const newOrder = arrayMove(images, oldIndex, newIndex);
+    setImages(newOrder);
+    if (imgReorderTimer.current) clearTimeout(imgReorderTimer.current);
+    imgReorderTimer.current = setTimeout(async () => {
+      await Promise.all(
+        newOrder.map((img, i) =>
+          supabase.from('gallery_images').update({ sort_order: i }).eq('id', img.id)
+        )
+      );
+    }, 600);
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
   const INPUT = {
     background: '#111',
     border: '1px solid #444',
@@ -566,19 +604,51 @@ function GalleryEditor({
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {images.map((img) => (
-          <ImageCard
-            key={img.id}
-            image={img}
-            isDemoMode={isDemoMode}
-            isCover={gallery.cover_image === img.storage_path}
-            onSetCover={() => handleSetCover(img.storage_path)}
-            onDelete={() => handleDeleteImage(img.id)}
-            onUpdate={handleImageFieldUpdate}
-          />
-        ))}
-      </div>
+      {!isDemoMode && images.length > 1 && (
+        <p className="text-grey-mid text-xs mb-2" style={{ opacity: 0.5, letterSpacing: '0.08em' }}>
+          Drag images to reorder
+        </p>
+      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleImageDragEnd}>
+        <SortableContext items={images.map((img) => img.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {images.map((img) => (
+              <SortableImageCard
+                key={img.id}
+                image={img}
+                isDemoMode={isDemoMode}
+                isCover={gallery.cover_image === img.storage_path}
+                onSetCover={() => handleSetCover(img.storage_path)}
+                onDelete={() => handleDeleteImage(img.id)}
+                onUpdate={handleImageFieldUpdate}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+function SortableImageCard(props: React.ComponentProps<typeof ImageCard>) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: props.image.id,
+    disabled: props.isDemoMode,
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : undefined,
+        opacity: isDragging ? 0.5 : 1,
+        cursor: props.isDemoMode ? 'default' : 'grab',
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <ImageCard {...props} />
     </div>
   );
 }
@@ -634,7 +704,8 @@ function ImageCard({
         )}
       </div>
 
-      <div className="p-2">
+      {/* stop pointer events here so inputs/buttons never start a drag */}
+      <div className="p-2" onPointerDown={(e) => e.stopPropagation()}>
         <input
           style={INPUT_SM}
           placeholder="Title"
