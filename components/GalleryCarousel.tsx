@@ -38,10 +38,10 @@ export default function GalleryCarousel({ galleries }: Props) {
   return (
     <div
       style={{
-        height: '100%',
+        minHeight: '100%',
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gridTemplateRows: galleries.length > 3 ? 'repeat(2, 1fr)' : '1fr',
+        gridAutoRows: 'calc((100vh - 80px) / 2)',
         gap: '8px',
         padding: '0 60px 16px 60px',
       }}
