@@ -19,6 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { supabase } from '@/lib/supabase';
+import { extractStoragePath } from '@/lib/storage-utils';
 import { DEMO_GALLERIES, DEMO_IMAGES } from '@/lib/demo-data';
 import type { Gallery, GalleryImage } from '@/types';
 
@@ -276,6 +277,8 @@ function GalleryEditor({
     published: gallery.published,
   });
   const [images, setImages] = useState<GalleryImage[]>([]);
+  // Signed URLs keyed by image id — separate from storage_path (raw path)
+  const [displayUrls, setDisplayUrls] = useState<Record<string, string>>({});
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -292,7 +295,21 @@ function GalleryEditor({
       .select('*')
       .eq('gallery_id', gallery.id)
       .order('sort_order', { ascending: true });
-    setImages(data || []);
+    const raw = data || [];
+    setImages(raw);
+
+    // Generate 1-hour signed URLs for display (admin is authenticated)
+    const urls: Record<string, string> = {};
+    await Promise.all(
+      raw.map(async (img) => {
+        const path = extractStoragePath(img.storage_path, 'gallery-images');
+        const { data: signed } = await supabase.storage
+          .from('gallery-images')
+          .createSignedUrl(path, 3600);
+        if (signed) urls[img.id] = signed.signedUrl;
+      })
+    );
+    setDisplayUrls(urls);
   }, [gallery.id, isDemoMode]);
 
   useEffect(() => {
@@ -352,10 +369,10 @@ function GalleryEditor({
         .from('gallery-images')
         .upload(path, file, { cacheControl: '3600', upsert: false });
       if (!error && uploadData) {
-        const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(uploadData.path);
+        // Store bare object path — signed URLs are generated at display time
         await supabase.from('gallery_images').insert({
           gallery_id: gallery.id,
-          storage_path: urlData.publicUrl,
+          storage_path: uploadData.path,
           sort_order: images.length + i,
         });
       }
@@ -394,9 +411,8 @@ function GalleryEditor({
     if (isDemoMode) return;
     const img = images.find((i) => i.id === imageId);
     if (img) {
-      // Extract storage path from the full public URL
-      const url = new URL(img.storage_path);
-      const storagePath = url.pathname.split('/object/public/gallery-images/')[1];
+      // storage_path is now a bare path (migration stripped the URL prefix)
+      const storagePath = extractStoragePath(img.storage_path, 'gallery-images');
       if (storagePath) await supabase.storage.from('gallery-images').remove([storagePath]);
     }
     await supabase.from('gallery_images').delete().eq('id', imageId);
@@ -616,6 +632,7 @@ function GalleryEditor({
               <SortableImageCard
                 key={img.id}
                 image={img}
+                displayUrl={displayUrls[img.id] || null}
                 isDemoMode={isDemoMode}
                 isCover={gallery.cover_image === img.storage_path}
                 onSetCover={() => handleSetCover(img.storage_path)}
@@ -655,6 +672,7 @@ function SortableImageCard(props: React.ComponentProps<typeof ImageCard>) {
 
 function ImageCard({
   image,
+  displayUrl,
   isDemoMode,
   isCover,
   onSetCover,
@@ -662,6 +680,7 @@ function ImageCard({
   onUpdate,
 }: {
   image: GalleryImage;
+  displayUrl: string | null;
   isDemoMode: boolean;
   isCover: boolean;
   onSetCover: () => void;
@@ -686,14 +705,20 @@ function ImageCard({
   return (
     <div className="bg-black/40 border border-white/10">
       <div className="relative aspect-square">
-        <Image
-          src={image.storage_path}
-          alt={image.title || 'Gallery image'}
-          fill
-          unoptimized
-          className="object-cover"
-          sizes="200px"
-        />
+        {displayUrl ? (
+          <Image
+            src={displayUrl}
+            alt={image.title || 'Gallery image'}
+            fill
+            unoptimized
+            className="object-cover"
+            sizes="200px"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-grey-mid text-xs">Loading…</span>
+          </div>
+        )}
         {isCover && (
           <div
             className="absolute top-1 left-1 px-1.5 py-0.5 text-white text-xs"

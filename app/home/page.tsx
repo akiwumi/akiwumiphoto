@@ -1,6 +1,7 @@
 import NavBar from '@/components/NavBar';
 import GalleryCarousel from '@/components/GalleryCarousel';
 import { createServerClient } from '@/lib/supabase-server';
+import { signUrl } from '@/lib/signed-urls';
 import type { Gallery } from '@/types';
 
 async function getGalleries(): Promise<Gallery[]> {
@@ -13,7 +14,15 @@ async function getGalleries(): Promise<Gallery[]> {
       .order('sort_order', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    const galleries = data || [];
+
+    // Sign cover image URLs so the private bucket serves them
+    return await Promise.all(
+      galleries.map(async (g) => ({
+        ...g,
+        cover_image: g.cover_image ? await signUrl(g.cover_image) : null,
+      }))
+    );
   } catch {
     return [];
   }

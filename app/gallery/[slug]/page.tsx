@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import GalleryPageClient from './GalleryPageClient';
 import { createServerClient } from '@/lib/supabase-server';
+import { signItems, signUrl } from '@/lib/signed-urls';
 import type { Gallery, GalleryImage } from '@/types';
 
 interface Props {
@@ -29,7 +30,16 @@ async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images:
 
     if (imagesError) return null;
 
-    return { gallery, images: images || [] };
+    // Sign all image URLs and the gallery cover so the private bucket serves them
+    const [signedImages, signedCover] = await Promise.all([
+      signItems(images || []),
+      signUrl(gallery.cover_image),
+    ]);
+
+    return {
+      gallery: { ...gallery, cover_image: signedCover },
+      images: signedImages,
+    };
   } catch {
     return null;
   }
