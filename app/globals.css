@@ -329,6 +329,139 @@ img {
   transform: translateY(-1px);
 }
 
+.contact-page {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.48)),
+    url("/images/contact-background.jpg") center / cover fixed;
+}
+
+.contact-page > :not(nav) {
+  position: relative;
+  z-index: 1;
+}
+
+.contact-page nav {
+  background: rgba(0, 0, 0, 0.36) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.52) !important;
+}
+
+.contact-page nav > a,
+.contact-page nav > button,
+.contact-page nav > div a:not(.active) {
+  color: #FFFFFF !important;
+}
+
+.contact-form {
+  padding: 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(8px);
+}
+
+.contact-form-title {
+  font-size: 1.4rem;
+  line-height: 1.1;
+}
+
+.contact-field,
+.contact-message {
+  border-radius: 14px;
+}
+
+.contact-field::placeholder,
+.contact-message::placeholder {
+  color: #A8A8A8;
+}
+
+.contact-submit {
+  border-radius: 14px;
+}
+
+@media (min-width: 901px) {
+  .contact-content {
+    position: absolute !important;
+    inset: 48px 0 0;
+    overflow: hidden;
+    padding: 12px 60px 16px !important;
+  }
+
+  .contact-heading {
+    margin-bottom: 8px;
+    font-size: 2.25rem !important;
+  }
+
+  .contact-rule {
+    margin-bottom: 12px;
+  }
+
+  .contact-form {
+    max-width: 620px;
+    gap: 10px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  .contact-form-title {
+    color: #FFFFFF !important;
+    font-size: 1.5rem;
+  }
+
+  .contact-form label {
+    margin-bottom: 3px;
+    color: #FFFFFF !important;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .contact-field,
+  .contact-message {
+    border: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.78) !important;
+    border-radius: 0;
+    background: transparent !important;
+    color: #FFFFFF !important;
+  }
+
+  .contact-field {
+    height: 42px;
+    padding: 0 2px;
+  }
+
+  .contact-message {
+    min-height: 74px !important;
+    max-height: 80px;
+    padding: 8px 2px;
+    resize: none;
+  }
+
+  .contact-field::placeholder,
+  .contact-message::placeholder {
+    color: rgba(255, 255, 255, 0.68);
+  }
+
+  .contact-field option {
+    color: #000000;
+  }
+
+  .contact-submit {
+    height: 42px;
+    width: fit-content;
+    min-width: 220px;
+    padding: 0 28px;
+    border-color: rgba(255, 255, 255, 0.78) !important;
+    border-radius: 999px;
+  }
+
+  .contact-social-row {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-enter,
   .motion-card,
@@ -597,6 +730,95 @@ img {
 }
 
 @media (max-width: 900px) {
+  .contact-content {
+    position: absolute !important;
+    inset: 98px 0 0;
+    overflow: hidden;
+    padding: 10px 20px 14px !important;
+  }
+
+  .contact-layout {
+    display: block !important;
+  }
+
+  .contact-form {
+    max-width: none;
+    gap: 7px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  .contact-form-title {
+    color: #FFFFFF !important;
+    font-size: 1.2rem;
+  }
+
+  .contact-name-row {
+    gap: 8px;
+  }
+
+  .contact-heading {
+    margin-bottom: 8px;
+    font-size: 1.5rem !important;
+  }
+
+  .contact-rule {
+    margin-bottom: 12px;
+  }
+
+  .contact-form label {
+    margin-bottom: 3px;
+    color: #FFFFFF !important;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .contact-field,
+  .contact-message {
+    border: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.78) !important;
+    border-radius: 0;
+    background: transparent !important;
+    color: #FFFFFF !important;
+  }
+
+  .contact-field {
+    height: 36px;
+    padding-right: 2px;
+    padding-left: 2px;
+    font-size: 0.95rem;
+  }
+
+  .contact-message {
+    min-height: 60px !important;
+    max-height: 68px;
+    padding: 8px 2px;
+    font-size: 0.95rem;
+    resize: none;
+  }
+
+  .contact-field::placeholder,
+  .contact-message::placeholder {
+    color: rgba(255, 255, 255, 0.68);
+  }
+
+  .contact-field option {
+    color: #000000;
+  }
+
+  .contact-submit {
+    height: 40px;
+    border-color: rgba(255, 255, 255, 0.78) !important;
+    border-radius: 999px;
+  }
+
+  .contact-social-row {
+    display: none !important;
+  }
+
   .gallery-feed-scroll {
     overflow-y: auto;
     overscroll-behavior-y: contain;

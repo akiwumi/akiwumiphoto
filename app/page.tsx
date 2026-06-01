@@ -5,26 +5,12 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useAudio } from '@/contexts/AudioContext';
-import { supabase } from '@/lib/supabase';
 
 export default function SplashPage() {
   const router = useRouter();
   const { start } = useAudio();
   const [showButton, setShowButton] = useState(false);
   const [exiting, setExiting] = useState(false);
-  const [bgImage, setBgImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase
-      .from('page_content')
-      .select('value')
-      .eq('page', 'splash')
-      .eq('key', 'bg_image')
-      .single()
-      .then(({ data }) => {
-        if (data?.value) setBgImage(data.value);
-      });
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowButton(true), 3200);
@@ -48,26 +34,24 @@ export default function SplashPage() {
           transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
           {/* Full-screen background image — fades in with the title */}
-          {bgImage && (
-            <motion.div
-              className="absolute inset-0"
-              style={{ zIndex: 0 }}
-              initial={{ opacity: 0, scale: 1.06 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            >
-              <Image
-                src={bgImage}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority
-              />
-              <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.45)' }} />
-            </motion.div>
-          )}
+          <motion.div
+            className="absolute inset-0"
+            style={{ zIndex: 0 }}
+            initial={{ opacity: 0, scale: 1.06 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          >
+            <Image
+              src="/images/intro-background.jpg"
+              alt=""
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.42)' }} />
+          </motion.div>
 
           {/* Title — zooms in from blur, eases out on exit */}
           <motion.h1
@@ -97,10 +81,11 @@ export default function SplashPage() {
                 onClick={handleEnter}
                 className="absolute bottom-12 left-5 right-5 md:left-auto md:right-auto md:w-[200px] h-[52px] text-white font-medium uppercase cursor-pointer btn-lift"
                 style={{
-                  background: '#E8001C',
+                  background: 'rgba(255, 255, 255, 0.14)',
                   letterSpacing: '0.12em',
                   fontSize: '0.875rem',
-                  border: 'none',
+                  border: '1px solid rgba(255, 255, 255, 0.62)',
+                  backdropFilter: 'blur(12px)',
                   paddingBottom: 'env(safe-area-inset-bottom)',
                   zIndex: 1,
                 }}
