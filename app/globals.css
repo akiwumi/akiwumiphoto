@@ -331,26 +331,23 @@ img {
 
 .contact-page {
   position: relative;
-  isolation: isolate;
   background:
     linear-gradient(rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.48)),
     url("/images/contact-background.jpg") center / cover fixed;
 }
 
-.contact-page > :not(nav) {
+.contact-page .nav-overlay {
+  position: fixed;
+  z-index: 500;
+}
+
+.contact-page .nav-overlay.open {
+  transform: translateY(0);
+}
+
+.contact-page > :not(nav):not(.nav-overlay) {
   position: relative;
   z-index: 1;
-}
-
-.contact-page nav {
-  background: rgba(0, 0, 0, 0.36) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.52) !important;
-}
-
-.contact-page nav > a,
-.contact-page nav > button,
-.contact-page nav > div a:not(.active) {
-  color: #FFFFFF !important;
 }
 
 .contact-form {

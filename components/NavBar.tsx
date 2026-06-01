@@ -13,7 +13,7 @@ const NAV_LINKS = [
 ];
 
 // Pages with white/light backgrounds — nav needs to flip to dark
-const LIGHT_PAGES = ['/prints', '/about', '/contact'];
+const LIGHT_PAGES = ['/prints', '/about'];
 
 export default function NavBar() {
   const pathname = usePathname();
