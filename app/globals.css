@@ -597,6 +597,52 @@ img {
 }
 
 @media (max-width: 900px) {
+  .gallery-feed-scroll {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gallery-feed-grid {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-auto-rows: min(78vw, 390px) !important;
+    gap: 8px !important;
+    min-height: auto !important;
+    margin: 0;
+    padding: 0 0 16px !important;
+  }
+
+  .gallery-feed-card {
+    border-radius: 0;
+    background: #1A1A1A;
+  }
+
+  .gallery-feed-image {
+    inset: 0 !important;
+    border-radius: 0;
+  }
+
+  .gallery-feed-title {
+    top: auto;
+    bottom: 0 !important;
+    padding: 18px 20px !important;
+  }
+
+  .gallery-feed-title p {
+    color: #FFFFFF;
+    overflow: hidden;
+    font-size: clamp(0.7rem, 3.4vw, 1rem);
+    letter-spacing: 0.08em !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gallery-feed-title .tile-accent {
+    display: block;
+  }
+
   .about-page {
     min-height: 100dvh;
     height: auto;

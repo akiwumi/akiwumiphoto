@@ -37,6 +37,7 @@ export default function GalleryCarousel({ galleries }: Props) {
 
   return (
     <div
+      className="gallery-feed-grid"
       style={{
         minHeight: '100%',
         display: 'grid',
@@ -62,34 +63,35 @@ function GalleryTile({ gallery, priority, index }: { gallery: Gallery; priority?
       initial="hidden"
       animate="visible"
     >
-    <Link href={`/gallery/${gallery.slug}`} className="block gallery-tile group cursor-pointer relative overflow-hidden bg-grey-dark" style={{ height: '100%' }}>
+    <Link href={`/gallery/${gallery.slug}`} className="gallery-feed-card block gallery-tile group cursor-pointer relative overflow-hidden bg-grey-dark" style={{ height: '100%' }}>
       <motion.div
         className="w-full h-full relative"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.985 }}
         transition={{ duration: 0.4, ease: FLIGHT_EASE }}
       >
-        {gallery.cover_image ? (
-          <Image
-            src={gallery.cover_image}
-            alt={gallery.title}
-            fill
-            unoptimized
-            draggable={false}
-            sizes="33vw"
-            className="object-cover media-zoom"
-            priority={priority}
-          />
-        ) : (
-          <div className="absolute inset-0 bg-grey-dark flex items-center justify-center">
-            <span className="text-grey-mid text-xs uppercase tracking-[0.15em]">No Image</span>
-          </div>
-        )}
-        <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
+        <div className="gallery-feed-image absolute inset-0 overflow-hidden">
+          {gallery.cover_image ? (
+            <Image
+              src={gallery.cover_image}
+              alt={gallery.title}
+              fill
+              unoptimized
+              draggable={false}
+              sizes="(max-width: 900px) calc(100vw - 76px), 33vw"
+              className="object-cover media-zoom"
+              priority={priority}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-grey-dark flex items-center justify-center">
+              <span className="text-grey-mid text-xs uppercase tracking-[0.15em]">No Image</span>
+            </div>
+          )}
+          <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent motion-overlay" />
+        </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent motion-overlay" />
-
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="gallery-feed-title absolute bottom-0 left-0 right-0 p-4">
           <p
             className="text-white font-bold uppercase text-base"
             style={{ letterSpacing: '0.08em' }}
