@@ -597,6 +597,51 @@ img {
 }
 
 @media (max-width: 900px) {
+  .about-page {
+    min-height: 100dvh;
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .about-content {
+    flex: none;
+    overflow: visible;
+    padding: 14px 20px 40px !important;
+  }
+
+  .about-layout {
+    display: block !important;
+    overflow: visible;
+  }
+
+  .about-layout > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .about-portrait {
+    height: min(112vw, 560px) !important;
+  }
+
+  .about-bio {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: auto;
+    margin-top: -18px;
+    padding: 26px 36px 22px 18px;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    background: #FFFFFF;
+  }
+
+  .about-bio-copy {
+    width: calc(100vw - 160px);
+    max-width: 100%;
+    white-space: pre-line !important;
+    overflow-wrap: anywhere;
+  }
+
   .lightbox-modal {
     justify-content: flex-start;
     padding: max(84px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));

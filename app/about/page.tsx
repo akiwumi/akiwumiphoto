@@ -24,11 +24,11 @@ export default async function AboutPage() {
   const { heading, bio, portrait } = await getAboutContent();
 
   return (
-    <main className="full-screen bg-white flex flex-col overflow-hidden">
+    <main className="about-page full-screen bg-white flex flex-col overflow-hidden">
       <NavBar />
       <div style={{ height: 48, flexShrink: 0 }} />
 
-      <div className="flex-1 flex flex-col overflow-hidden page-enter" style={{ padding: '14px 60px 40px' }}>
+      <div className="about-content flex-1 flex flex-col overflow-hidden page-enter" style={{ padding: '14px 60px 40px' }}>
         {/* Header */}
         <h1
           className="text-black font-bold uppercase mb-3"
@@ -40,7 +40,7 @@ export default async function AboutPage() {
 
         {/* Two equal columns — portrait reveals first, bio staggered after */}
         <div
-          className="flex-1 overflow-hidden"
+          className="about-layout flex-1 overflow-hidden"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -50,7 +50,7 @@ export default async function AboutPage() {
         >
           {/* Portrait */}
           <Reveal delay={0.05}>
-            <div className="gallery-tile" style={{ position: 'relative', overflow: 'hidden', height: '100%' }}>
+            <div className="about-portrait gallery-tile" style={{ position: 'relative', overflow: 'hidden', height: '100%' }}>
               {portrait && (
                 <Image
                   src={portrait}
@@ -66,7 +66,7 @@ export default async function AboutPage() {
 
           {/* Bio */}
           <Reveal delay={0.18}>
-            <div className="flex flex-col justify-center overflow-hidden h-full">
+            <div className="about-bio flex flex-col justify-center overflow-hidden h-full">
               {heading && (
                 <h2
                   className="text-black font-bold uppercase mb-4"
@@ -76,7 +76,7 @@ export default async function AboutPage() {
                 </h2>
               )}
               <div
-                className="text-black text-sm leading-relaxed space-y-4"
+                className="about-bio-copy text-black text-sm leading-relaxed space-y-4"
                 style={{ whiteSpace: 'pre-wrap' }}
               >
                 {bio}
