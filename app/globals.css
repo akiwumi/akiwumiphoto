@@ -101,6 +101,12 @@ img {
   width: 100%;
 }
 
+/* About bio paragraphs — the global `* { margin: 0 }` reset outranks Tailwind's
+   layered space-y utility, so paragraph rhythm is set explicitly here. */
+.about-bio-copy p + p {
+  margin-top: 1rem;
+}
+
 /* Bauhaus tile accent line */
 .tile-accent {
   width: 32px;

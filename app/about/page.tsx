@@ -15,9 +15,17 @@ async function getAboutContent(): Promise<{ heading: string; bio: string; portra
     const bio = rows.find((r) => r.key === 'bio')?.value || '';
     const portrait = rows.find((r) => r.key === 'portrait_image')?.value || null;
     return { heading, bio, portrait };
-  } catch {
+  } catch (err) {
+    console.error('[about] could not load page content:', err);
     return { heading: '', bio: '', portrait: null };
   }
+}
+
+// Renders *emphasised* spans in admin-authored copy as italics.
+function renderEmphasis(text: string) {
+  return text.split(/\*([^*]+)\*/g).map((chunk, i) =>
+    i % 2 === 1 ? <em key={i}>{chunk}</em> : chunk
+  );
 }
 
 export default async function AboutPage() {
@@ -75,11 +83,14 @@ export default async function AboutPage() {
                   {heading}
                 </h2>
               )}
-              <div
-                className="about-bio-copy text-black text-sm leading-relaxed space-y-4"
-                style={{ whiteSpace: 'pre-wrap' }}
-              >
-                {bio}
+              <div className="about-bio-copy text-black text-sm leading-relaxed">
+                {bio
+                  .split(/\n\s*\n/)
+                  .map((para) => para.trim())
+                  .filter(Boolean)
+                  .map((para, i) => (
+                    <p key={i}>{renderEmphasis(para)}</p>
+                  ))}
               </div>
               <div className="h-0.5 bg-black mt-6" />
             </div>
