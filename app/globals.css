@@ -413,6 +413,10 @@ img {
     font-size: 1.5rem;
   }
 
+  .contact-fallback {
+    color: #FFFFFF !important;
+  }
+
   .contact-form label {
     margin-bottom: 3px;
     color: #FFFFFF !important;
@@ -756,6 +760,10 @@ img {
   .contact-form-title {
     color: #FFFFFF !important;
     font-size: 1.2rem;
+  }
+
+  .contact-fallback {
+    color: #FFFFFF !important;
   }
 
   .contact-name-row {

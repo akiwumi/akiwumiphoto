@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Reveal from '@/components/Reveal';
 
+const CONTACT_EMAIL = 'akiwumi@gmail.com';
+
 const SUBJECTS = [
   'General Enquiry',
   'Print Enquiry',
@@ -25,35 +27,32 @@ function ContactForm() {
     subject: defaultSubject,
     message: '',
   });
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'opened'>('idle');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Hands the enquiry to the visitor's own mail client — nothing is sent from
+  // the site, so the form is never cleared: if their mail app fails to open,
+  // what they typed is still on screen.
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('sending');
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `${form.firstName} ${form.lastName}`.trim(),
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
-        }),
-      });
-      if (res.ok) {
-        setStatus('success');
-        setForm({ firstName: '', lastName: '', email: '', subject: 'General Enquiry', message: '' });
-      } else {
-        setStatus('error');
-      }
-    } catch {
-      setStatus('error');
-    }
+    const name = `${form.firstName} ${form.lastName}`.trim();
+    const subject = `${form.subject} — ${name}`;
+    const body = [
+      `Name: ${name}`,
+      `Email: ${form.email}`,
+      `Subject: ${form.subject}`,
+      '',
+      form.message,
+    ].join('\r\n');
+
+    window.location.href =
+      `mailto:${CONTACT_EMAIL}` +
+      `?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(body)}`;
+    setStatus('opened');
   };
 
   return (
@@ -129,13 +128,15 @@ function ContactForm() {
         <label className="block text-black text-xs font-medium mb-1.5">
           Comments
         </label>
+        {/* maxLength is capped so the encoded mailto: URL stays under the
+            ~2000-character limit some OS mail handlers impose. */}
         <textarea
           name="message"
           value={form.message}
           onChange={handleChange}
           required
           rows={5}
-          maxLength={120}
+          maxLength={1000}
           placeholder="Enter your message"
           className="contact-message w-full px-4 py-3 bg-white text-black font-sans text-base resize-vertical field-focus"
           style={{ border: '1px solid #D6D6D6', outline: 'none', minHeight: 120 }}
@@ -145,29 +146,27 @@ function ContactForm() {
       {/* Submit */}
       <button
         type="submit"
-        disabled={status === 'sending'}
         className="contact-submit w-full h-14 text-white font-medium uppercase text-sm transition-colors btn-lift"
         style={{
-          background: status === 'sending' ? 'rgba(153, 153, 153, 0.72)' : 'rgba(232, 0, 28, 0.68)',
+          background: 'rgba(232, 0, 28, 0.68)',
           border: '1px solid rgba(255, 255, 255, 0.62)',
           backdropFilter: 'blur(10px)',
           letterSpacing: '0.12em',
-          cursor: status === 'sending' ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
         }}
-        onMouseEnter={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(192, 0, 24, 0.82)'; }}
-        onMouseLeave={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(232, 0, 28, 0.68)'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(192, 0, 24, 0.82)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(232, 0, 28, 0.68)'; }}
       >
-        {status === 'sending' ? 'Sending…' : 'Submit'}
+        Submit
       </button>
 
-      {status === 'success' && (
-        <p className="text-center text-sm text-black">Message sent. We&apos;ll be in touch.</p>
-      )}
-      {status === 'error' && (
-        <p className="text-center text-sm" style={{ color: '#E8001C' }}>
-          Something went wrong. Please try again.
-        </p>
-      )}
+      {/* The mail client may not open — always leave the address in reach. */}
+      <p className="contact-fallback text-center text-sm text-black">
+        {status === 'opened' ? 'Opening your email app. If nothing happened, write to ' : 'Or email directly: '}
+        <a href={`mailto:${CONTACT_EMAIL}`} className="underline" style={{ color: '#E8001C' }}>
+          {CONTACT_EMAIL}
+        </a>
+      </p>
     </form>
   );
 }
