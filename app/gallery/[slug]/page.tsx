@@ -40,7 +40,8 @@ async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images:
       gallery: { ...gallery, cover_image: signedCover },
       images: signedImages,
     };
-  } catch {
+  } catch (err) {
+    console.error(`[gallery/${slug}] could not load gallery:`, err);
     return null;
   }
 }

@@ -23,7 +23,8 @@ async function getGalleries(): Promise<Gallery[]> {
         cover_image: g.cover_image ? await signUrl(g.cover_image) : null,
       }))
     );
-  } catch {
+  } catch (err) {
+    console.error('[home] could not load galleries:', err);
     return [];
   }
 }
