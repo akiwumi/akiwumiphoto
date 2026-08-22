@@ -5,6 +5,15 @@ import { useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Reveal from '@/components/Reveal';
 
+/**
+ * Web3Forms only accepts submissions from the browser on the free plan —
+ * server-to-server posting is a Pro feature — so the form talks to them
+ * directly. The access key is public by their design; which inbox enquiries
+ * land in is bound to the key itself, chosen when the key is created.
+ */
+const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
+const ACCESS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
+
 const SUBJECTS = [
   'General Enquiry',
   'Print Enquiry',
@@ -24,7 +33,7 @@ function ContactForm() {
     email: '',
     subject: defaultSubject,
     message: '',
-    website: '', // honeypot — see the hidden field below
+    botcheck: '', // honeypot — see the hidden field below
   };
 
   const [form, setForm] = useState(EMPTY);
@@ -35,37 +44,62 @@ function ContactForm() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // The form is only cleared once the server confirms the send, so a failure
-  // never costs the visitor what they typed.
+  // The form is only cleared once the send is confirmed, so a failure never
+  // costs the visitor what they typed.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Anything in the honeypot means a bot. Drop it without a word, rather
+    // than reporting back what gave it away.
+    if (form.botcheck) {
+      setStatus('success');
+      setForm(EMPTY);
+      return;
+    }
+
+    if (!ACCESS_KEY) {
+      console.error('[contact] NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY is not set');
+      setError('The form is not configured yet. Please try again later.');
+      setStatus('error');
+      return;
+    }
+
     setStatus('sending');
     setError('');
 
+    const name = `${form.firstName} ${form.lastName}`.trim();
+
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch(WEB3FORMS_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          name: `${form.firstName} ${form.lastName}`.trim(),
+          access_key: ACCESS_KEY,
+          from_name: 'Akiwumi Photo',
+          subject: `[akiwumiphoto.com] ${form.subject} — ${name}`,
+          replyto: form.email,
+          botcheck: false,
+          // Reproduced verbatim in the notification email.
+          name,
           email: form.email,
-          subject: form.subject,
+          enquiry: form.subject,
           message: form.message,
-          website: form.website,
         }),
       });
 
-      if (res.ok) {
+      // Web3Forms reports rejections in the body, so an ok status is not enough.
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
         setStatus('success');
         setForm(EMPTY);
         return;
       }
 
-      const data = await res.json().catch(() => null);
-      setError(data?.error || 'The message could not be sent.');
+      console.error('[contact] Web3Forms rejected the send:', res.status, data?.message);
+      setError('The message could not be sent. Please try again.');
       setStatus('error');
     } catch {
-      setError('Could not reach the server. Please check your connection.');
+      setError('Could not reach the mail service. Please check your connection.');
       setStatus('error');
     }
   };
@@ -158,11 +192,12 @@ function ContactForm() {
         />
       </div>
 
-      {/* Honeypot: off-screen and skipped by tab order, so only bots fill it. */}
+      {/* Honeypot: off-screen and skipped by tab order, so only bots fill it.
+          Named for the field Web3Forms itself screens on. */}
       <input
         type="text"
-        name="website"
-        value={form.website}
+        name="botcheck"
+        value={form.botcheck}
         onChange={handleChange}
         tabIndex={-1}
         autoComplete="off"
@@ -194,7 +229,7 @@ function ContactForm() {
         </p>
       )}
       {status === 'error' && (
-        <p className="contact-status text-center text-sm" role="alert" style={{ color: '#E8001C' }}>
+        <p className="contact-status contact-status-error text-center text-sm" role="alert">
           {error}
         </p>
       )}

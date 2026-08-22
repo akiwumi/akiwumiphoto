@@ -107,6 +107,12 @@ img {
   margin-top: 1rem;
 }
 
+/* Failures read red. Qualified by the tag so it outranks the white
+   .contact-status rules the breakpoints set with !important. */
+p.contact-status-error {
+  color: #E8001C !important;
+}
+
 /* Bauhaus tile accent line */
 .tile-accent {
   width: 32px;

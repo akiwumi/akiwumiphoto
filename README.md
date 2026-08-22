@@ -9,8 +9,7 @@ environment settings for the deployed site.
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL. Galleries, videos and page content all come from here. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key. Also signs the private gallery-images bucket, which its RLS policy permits. |
-| `RESEND_API_KEY` | yes | Sends contact form enquiries. Without it the form returns an error rather than pretending to succeed. |
-| `CONTACT_FROM_EMAIL` | no | Sender for contact emails, e.g. `Akiwumi Photo <noreply@akiwumiphoto.com>`. Requires the domain to be verified in Resend. Defaults to Resend's shared onboarding sender. |
+| `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` | yes | Relays contact form enquiries. Public by Web3Forms' design — the form posts to them from the browser, since server-side posting is a paid feature. The destination inbox is bound to the key itself, not configured here. |
 
 If a page renders empty where you expect content, check the dev server output —
 the data fetchers log why they came back with nothing.
