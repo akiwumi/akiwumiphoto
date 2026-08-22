@@ -5,8 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Reveal from '@/components/Reveal';
 
-const CONTACT_EMAIL = 'akiwumi@gmail.com';
-
 const SUBJECTS = [
   'General Enquiry',
   'Print Enquiry',
@@ -20,39 +18,56 @@ function ContactForm() {
   const searchParams = useSearchParams();
   const defaultSubject = searchParams.get('subject') || 'General Enquiry';
 
-  const [form, setForm] = useState({
+  const EMPTY = {
     firstName: '',
     lastName: '',
     email: '',
     subject: defaultSubject,
     message: '',
-  });
-  const [status, setStatus] = useState<'idle' | 'opened'>('idle');
+    website: '', // honeypot — see the hidden field below
+  };
+
+  const [form, setForm] = useState(EMPTY);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Hands the enquiry to the visitor's own mail client — nothing is sent from
-  // the site, so the form is never cleared: if their mail app fails to open,
-  // what they typed is still on screen.
-  const handleSubmit = (e: React.FormEvent) => {
+  // The form is only cleared once the server confirms the send, so a failure
+  // never costs the visitor what they typed.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = `${form.firstName} ${form.lastName}`.trim();
-    const subject = `${form.subject} — ${name}`;
-    const body = [
-      `Name: ${name}`,
-      `Email: ${form.email}`,
-      `Subject: ${form.subject}`,
-      '',
-      form.message,
-    ].join('\r\n');
+    setStatus('sending');
+    setError('');
 
-    window.location.href =
-      `mailto:${CONTACT_EMAIL}` +
-      `?subject=${encodeURIComponent(subject)}` +
-      `&body=${encodeURIComponent(body)}`;
-    setStatus('opened');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+          website: form.website,
+        }),
+      });
+
+      if (res.ok) {
+        setStatus('success');
+        setForm(EMPTY);
+        return;
+      }
+
+      const data = await res.json().catch(() => null);
+      setError(data?.error || 'The message could not be sent.');
+      setStatus('error');
+    } catch {
+      setError('Could not reach the server. Please check your connection.');
+      setStatus('error');
+    }
   };
 
   return (
@@ -143,30 +158,46 @@ function ContactForm() {
         />
       </div>
 
+      {/* Honeypot: off-screen and skipped by tab order, so only bots fill it. */}
+      <input
+        type="text"
+        name="website"
+        value={form.website}
+        onChange={handleChange}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+      />
+
       {/* Submit */}
       <button
         type="submit"
+        disabled={status === 'sending'}
         className="contact-submit w-full h-14 text-white font-medium uppercase text-sm transition-colors btn-lift"
         style={{
-          background: 'rgba(232, 0, 28, 0.68)',
+          background: status === 'sending' ? 'rgba(153, 153, 153, 0.72)' : 'rgba(232, 0, 28, 0.68)',
           border: '1px solid rgba(255, 255, 255, 0.62)',
           backdropFilter: 'blur(10px)',
           letterSpacing: '0.12em',
-          cursor: 'pointer',
+          cursor: status === 'sending' ? 'not-allowed' : 'pointer',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(192, 0, 24, 0.82)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(232, 0, 28, 0.68)'; }}
+        onMouseEnter={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(192, 0, 24, 0.82)'; }}
+        onMouseLeave={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(232, 0, 28, 0.68)'; }}
       >
-        Submit
+        {status === 'sending' ? 'Sending…' : 'Submit'}
       </button>
 
-      {/* The mail client may not open — always leave the address in reach. */}
-      <p className="contact-fallback text-center text-sm text-black">
-        {status === 'opened' ? 'Opening your email app. If nothing happened, write to ' : 'Or email directly: '}
-        <a href={`mailto:${CONTACT_EMAIL}`} className="underline" style={{ color: '#E8001C' }}>
-          {CONTACT_EMAIL}
-        </a>
-      </p>
+      {status === 'success' && (
+        <p className="contact-status text-center text-sm" role="status">
+          Thank you — your message has been sent. We&apos;ll be in touch.
+        </p>
+      )}
+      {status === 'error' && (
+        <p className="contact-status text-center text-sm" role="alert" style={{ color: '#E8001C' }}>
+          {error}
+        </p>
+      )}
     </form>
   );
 }

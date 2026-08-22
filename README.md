@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment variables
+
+Set these in `.env.local` for local development, and in the hosting project's
+environment settings for the deployed site.
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL. Galleries, videos and page content all come from here. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key. Also signs the private gallery-images bucket, which its RLS policy permits. |
+| `RESEND_API_KEY` | yes | Sends contact form enquiries. Without it the form returns an error rather than pretending to succeed. |
+| `CONTACT_FROM_EMAIL` | no | Sender for contact emails, e.g. `Akiwumi Photo <noreply@akiwumiphoto.com>`. Requires the domain to be verified in Resend. Defaults to Resend's shared onboarding sender. |
+
+If a page renders empty where you expect content, check the dev server output —
+the data fetchers log why they came back with nothing.
+
 ## Getting Started
 
 First, run the development server:
