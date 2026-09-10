@@ -241,7 +241,6 @@ export default function ContactPage() {
   return (
     <main className="contact-page full-screen bg-white flex flex-col overflow-hidden">
       <NavBar />
-      <div style={{ height: 48, flexShrink: 0 }} />
 
       <div className="contact-content flex-1 page-enter" style={{ padding: '14px 60px 60px' }}>
         <Reveal>
@@ -249,7 +248,7 @@ export default function ContactPage() {
             className="contact-heading text-white font-bold uppercase mb-4"
             style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
           >
-            CONTACT
+            Contact
           </h1>
           <div className="contact-rule h-0.5 bg-white mb-8" />
         </Reveal>

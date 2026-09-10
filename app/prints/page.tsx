@@ -37,40 +37,8 @@ export default function PrintsPage() {
   return (
     <main
       className="full-screen flex flex-col overflow-y-auto"
-      style={{
-        background:
-          'linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.46)), url("/images/prints-background.jpg") center / cover fixed',
-      }}
     >
-      <style>{`
-        @media (max-width: 900px) {
-          .prints-content {
-            padding: 14px 5px 28px !important;
-          }
-
-          .prints-title {
-            margin-bottom: 5px !important;
-            padding: 20px !important;
-          }
-
-          .prints-grid {
-            gap: 5px !important;
-            margin-bottom: 5px !important;
-          }
-
-          .prints-panel {
-            width: 100%;
-            background: transparent !important;
-            padding: 20px !important;
-          }
-
-          .prints-enquire {
-            margin: 20px 20px 72px;
-          }
-        }
-      `}</style>
       <NavBar />
-      <div style={{ height: 48, flexShrink: 0 }} />
 
       <div className="prints-content flex-1 pb-12 page-enter" style={{ padding: '14px 60px 60px' }}>
         <Reveal>
@@ -83,7 +51,7 @@ export default function PrintsPage() {
               letterSpacing: '0.08em',
             }}
           >
-            LIMITED EDITION PRINTS
+            Limited edition prints
           </h1>
         </Reveal>
 
@@ -149,19 +117,36 @@ export default function PrintsPage() {
         </div>
 
         <Reveal delay={0.28}>
-          <Link
-            href="/contact?subject=Print+Enquiry"
-            className="prints-enquire inline-flex items-center justify-center font-medium uppercase text-white btn-lift"
-            style={{
-              background: 'rgba(232, 0, 28, 0.78)',
-              border: '1px solid rgba(255, 255, 255, 0.62)',
-              padding: '14px 24px',
-              letterSpacing: '0.12em',
-              fontSize: '0.875rem',
-            }}
-          >
-            Enquire About Prints
-          </Link>
+          <div className="prints-enquire flex flex-wrap items-center gap-4">
+            <Link
+              href="/contact?subject=Print+Enquiry"
+              className="inline-flex items-center justify-center font-medium uppercase text-white btn-lift"
+              style={{
+                background: 'rgba(232, 0, 28, 0.78)',
+                border: '1px solid rgba(255, 255, 255, 0.62)',
+                padding: '14px 24px',
+                letterSpacing: '0.12em',
+                fontSize: '0.875rem',
+              }}
+            >
+              Enquire About Prints
+            </Link>
+
+            {/* Where buyers land after a purchase to record ownership. */}
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center font-medium uppercase text-white btn-lift"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.62)',
+                padding: '14px 24px',
+                letterSpacing: '0.12em',
+                fontSize: '0.875rem',
+              }}
+            >
+              Already Bought? Register Your Print
+            </Link>
+          </div>
         </Reveal>
 
       </div>

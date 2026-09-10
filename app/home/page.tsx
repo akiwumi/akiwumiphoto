@@ -35,8 +35,7 @@ export default async function HomePage() {
   return (
     <main className="full-screen bg-black flex flex-col overflow-hidden">
       <NavBar />
-      {/* spacer pushes content below the fixed nav */}
-      <div style={{ height: 48, flexShrink: 0 }} />
+      <div className="site-page-heading"><h1>Projects</h1><p>Photography by Eugene Akiwumi.</p></div>
       <div className="gallery-feed-scroll flex-1 overflow-y-auto">
         <GalleryCarousel galleries={galleries} />
       </div>

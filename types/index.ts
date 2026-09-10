@@ -37,3 +37,35 @@ export interface PageContent {
   key: string;
   value: string | null;
 }
+
+export interface Collector {
+  id: string;
+  auth_user_id: string | null;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  region: string | null;
+  postcode: string;
+  /** ISO 3166-1 alpha-2. */
+  country_code: string;
+  email_verified: boolean;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseMessage {
+  id: string;
+  collector_id: string;
+  artwork_title: string;
+  purchase_reference: string | null;
+  purchased_on: string | null;
+  purchased_from: string | null;
+  message: string;
+  status: 'received' | 'reviewing' | 'confirmed' | 'rejected';
+  created_at: string;
+}

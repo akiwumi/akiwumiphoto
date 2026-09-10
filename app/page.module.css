@@ -1,0 +1,34 @@
+.page { background: var(--site-background); color: #fff; padding: 0 var(--site-gutter); }
+.page a { color: inherit; text-decoration: none; }
+.page a:focus-visible { outline: 2px solid #e8001c; outline-offset: 6px; }
+.introduction { padding: 32px 0 38px; max-width: 980px; }
+.eyebrow { color: var(--site-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .16em; margin-bottom: 16px; }
+.introduction h1 { font-size: var(--site-title-size); font-weight: 500; letter-spacing: -.045em; line-height: 1.12; }
+.projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.project { min-width: 0; }
+.photograph { position: relative; height: clamp(280px, 39vw, 600px); background: #1a1a1a; overflow: hidden; }
+.photograph img { object-fit: cover; transition: transform .35s ease; }
+.project:hover img { transform: scale(1.025); }
+.caption { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; font-size: 12px; line-height: 1.5; }
+.caption > span:last-child { flex-shrink: 0; }
+.fallback { grid-column: 1 / -1; }
+.archiveLink { display: flex; justify-content: flex-end; padding: 20px 0 56px; font-size: 14px; }
+.archiveLink a, .contactLink { border-bottom: 1px solid #777; padding-bottom: 8px; }
+.services { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; border-top: 1px solid var(--site-border); padding: 64px 0 72px; scroll-margin-top: 24px; }
+.services h2 { font-family: var(--font-bebas), sans-serif; font-size: clamp(40px, 5vw, 72px); font-weight: 400; line-height: 1; letter-spacing: .015em; margin-bottom: 32px; }
+.contactLink { display: inline-block; font-size: 14px; }
+.serviceList article { padding: 24px 0; border-bottom: 1px solid var(--site-border); }
+.serviceList article:first-child { padding-top: 0; }
+.serviceList h3 { font-size: 19px; font-weight: 500; margin-bottom: 10px; }
+.serviceList p { color: var(--site-muted); font-size: 14px; line-height: 1.6; margin-bottom: 14px; }
+.serviceList a { font-size: 12px; }
+@media (max-width: 900px) { .page { padding: 0 24px; } .services { gap: 40px; } }
+@media (max-width: 700px) {
+  .page { padding: 0 20px; }
+  .introduction { padding: 20px 0 28px; }
+  .projects { grid-template-columns: 1fr; gap: 24px; }
+  .photograph { height: auto; aspect-ratio: 4 / 5; }
+  .services { grid-template-columns: 1fr; gap: 40px; padding: 40px 0; }
+  .archiveLink { padding-bottom: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .photograph img { transition: none; } .project:hover img { transform: none; } }

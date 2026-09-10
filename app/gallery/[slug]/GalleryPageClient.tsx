@@ -19,7 +19,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
     <>
       <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Header — aligned to the same 60px inset as the gallery grid */}
-        <div style={{ padding: '14px 60px 10px' }}>
+        <div className="site-page-heading" style={{ padding: '14px 60px 10px' }}>
           <Link
             href="/home"
             className="text-grey-mid text-xs uppercase tracking-[0.15em] hover:text-red transition-colors flex items-center gap-1 mb-3"
@@ -27,7 +27,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <polyline points="15,18 9,12 15,6" />
             </svg>
-            HOME / {gallery.title.toUpperCase()}
+            Projects / {gallery.title}
           </Link>
 
           <h1
@@ -47,6 +47,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
         {/* Image grid — 3 columns, 60px side insets, matching home page */}
         {images.length > 0 ? (
           <div
+            className="site-media-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',

@@ -55,7 +55,6 @@ export default async function GalleryPage({ params }: Props) {
   return (
     <main className="full-screen bg-black flex flex-col overflow-hidden">
       <NavBar />
-      <div style={{ height: 48, flexShrink: 0 }} />
       <GalleryPageClient gallery={data.gallery} images={data.images} />
     </main>
   );

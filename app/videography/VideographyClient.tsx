@@ -17,12 +17,12 @@ export default function VideographyClient({ videos }: Props) {
     <>
       <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Header */}
-        <div style={{ padding: '14px 60px 10px' }}>
+        <div className="site-page-heading" style={{ padding: '14px 60px 10px' }}>
           <h1
             className="text-white font-bold uppercase leading-none mb-2"
             style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', letterSpacing: '0.08em' }}
           >
-            VIDEOGRAPHY
+            Film & moving image
           </h1>
           <div className="red-rule" />
         </div>
@@ -30,6 +30,7 @@ export default function VideographyClient({ videos }: Props) {
         {/* Grid */}
         {videos.length > 0 ? (
           <div
+            className="site-media-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
@@ -95,9 +96,9 @@ function VideoCard({ video, priority, index, onClick }: { video: Video; priority
         <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.92 }} transition={{ duration: 0.2 }}>
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E8001C" strokeWidth="1.5" strokeLinecap="round">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <circle cx="12" cy="12" r="10" />
-              <polygon points="10,8 16,12 10,16" fill="#E8001C" stroke="#E8001C" />
+              <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="currentColor" />
             </svg>
           </motion.div>
         </div>

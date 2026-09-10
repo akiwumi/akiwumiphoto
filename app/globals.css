@@ -1017,3 +1017,352 @@ p.contact-status-error {
     min-height: 56px;
   }
 }
+
+/* --- COLLECTOR REGISTRATION --- */
+
+.register-page {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.74)),
+    url("/images/prints-background.jpg") center / cover fixed;
+}
+
+.register-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.register-panel {
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  background: rgba(10, 10, 10, 0.58);
+  backdrop-filter: blur(14px);
+}
+
+/* Groups the form into Your details / Your purchase, so a long form still
+   reads as a few short ones. */
+.register-section + .register-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.register-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #FFFFFF;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.register-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.register-step {
+  display: flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #E8001C;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+}
+
+.register-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.register-grid-full {
+  grid-column: 1 / -1;
+}
+
+.register-label {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.register-optional {
+  margin-left: 6px;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+.register-field {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+textarea.register-field {
+  height: auto;
+  min-height: 128px;
+  padding: 12px 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+select.register-field {
+  appearance: none;
+  cursor: pointer;
+  /* Room for the chevron drawn by the wrapper. */
+  padding-right: 38px;
+}
+
+.register-field option {
+  background: #1A1A1A;
+  color: #FFFFFF;
+}
+
+.register-field::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.register-select-wrap {
+  position: relative;
+}
+
+.register-select-wrap::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.6);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.register-field[aria-invalid="true"] {
+  border-color: #E8001C;
+}
+
+.register-error {
+  margin-top: 6px;
+  color: #FF6A7B;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.register-hint {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.register-submit {
+  width: fit-content;
+  min-width: 260px;
+  height: 48px;
+  padding: 0 32px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(232, 0, 28, 0.72);
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background-color 0.18s var(--ease-flight);
+}
+
+.register-submit:hover:not(:disabled) {
+  background: rgba(192, 0, 24, 0.88);
+}
+
+.register-submit:disabled {
+  background: rgba(153, 153, 153, 0.6);
+  cursor: not-allowed;
+}
+
+/* Banner for form-level outcomes: an unusable link, a failed send. */
+.register-notice {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 3px solid #E8001C;
+  border-radius: 12px;
+  background: rgba(232, 0, 28, 0.12);
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.register-notice-positive {
+  border-left-color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* The full-panel state shown once something has been sent. */
+.register-confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.register-confirmation h2 {
+  color: #FFFFFF;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.register-confirmation p {
+  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.register-confirmation strong {
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.register-mark {
+  display: flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(232, 0, 28, 0.6);
+  border-radius: 999px;
+  background: rgba(232, 0, 28, 0.16);
+  color: #E8001C;
+}
+
+.register-linkish {
+  border: 0;
+  background: none;
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.register-linkish:hover:not(:disabled) {
+  color: #E8001C;
+}
+
+.register-linkish:disabled {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+/* Aside: what happens next, and why the details are asked for. */
+.register-aside-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.register-aside-item {
+  display: flex;
+  gap: 14px;
+}
+
+.register-aside-item h3 {
+  margin-bottom: 4px;
+  color: #FFFFFF;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.register-aside-item p {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.register-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 18px;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.register-summary dt {
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.register-summary dd {
+  color: #FFFFFF;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .register-content {
+    padding: 14px 20px 72px !important;
+  }
+
+  .register-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .register-panel {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .register-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* First and last name stay side by side — they always fit. */
+  .register-grid-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .register-submit {
+    width: 100%;
+    min-width: 0;
+  }
+}

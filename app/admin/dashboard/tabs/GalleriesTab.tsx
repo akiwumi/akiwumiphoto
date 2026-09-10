@@ -34,6 +34,18 @@ function isSupabaseConfigured() {
   return url.startsWith('https://') && !PLACEHOLDER.some((p) => url.includes(p)) && key.length > 20;
 }
 
+const DEMO_STORAGE_KEY = 'akiwumi-admin-demo-galleries';
+function readDemoGalleries(): Gallery[] {
+  if (typeof window === 'undefined') return DEMO_GALLERIES;
+  try {
+    const saved = window.localStorage.getItem(DEMO_STORAGE_KEY);
+    return saved ? (JSON.parse(saved) as Gallery[]) : DEMO_GALLERIES;
+  } catch { return DEMO_GALLERIES; }
+}
+function writeDemoGalleries(galleries: Gallery[]) {
+  if (typeof window !== 'undefined') window.localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(galleries));
+}
+
 export default function GalleriesTab() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -44,7 +56,7 @@ export default function GalleriesTab() {
   const fetchGalleries = useCallback(async () => {
     setLoading(true);
     if (!isSupabaseConfigured()) {
-      setGalleries(DEMO_GALLERIES);
+      setGalleries(readDemoGalleries());
       setIsDemoMode(true);
       setLoading(false);
       return;
@@ -58,7 +70,7 @@ export default function GalleriesTab() {
       setGalleries(data || []);
       setIsDemoMode(false);
     } catch {
-      setGalleries(DEMO_GALLERIES);
+      setGalleries(readDemoGalleries());
       setIsDemoMode(true);
     }
     setLoading(false);
@@ -68,18 +80,23 @@ export default function GalleriesTab() {
 
   const handleReorder = useCallback((newOrder: Gallery[]) => {
     setGalleries(newOrder);
+    if (isDemoMode) { writeDemoGalleries(newOrder.map((g, i) => ({ ...g, sort_order: i }))); return; }
     if (reorderTimer.current) clearTimeout(reorderTimer.current);
     reorderTimer.current = setTimeout(async () => {
       await Promise.all(
         newOrder.map((g, i) => supabase.from('galleries').update({ sort_order: i }).eq('id', g.id))
       );
     }, 600);
-  }, []);
+  }, [isDemoMode]);
 
   const selectedGallery = galleries.find((g) => g.id === selectedId) || null;
 
   const handleCreate = async () => {
-    if (isDemoMode) return;
+    if (isDemoMode) {
+      const now = new Date().toISOString();
+      const created: Gallery = { id: `demo-${Date.now()}`, title: 'New Gallery', slug: `gallery-${Date.now()}`, description: '', cover_image: null, sort_order: galleries.length, published: true, created_at: now, updated_at: now };
+      const next = [...galleries, created]; writeDemoGalleries(next); setGalleries(next); setSelectedId(created.id); return;
+    }
     const { data } = await supabase
       .from('galleries')
       .insert({ title: 'New Gallery', slug: `gallery-${Date.now()}`, sort_order: galleries.length, published: true })
@@ -93,7 +110,9 @@ export default function GalleriesTab() {
 
   const handleDelete = async (id: string) => {
     if (isDemoMode) {
-      alert('Connect Supabase to delete galleries.');
+      if (!confirm('Delete this gallery and all its images?')) return;
+      const next = galleries.filter((g) => g.id !== id).map((g, i) => ({ ...g, sort_order: i }));
+      writeDemoGalleries(next); setGalleries(next); setSelectedId(null);
       return;
     }
     if (!confirm('Delete this gallery and all its images? This cannot be undone.')) return;
@@ -147,7 +166,7 @@ export default function GalleriesTab() {
           style={{ background: '#1a1000', borderBottom: '1px solid #E8001C33' }}
         >
           <span className="text-xs" style={{ color: '#E8001C' }}>
-            Demo mode — changes will not be saved until Supabase is configured
+            Demo mode — changes are saved in this browser. Connect Supabase for shared production data.
           </span>
           <button
             onClick={handleSeedToDatabase}
@@ -171,13 +190,12 @@ export default function GalleriesTab() {
             </p>
             <button
               onClick={handleCreate}
-              disabled={isDemoMode}
               className="w-full h-8 text-white text-xs uppercase font-medium"
               style={{
-                background: isDemoMode ? '#444' : '#E8001C',
+                background: '#E8001C',
                 letterSpacing: '0.1em',
                 fontFamily: 'inherit',
-                cursor: isDemoMode ? 'not-allowed' : 'pointer',
+                cursor: 'pointer',
               }}
             >
               + New Gallery
@@ -327,7 +345,10 @@ function GalleryEditor({
   };
 
   const handleSave = async () => {
-    if (isDemoMode) { setMsg('Connect Supabase to save.'); setTimeout(() => setMsg(''), 2000); return; }
+    if (isDemoMode) {
+      const saved = readDemoGalleries().map((item) => item.id === gallery.id ? { ...item, ...form, updated_at: new Date().toISOString() } : item);
+      writeDemoGalleries(saved); setMsg('Saved in this browser.'); onSave(); setTimeout(() => setMsg(''), 2000); return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from('galleries')
@@ -340,9 +361,16 @@ function GalleryEditor({
   };
 
   const handlePublishToggle = async () => {
-    if (isDemoMode) return;
     const newVal = !form.published;
     setForm((p) => ({ ...p, published: newVal }));
+    if (isDemoMode) {
+      const saved = readDemoGalleries().map((item) =>
+        item.id === gallery.id ? { ...item, published: newVal, updated_at: new Date().toISOString() } : item
+      );
+      writeDemoGalleries(saved);
+      onSave();
+      return;
+    }
     await supabase.from('galleries').update({ published: newVal }).eq('id', gallery.id);
     onSave();
   };
@@ -450,7 +478,7 @@ function GalleryEditor({
   const INPUT = {
     background: '#111',
     border: '1px solid #444',
-    color: isDemoMode ? '#888' : '#fff',
+    color: '#fff',
     padding: '8px 12px',
     fontFamily: 'inherit',
     fontSize: '0.875rem',
@@ -499,7 +527,6 @@ function GalleryEditor({
           <input
             style={INPUT}
             value={form.title}
-            readOnly={isDemoMode}
             onChange={(e) => handleTitleChange(e.target.value)}
           />
         </div>
@@ -509,7 +536,6 @@ function GalleryEditor({
           <input
             style={INPUT}
             value={form.slug}
-            readOnly={isDemoMode}
             onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
           />
           <p className="text-grey-mid text-xs mt-1">/gallery/{form.slug}</p>
@@ -520,7 +546,6 @@ function GalleryEditor({
           <textarea
             style={{ ...INPUT, minHeight: 80, resize: 'vertical' }}
             value={form.description}
-            readOnly={isDemoMode}
             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
           />
         </div>
@@ -529,9 +554,8 @@ function GalleryEditor({
           <label style={{ ...LABEL, margin: 0 }}>Published</label>
           <button
             onClick={handlePublishToggle}
-            disabled={isDemoMode}
             className="relative w-12 h-6 rounded-full transition-colors"
-            style={{ background: form.published ? '#22c55e' : '#444', fontFamily: 'inherit', cursor: isDemoMode ? 'not-allowed' : 'pointer' }}
+            style={{ background: form.published ? '#22c55e' : '#444', fontFamily: 'inherit', cursor: 'pointer' }}
             aria-label="Toggle published"
           >
             <span
@@ -548,7 +572,7 @@ function GalleryEditor({
           onClick={handleSave}
           disabled={saving}
           className="px-6 h-9 text-white text-xs uppercase font-medium"
-          style={{ background: isDemoMode ? '#444' : '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, cursor: isDemoMode ? 'not-allowed' : 'pointer' }}
+          style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit', opacity: saving ? 0.6 : 1, cursor: 'pointer' }}
         >
           {saving ? 'Saving…' : 'Save'}
         </button>

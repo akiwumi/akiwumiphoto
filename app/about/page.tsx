@@ -34,7 +34,6 @@ export default async function AboutPage() {
   return (
     <main className="about-page full-screen bg-white flex flex-col overflow-hidden">
       <NavBar />
-      <div style={{ height: 48, flexShrink: 0 }} />
 
       <div className="about-content flex-1 flex flex-col overflow-hidden page-enter" style={{ padding: '14px 60px 40px' }}>
         {/* Header */}
@@ -42,7 +41,7 @@ export default async function AboutPage() {
           className="text-black font-bold uppercase mb-3"
           style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', letterSpacing: '0.08em', flexShrink: 0 }}
         >
-          ABOUT
+          About
         </h1>
         <div className="red-rule mb-4" style={{ flexShrink: 0 }} />
 

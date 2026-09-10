@@ -1,0 +1,65 @@
+/* Shared public-site tokens. Admin styling remains independent. */
+:root {
+  --site-background: #000;
+  --site-text: #fff;
+  --site-muted: #aaa;
+  --site-border: #333;
+  --site-surface: #1a1a1a;
+  --site-gutter: 60px;
+  --site-title-size: clamp(26px, 3.25vw, 48px);
+}
+.public-site { font-family: var(--font-space-grotesk), sans-serif; background: var(--site-background); color: var(--site-text); }
+.public-site main.full-screen { height: auto; min-height: 80dvh; overflow: visible; background: var(--site-background); }
+.public-site h1 { font-size: var(--site-title-size) !important; font-weight: 500; letter-spacing: -.045em !important; line-height: 1.12; text-transform: none; color: var(--site-text); }
+.public-site h2, .public-site h3 { font-weight: 500; text-transform: none; letter-spacing: -.015em !important; }
+.public-site .text-grey-mid { color: var(--site-muted); }
+.public-site .red-rule, .public-site .contact-rule { height: 1px; background: var(--site-border); margin-top: 24px; }
+.public-site .site-page-heading { padding: 32px var(--site-gutter) 28px !important; }
+.public-site .site-page-heading p { color: var(--site-muted); line-height: 1.6; margin-top: 16px; -webkit-line-clamp: unset; }
+.public-site .site-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 18px !important; padding: 8px var(--site-gutter) 64px !important; }
+.public-site .about-content, .public-site .contact-content, .public-site .prints-content, .public-site .register-content { position: static !important; inset: auto; overflow: visible; padding: 32px var(--site-gutter) 64px !important; }
+.public-site .about-layout { overflow: visible; align-items: start; gap: 48px !important; padding-top: 24px; }
+.public-site .about-portrait { height: auto !important; aspect-ratio: 4 / 5; }
+.public-site .about-bio { height: auto; overflow: visible; padding: 0; margin: 0; background: transparent; }
+.public-site .about-bio h2 { color: var(--site-text); font-size: 22px !important; margin-bottom: 24px; }
+.public-site .about-bio-copy { color: var(--site-muted); font-size: 15px; line-height: 1.75; width: 100%; }
+.public-site .contact-layout { grid-template-columns: minmax(0, 680px) !important; padding-top: 32px; }
+.public-site .contact-form { padding: 0; gap: 24px; max-width: 680px; background: transparent; }
+.public-site .contact-form-title { font-size: 22px; margin-bottom: 8px; }
+.public-site .contact-form label, .public-site .register-label { color: var(--site-muted) !important; font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-bottom: 10px; }
+.public-site .contact-field, .public-site .contact-message, .public-site .register-field { font-family: inherit; border: 1px solid var(--site-border) !important; border-radius: 0; background: var(--site-background) !important; color: var(--site-text) !important; padding: 12px 14px; font-size: 16px; min-height: 48px; }
+.public-site .contact-message { min-height: 150px !important; max-height: none; resize: vertical; }
+.public-site .contact-field option { background: var(--site-background); color: var(--site-text); }
+.public-site .contact-field:focus, .public-site .contact-message:focus, .public-site .register-field:focus { outline: 2px solid var(--site-text) !important; outline-offset: 3px; box-shadow: none; transform: none; }
+.public-site .contact-submit, .public-site .register-submit, .public-site .prints-enquire a { background: var(--site-text) !important; color: var(--site-background); border: 1px solid var(--site-text) !important; border-radius: 0; padding: 14px 24px; min-height: 48px; height: auto; font-family: inherit; font-size: 14px; font-weight: 500; letter-spacing: 0 !important; text-transform: none; backdrop-filter: none; }
+.public-site .contact-submit:hover, .public-site .register-submit:hover, .public-site .prints-enquire a:hover { background: #ddd !important; }
+.public-site .contact-submit:disabled, .public-site .register-submit:disabled { opacity: .5; cursor: wait; }
+.public-site .prints-title { padding: 0 !important; margin-bottom: 32px !important; }
+.public-site .prints-grid { gap: 18px; margin-bottom: 32px; }
+.public-site .prints-panel { border-top: 1px solid var(--site-border); padding: 24px 0; }
+.public-site .prints-panel h2 { font-size: 24px; margin-bottom: 16px; }
+.public-site .prints-panel p, .public-site .prints-panel li { line-height: 1.7; }
+.public-site .prints-enquire { margin: 24px 0; gap: 16px; }
+.public-site .register-panel { background: transparent; border: 1px solid var(--site-border); border-radius: 0; backdrop-filter: none; }
+.public-site .register-section-title { font-size: 19px; letter-spacing: -.015em; text-transform: none; }
+.public-site .register-step { background: var(--site-text); color: var(--site-background); }
+.public-site .register-field[aria-invalid="true"] { border-color: #ff6a7b !important; }
+.public-site .register-hint { color: var(--site-muted); }
+.public-site .gallery-tile p, .public-site .site-media-grid h3 { font-size: 14px; font-weight: 400; text-transform: none; letter-spacing: 0 !important; }
+.public-site .tile-accent { background: var(--site-text); }
+.public-site .reveal { opacity: 1; filter: none; transform: none; transition: none; }
+.public-site .page-enter { animation: none; }
+.public-site p.contact-status-error { color: #ff6a7b !important; }
+@media (max-width: 900px) {
+  :root { --site-gutter: 24px; }
+  .public-site .about-layout { display: grid !important; grid-template-columns: 1fr !important; gap: 32px !important; }
+  .public-site .about-portrait { max-width: 560px; }
+}
+@media (max-width: 700px) {
+  :root { --site-gutter: 20px; }
+  .public-site .site-media-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .public-site .site-page-heading, .public-site .about-content, .public-site .contact-content, .public-site .prints-content, .public-site .register-content { padding-top: 20px !important; }
+  .public-site .prints-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* Explicit family prevents legacy page-specific display fonts taking over. */
+.public-site h1, .public-site .contact-form-title, .public-site .prints-panel h2, .public-site .register-section-title { font-family: var(--font-space-grotesk), sans-serif !important; }

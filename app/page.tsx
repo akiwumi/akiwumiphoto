@@ -1,107 +1,91 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import type { Metadata } from 'next';
 import Image from 'next/image';
-import { useAudio } from '@/contexts/AudioContext';
+import Link from 'next/link';
+import { createServerClient } from '@/lib/supabase-server';
+import { signUrl } from '@/lib/signed-urls';
+import styles from './page.module.css';
+import NavBar from '@/components/NavBar';
+import SiteFooter from '@/components/SiteFooter';
 
-export default function SplashPage() {
-  const router = useRouter();
-  const { start } = useAudio();
-  const [showButton, setShowButton] = useState(false);
-  const [exiting, setExiting] = useState(false);
+const introduction = 'Stockholm-based photographer and filmmaker documenting people, culture and place.';
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowButton(true), 3200);
-    return () => clearTimeout(timer);
-  }, []);
+export const metadata: Metadata = {
+  title: 'Stockholm Photographer & Filmmaker | Eugene Akiwumi',
+  description: introduction,
+  openGraph: {
+    title: 'Eugene Akiwumi — Photography & Film',
+    description: introduction,
+    type: 'website',
+  },
+};
 
-  const handleEnter = () => {
-    start();
-    setExiting(true);
-    setTimeout(() => router.push('/home'), 800);
-  };
+async function getSelectedProjects() {
+  try {
+    const supabase = await createServerClient();
+    const { data, error } = await supabase
+      .from('galleries')
+      .select('id, title, slug, cover_image')
+      .eq('published', true)
+      .not('cover_image', 'is', null)
+      .order('sort_order', { ascending: true })
+      .limit(3);
+    if (error) throw error;
+    return await Promise.all((data || []).map(async (project) => ({
+      ...project,
+      cover_image: await signUrl(project.cover_image),
+    })));
+  } catch (error) {
+    console.error('[homepage] could not load selected projects:', error);
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const projects = await getSelectedProjects();
 
   return (
-    <AnimatePresence>
-      {!exiting && (
-        <motion.main
-          key="splash"
-          className="full-screen bg-black flex flex-col items-center justify-center relative overflow-hidden"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-        >
-          {/* Full-screen background image — fades in with the title */}
-          <motion.div
-            className="absolute inset-0"
-            style={{ zIndex: 0 }}
-            initial={{ opacity: 0, scale: 1.06 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          >
-            <Image
-              src="/images/intro-background.jpg"
-              alt=""
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-            <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.42)' }} />
-          </motion.div>
+    <main className={styles.page}>
+      <NavBar contained />
 
-          {/* Title — zooms in from blur, eases out on exit */}
-          <motion.h1
-            className="text-white text-center uppercase px-5 leading-none select-none"
-            style={{
-              fontFamily: 'var(--font-bebas), var(--font-space-grotesk), sans-serif',
-              fontSize: 'clamp(3.5rem, 13vw, 14rem)',
-              letterSpacing: 'clamp(0.1em, 1.5vw, 0.3em)',
-              fontWeight: 400,
-              position: 'relative',
-              zIndex: 1,
-            }}
-            initial={{ opacity: 0, scale: 2.4, filter: 'blur(32px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 0.96, filter: 'blur(12px)' }}
-            transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          >
-            WELCOME TO
-            <br />
-            AKIWUMI PHOTO
-          </motion.h1>
+      <section className={styles.introduction} aria-labelledby="intro-title">
+        <p className={styles.eyebrow}>Eugene Akiwumi · Photography & Film</p>
+        <h1 id="intro-title">{introduction}</h1>
+      </section>
 
-          {/* ENTER button — fades in after text settles, pinned to bottom */}
-          <AnimatePresence>
-            {showButton && (
-              <motion.button
-                onClick={handleEnter}
-                className="absolute bottom-12 left-5 right-5 md:left-auto md:right-auto md:w-[200px] h-[52px] text-white font-medium uppercase cursor-pointer btn-lift"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.14)',
-                  letterSpacing: '0.12em',
-                  fontSize: '0.875rem',
-                  border: '1px solid rgba(255, 255, 255, 0.62)',
-                  backdropFilter: 'blur(12px)',
-                  paddingBottom: 'env(safe-area-inset-bottom)',
-                  zIndex: 1,
-                }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95, y: 0, transition: { duration: 0.06 } }}
-              >
-                ENTER
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </motion.main>
-      )}
-    </AnimatePresence>
+      <section aria-label="Selected photographs" className={styles.projects}>
+        {projects.length > 0 ? projects.map((project, index) => (
+          <Link key={project.id} href={`/gallery/${project.slug}`} className={styles.project}>
+            <div className={styles.photograph}>
+              <Image src={project.cover_image!} alt={project.title} fill unoptimized
+                preload={index === 0} loading="eager" sizes="(max-width: 700px) 100vw, 33vw" />
+            </div>
+            <div className={styles.caption}><span>{project.title}</span><span aria-hidden="true">↗</span></div>
+          </Link>
+        )) : (
+          <Link href="/home" className={`${styles.project} ${styles.fallback}`}>
+            <div className={styles.photograph}>
+              <Image src="/images/intro-background.jpg" alt="Selected photography by Eugene Akiwumi" fill preload sizes="100vw" />
+            </div>
+            <div className={styles.caption}><span>Explore the photography</span><span aria-hidden="true">↗</span></div>
+          </Link>
+        )}
+      </section>
+
+      <div className={styles.archiveLink}><Link href="/home">View all projects <span aria-hidden="true">↗</span></Link></div>
+
+      <section id="services" className={styles.services} aria-labelledby="services-title">
+        <div>
+          <p className={styles.eyebrow}>Services</p>
+          <h2 id="services-title">Let’s make<br />something meaningful.</h2>
+          <Link href="/contact?subject=Commission" className={styles.contactLink}>Discuss a project <span aria-hidden="true">↗</span></Link>
+        </div>
+        <div className={styles.serviceList}>
+          <article><h3>Portrait photography</h3><p>Portraits of people, artists and creative communities.</p><Link href="/home">Explore photography ↗</Link></article>
+          <article><h3>Documentary & editorial</h3><p>Photographic stories about people, culture and place.</p><Link href="/home">Explore projects ↗</Link></article>
+          <article><h3>Film & moving image</h3><p>Documentaries, music videos and commercial filmmaking.</p><Link href="/videography">Watch films ↗</Link></article>
+        </div>
+      </section>
+      <SiteFooter contained />
+    </main>
   );
 }

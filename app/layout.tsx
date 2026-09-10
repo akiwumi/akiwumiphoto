@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Bebas_Neue } from 'next/font/google';
 import './globals.css';
+import './site-design.css';
 import { AudioProvider } from '@/contexts/AudioContext';
 import MusicToggle from '@/components/MusicToggle';
 import LayoutTransition from '@/components/LayoutTransition';

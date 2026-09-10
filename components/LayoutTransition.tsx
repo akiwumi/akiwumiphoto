@@ -3,9 +3,15 @@
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
+import SiteFooter from './SiteFooter';
 
 export default function LayoutTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  // The landing page should be visible in the initial server-rendered HTML.
+  if (!pathname.startsWith('/admin')) {
+    return <div className="public-site">{children}{pathname !== '/' && <SiteFooter />}</div>;
+  }
+
   return (
     <motion.div
       key={pathname}
