@@ -50,7 +50,7 @@ export default async function AboutPage() {
           className="about-layout flex-1 overflow-hidden"
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: '0.7fr 1.3fr',
             gap: 30,
             minHeight: 0,
           }}
@@ -64,7 +64,7 @@ export default async function AboutPage() {
                   alt="Akiwumi — photographer portrait"
                   fill
                   className="object-cover object-center media-zoom"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 900px) 100vw, 35vw"
                   priority
                 />
               )}

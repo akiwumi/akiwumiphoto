@@ -53,7 +53,7 @@
 @media (max-width: 900px) {
   :root { --site-gutter: 24px; }
   .public-site .about-layout { display: grid !important; grid-template-columns: 1fr !important; gap: 32px !important; }
-  .public-site .about-portrait { max-width: 560px; }
+  .public-site .about-portrait { max-width: min(392px, 70%); }
 }
 @media (max-width: 700px) {
   :root { --site-gutter: 20px; }
