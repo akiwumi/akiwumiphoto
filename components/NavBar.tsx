@@ -30,6 +30,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
       <nav id={menuId} aria-label="Main navigation" className={`${styles.navigation} ${menuOpen ? styles.open : ''}`}
         onClick={() => setMenuOpen(false)}>
         <Link href="/home" aria-current={pathname === '/home' || pathname.startsWith('/gallery/') ? 'page' : undefined}>Projects</Link>
+        <Link href="/videography" aria-current={pathname === '/videography' ? 'page' : undefined}>Film</Link>
         <Link href="/#services">Services</Link>
         <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>
         <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>
