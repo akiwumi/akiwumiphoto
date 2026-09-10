@@ -54,8 +54,14 @@ INSERT INTO page_content (page, key, value) VALUES
   ('prints', 'ultra_price', 'POA');
 
 -- Updated_at trigger
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
+-- Named update_updated_at_column because that is what the deployed database
+-- calls it, and what 002 attaches to public.collectors. search_path is pinned
+-- so a fresh project does not reproduce the linter's mutable-search_path
+-- warning; now() resolves out of pg_catalog either way.
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
@@ -64,11 +70,11 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER galleries_updated_at
   BEFORE UPDATE ON galleries
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER videos_updated_at
   BEFORE UPDATE ON videos
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Enable RLS
 ALTER TABLE galleries ENABLE ROW LEVEL SECURITY;

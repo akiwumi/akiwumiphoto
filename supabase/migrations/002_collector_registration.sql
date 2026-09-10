@@ -53,9 +53,6 @@ CREATE TABLE public.purchase_messages (
 
 CREATE INDEX purchase_messages_collector_idx ON public.purchase_messages (collector_id, created_at DESC);
 
--- NOTE: the deployed database names this function update_updated_at_column;
--- 001_initial.sql creates it as update_updated_at. Rename in 001 before
--- replaying these migrations onto a fresh project.
 CREATE TRIGGER collectors_updated_at
   BEFORE UPDATE ON public.collectors
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
