@@ -1,0 +1,11 @@
+-- public.update_updated_at_column ran with a mutable search_path, which the
+-- Supabase linter flags (0011_function_search_path_mutable): a role able to
+-- prepend a schema could shadow what the body resolves. The body only calls
+-- now() out of pg_catalog, which stays implicitly resolvable under an empty
+-- search_path, so pinning it changes no behaviour.
+--
+-- Left as SECURITY INVOKER and left executable by the public roles on purpose.
+-- Unlike the trigger-only functions revoked in 003, this one predates the
+-- collector work and backs the updated_at triggers on galleries, videos and
+-- collectors; revoking here would be a wider change than the lint calls for.
+ALTER FUNCTION public.update_updated_at_column() SET search_path = '';
