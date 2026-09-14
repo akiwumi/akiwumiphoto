@@ -10,7 +10,7 @@ environment settings for the deployed site.
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL. Galleries, videos and page content all come from here. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key. Also signs the private gallery-images bucket, which its RLS policy permits. |
 | `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` | yes | Relays contact form enquiries. Public by Web3Forms' design — the form posts to them from the browser, since server-side posting is a paid feature. The destination inbox is bound to the key itself, not configured here. |
-| `NEXT_PUBLIC_SITE_URL` | deployed only | Origin the print-registration verification link points back to, e.g. `https://akiwumiphoto.com`. Without it the link is built from the incoming request, which is right in local dev but wrong behind a proxy or on a preview deployment. |
+| `NEXT_PUBLIC_SITE_URL` | deployed only | Origin the print-registration verification link points back to, e.g. `https://www.akiwumiphoto.com` (the canonical www host). Without it the link is built from the incoming request, which is right in local dev but wrong behind a proxy or on a preview deployment. |
 
 If a page renders empty where you expect content, check the dev server output —
 the data fetchers log why they came back with nothing.

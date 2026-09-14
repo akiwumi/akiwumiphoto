@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createServerClient } from '@/lib/supabase-server';
-import { siteOrigin } from '@/lib/site-origin';
 import { PASSWORD_RESET_COOKIE } from '@/lib/admin-auth';
 
 /**
@@ -21,7 +20,10 @@ import { PASSWORD_RESET_COOKIE } from '@/lib/admin-auth';
  * recognised by the cookie the admin login page sets when requesting one.
  */
 export async function GET(request: NextRequest) {
-  const origin = siteOrigin(request);
+  // Stay on the host the link arrived on, not the configured site URL: the
+  // session cookies set below belong to this host, so a page on any other
+  // domain would open signed out.
+  const origin = request.nextUrl.origin;
   const params = request.nextUrl.searchParams;
   const tokenHash = params.get('token_hash');
   const type = params.get('type') as EmailOtpType | null;
