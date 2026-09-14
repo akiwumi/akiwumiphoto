@@ -5,14 +5,18 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import Lightbox from '@/components/Lightbox';
-import type { Gallery, GalleryImage } from '@/types';
+import TileBasketButton from '@/components/TileBasketButton';
+import { defaultSize } from '@/lib/print-availability';
+import type { Gallery, GalleryImage, PrintSize, SoldBySize } from '@/types';
 
 interface Props {
   gallery: Gallery;
   images: GalleryImage[];
+  sizes: PrintSize[];
+  sold: Record<string, SoldBySize>;
 }
 
-export default function GalleryPageClient({ gallery, images }: Props) {
+export default function GalleryPageClient({ gallery, images, sizes, sold }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   return (
@@ -61,6 +65,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
                 image={image}
                 priority={i < 3}
                 index={i}
+                basketSize={image.for_sale === false ? undefined : defaultSize(sizes, sold[image.id])}
                 onClick={() => setLightboxIndex(i)}
               />
             ))}
@@ -77,6 +82,8 @@ export default function GalleryPageClient({ gallery, images }: Props) {
           images={images}
           initialIndex={lightboxIndex}
           galleryTitle={gallery.title}
+          sizes={sizes}
+          sold={sold}
           onClose={() => setLightboxIndex(null)}
         />
       )}
@@ -84,7 +91,16 @@ export default function GalleryPageClient({ gallery, images }: Props) {
   );
 }
 
-function ImageTile({ image, priority, index, onClick }: { image: GalleryImage; priority?: boolean; index: number; onClick: () => void }) {
+interface TileProps {
+  image: GalleryImage;
+  priority?: boolean;
+  index: number;
+  /** The size a one-click add uses; absent when the photo can't be bought. */
+  basketSize?: PrintSize;
+  onClick: () => void;
+}
+
+function ImageTile({ image, priority, index, basketSize, onClick }: TileProps) {
   return (
     <motion.div
       className="gallery-tile group relative overflow-hidden bg-grey-dark cursor-pointer"
@@ -115,6 +131,7 @@ function ImageTile({ image, priority, index, onClick }: { image: GalleryImage; p
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent motion-overlay" />
       <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
+      {basketSize && <TileBasketButton imageId={image.id} size={basketSize} />}
       <div className="absolute bottom-0 left-0 right-0 p-3">
         {image.title && (
           <p className="text-white font-bold text-sm uppercase" style={{ letterSpacing: '0.08em' }}>

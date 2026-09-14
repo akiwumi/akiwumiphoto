@@ -6,8 +6,9 @@ import { supabase } from '@/lib/supabase';
 import GalleriesTab from './tabs/GalleriesTab';
 import VideosTab from './tabs/VideosTab';
 import PagesTab from './tabs/PagesTab';
+import PrintsTab from './tabs/PrintsTab';
 
-type Tab = 'galleries' | 'videos' | 'pages' | 'settings';
+type Tab = 'galleries' | 'videos' | 'prints' | 'pages' | 'settings';
 
 export default function DashboardClient() {
   const [activeTab, setActiveTab] = useState<Tab>('galleries');
@@ -45,7 +46,7 @@ export default function DashboardClient() {
         </span>
 
         <div className="flex items-center gap-1">
-          {(['galleries', 'videos', 'pages', 'settings'] as Tab[]).map((tab) => (
+          {(['galleries', 'videos', 'prints', 'pages', 'settings'] as Tab[]).map((tab) => (
             <button key={tab} style={TAB_STYLE(tab)} onClick={() => setActiveTab(tab)}>
               {tab}
             </button>
@@ -64,6 +65,7 @@ export default function DashboardClient() {
       <div className="flex-1 overflow-hidden" style={{ paddingLeft: 50 }}>
         {activeTab === 'galleries' && <GalleriesTab />}
         {activeTab === 'videos' && <VideosTab />}
+        {activeTab === 'prints' && <PrintsTab />}
         {activeTab === 'pages' && <PagesTab />}
         {activeTab === 'settings' && <SettingsTab />}
       </div>

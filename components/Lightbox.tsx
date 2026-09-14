@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import RoomPreview from '@/components/RoomPreview';
-import type { GalleryImage } from '@/types';
+import BuyPrintPanel from '@/components/BuyPrintPanel';
+import type { GalleryImage, PrintSize, SoldBySize } from '@/types';
 import {
   DEFAULT_ROOM_PREVIEW_FRAME,
   DEFAULT_ROOM_PREVIEW_SIZE,
@@ -21,6 +22,8 @@ interface Props {
   images: GalleryImage[];
   initialIndex: number;
   galleryTitle: string;
+  sizes: PrintSize[];
+  sold: Record<string, SoldBySize>;
   onClose: () => void;
 }
 
@@ -37,8 +40,11 @@ function printLabel(image: GalleryImage, galleryTitle: string, index: number, to
   return `${name}, photo ${index + 1} of ${total}${fileName ? ` (ref ${fileName})` : ''}`;
 }
 
-export default function Lightbox({ images, initialIndex, galleryTitle, onClose }: Props) {
+export default function Lightbox({ images, initialIndex, galleryTitle, sizes, sold, onClose }: Props) {
   const [current, setCurrent] = useState(initialIndex);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const buyOpenRef = useRef(buyOpen);
+  useEffect(() => { buyOpenRef.current = buyOpen; }, [buyOpen]);
   const [mode, setMode] = useState<LightboxMode>('photo');
   const [selectedRoomId, setSelectedRoomId] = useState(DEFAULT_ROOM_PREVIEW_TEMPLATE_ID);
   const [selectedSize, setSelectedSize] = useState<RoomPreviewSize>(DEFAULT_ROOM_PREVIEW_SIZE);
@@ -53,7 +59,9 @@ export default function Lightbox({ images, initialIndex, galleryTitle, onClose }
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        // The size panel closes first, then the lightbox.
+        if (buyOpenRef.current) setBuyOpen(false);
+        else onClose();
         return;
       }
 
@@ -126,9 +134,21 @@ export default function Lightbox({ images, initialIndex, galleryTitle, onClose }
   };
 
   const image = images[current];
-  // Rendered in the top bar on wide screens and under the caption on narrow
-  // ones, where the top bar has no room; CSS shows exactly one of the two.
+  // The buy and enquire buttons render in the top bar on wide screens and
+  // under the caption on narrow ones, where the top bar has no room; CSS
+  // shows exactly one of each pair.
   const enquireHref = `/contact?subject=Print+Enquiry&print=${encodeURIComponent(printLabel(image, galleryTitle, current, images.length))}`;
+  const forSale = image.for_sale !== false && sizes.length > 0;
+  const buyButton = (placement: 'top' | 'footer') => forSale && (
+    <button
+      type="button"
+      className={`lightbox-enquire lightbox-enquire-${placement}`}
+      aria-expanded={buyOpen}
+      onClick={() => setBuyOpen((open) => !open)}
+    >
+      Add to basket
+    </button>
+  );
   const selectedRoom = useMemo(
     () => ROOM_PREVIEW_TEMPLATES.find((room) => room.id === selectedRoomId) ?? ROOM_PREVIEW_TEMPLATES[0],
     [selectedRoomId],
@@ -157,6 +177,10 @@ export default function Lightbox({ images, initialIndex, galleryTitle, onClose }
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {forSale && buyOpen && (
+          <BuyPrintPanel imageId={image.id} sizes={sizes} sold={sold[image.id]} onClose={() => setBuyOpen(false)} />
+        )}
+
         <div className="lightbox-topbar">
           <div className="lightbox-mode-toggle" aria-label="Preview mode">
             <button type="button" aria-pressed={mode === 'room'} onClick={() => setMode('room')}>
@@ -168,7 +192,8 @@ export default function Lightbox({ images, initialIndex, galleryTitle, onClose }
           </div>
 
           <div className="lightbox-topbar-actions">
-            <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-top">
+            {buyButton('top')}
+            <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-secondary lightbox-enquire-top">
               Enquire about this print
             </Link>
             <button type="button" onClick={onClose} className="lightbox-close" aria-label="Close lightbox">
@@ -226,9 +251,12 @@ export default function Lightbox({ images, initialIndex, galleryTitle, onClose }
             {image.title && <p className="lightbox-title">{image.title}</p>}
             {image.description && <p className="lightbox-description">{image.description}</p>}
             <p className="lightbox-count">{current + 1} / {images.length}</p>
-            <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-footer">
-              Enquire about this print
-            </Link>
+            <div className="lightbox-footer-actions">
+              {buyButton('footer')}
+              <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-secondary lightbox-enquire-footer">
+                Enquire about this print
+              </Link>
+            </div>
           </div>
 
           {mode === 'room' && (

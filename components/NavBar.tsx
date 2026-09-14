@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useId, useRef, useState } from 'react';
 import styles from './SiteChrome.module.css';
+import { useBasketCount } from '@/lib/basket-store';
 
 export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const basketCount = useBasketCount();
   return (
     <header className={`${styles.header} ${contained ? styles.contained : ''}`}
       onKeyDown={(event) => {
@@ -35,6 +37,10 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
         <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>
         <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>
         <Link href="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>
+        <Link href="/basket" aria-current={pathname === '/basket' ? 'page' : undefined}
+          aria-label={basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket'}>
+          Basket{basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
+        </Link>
       </nav>
     </header>
   );

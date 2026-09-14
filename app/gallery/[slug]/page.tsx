@@ -4,7 +4,8 @@ import NavBar from '@/components/NavBar';
 import GalleryPageClient from './GalleryPageClient';
 import { createServerClient } from '@/lib/supabase-server';
 import { signItems, signUrl } from '@/lib/signed-urls';
-import type { Gallery, GalleryImage } from '@/types';
+import { getPrintSizes, getSoldCounts } from '@/lib/print-shop';
+import type { Gallery, GalleryImage, PrintSize, SoldBySize } from '@/types';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -50,7 +51,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images: GalleryImage[] } | null> {
+interface GalleryData {
+  gallery: Gallery;
+  images: GalleryImage[];
+  sizes: PrintSize[];
+  sold: Record<string, SoldBySize>;
+}
+
+async function getGalleryData(slug: string): Promise<GalleryData | null> {
   try {
     const supabase = await createServerClient();
 
@@ -71,15 +79,20 @@ async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images:
 
     if (imagesError) return null;
 
-    // Sign all image URLs and the gallery cover so the private bucket serves them
-    const [signedImages, signedCover] = await Promise.all([
+    // Sign all image URLs and the gallery cover so the private bucket serves
+    // them, alongside what the print shop needs to sell each photograph.
+    const [signedImages, signedCover, sizes, sold] = await Promise.all([
       signItems(images || []),
       signUrl(gallery.cover_image),
+      getPrintSizes(),
+      getSoldCounts((images || []).map((image) => image.id)),
     ]);
 
     return {
       gallery: { ...gallery, cover_image: signedCover },
       images: signedImages,
+      sizes,
+      sold,
     };
   } catch (err) {
     console.error(`[gallery/${slug}] could not load gallery:`, err);
@@ -96,7 +109,7 @@ export default async function GalleryPage({ params }: Props) {
   return (
     <main className="full-screen bg-black flex flex-col overflow-hidden">
       <NavBar />
-      <GalleryPageClient gallery={data.gallery} images={data.images} />
+      <GalleryPageClient gallery={data.gallery} images={data.images} sizes={data.sizes} sold={data.sold} />
     </main>
   );
 }

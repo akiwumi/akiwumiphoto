@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
-type PageKey = 'about' | 'splash' | 'prints';
+type PageKey = 'about' | 'splash';
 
 export default function PagesTab() {
   const [activePage, setActivePage] = useState<PageKey>('about');
@@ -109,7 +109,7 @@ export default function PagesTab() {
   return (
     <div className="p-6">
       <div className="flex gap-1 mb-6 border-b border-white/10">
-        {(['about', 'splash', 'prints'] as PageKey[]).map((p) => (
+        {(['about', 'splash'] as PageKey[]).map((p) => (
           <button key={p} style={TAB_BTN(p)} onClick={() => setActivePage(p)}>{p}</button>
         ))}
       </div>
@@ -177,31 +177,6 @@ export default function PagesTab() {
             </button>
           </div>
           <button onClick={() => save('splash', { title: get('splash', 'title'), music_enabled: get('splash', 'music_enabled'), bg_image: get('splash', 'bg_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-        </div>
-      )}
-
-      {activePage === 'prints' && (
-        <div className="max-w-lg flex flex-col gap-4">
-          <h3 className="text-white font-bold uppercase text-sm" style={{ letterSpacing: '0.08em' }}>Prints Pricing</h3>
-          {['small', 'medium', 'large', 'ultra'].map((size) => (
-            <div key={size}>
-              <label style={LABEL}>{size} Print Price</label>
-              <input
-                style={INPUT}
-                value={get('prints', `${size}_price`)}
-                onChange={(e) => set('prints', `${size}_price`, e.target.value)}
-                placeholder="e.g. £350 or POA"
-              />
-            </div>
-          ))}
-          <button
-            onClick={() => save('prints', Object.fromEntries(['small', 'medium', 'large', 'ultra'].map((s) => [`${s}_price`, get('prints', `${s}_price`)])))}
-            disabled={saving}
-            className="px-6 h-9 text-white text-xs uppercase font-medium w-fit"
-            style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}
-          >
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
