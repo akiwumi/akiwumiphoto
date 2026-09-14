@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import GalleryPageClient from './GalleryPageClient';
@@ -7,6 +8,46 @@ import type { Gallery, GalleryImage } from '@/types';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// Chat apps and social sites can fetch the preview image well after the page
+// itself, so its signed URL lasts a week rather than the usual hour.
+const PREVIEW_IMAGE_TTL_SECONDS = 60 * 60 * 24 * 7;
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  try {
+    const supabase = await createServerClient();
+    const { data: gallery } = await supabase
+      .from('galleries')
+      .select('title, description, cover_image')
+      .eq('slug', slug)
+      .eq('published', true)
+      .single();
+
+    if (!gallery) return {};
+
+    const title = `${gallery.title} | Eugene Akiwumi`;
+    const description = gallery.description || `${gallery.title}: photography by Eugene Akiwumi, Stockholm.`;
+    const cover = await signUrl(gallery.cover_image, PREVIEW_IMAGE_TTL_SECONDS);
+
+    return {
+      title,
+      description,
+      alternates: { canonical: `/gallery/${slug}` },
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        url: `/gallery/${slug}`,
+        // Without a cover the site-wide preview image applies.
+        ...(cover ? { images: [{ url: cover, alt: gallery.title }] } : {}),
+      },
+    };
+  } catch {
+    return {};
+  }
 }
 
 async function getGalleryData(slug: string): Promise<{ gallery: Gallery; images: GalleryImage[] } | null> {

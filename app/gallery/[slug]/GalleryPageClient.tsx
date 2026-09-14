@@ -76,6 +76,7 @@ export default function GalleryPageClient({ gallery, images }: Props) {
         <Lightbox
           images={images}
           initialIndex={lightboxIndex}
+          galleryTitle={gallery.title}
           onClose={() => setLightboxIndex(null)}
         />
       )}

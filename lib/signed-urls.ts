@@ -26,11 +26,15 @@ function signingClient(): SupabaseClient {
   return _client;
 }
 
-/** Sign a single storage path / URL. Returns the original value on failure. */
-export async function signUrl(pathOrUrl: string | null | undefined): Promise<string | null> {
+/**
+ * Sign a single storage path / URL. Returns the original value on failure.
+ * Pass a longer ttlSeconds for URLs that outlive the page view, such as the
+ * link-preview image a chat app fetches some time after a link is shared.
+ */
+export async function signUrl(pathOrUrl: string | null | undefined, ttlSeconds = TTL_SECONDS): Promise<string | null> {
   if (!pathOrUrl) return null;
   const path = extractStoragePath(pathOrUrl, BUCKET);
-  const { data, error } = await signingClient().storage.from(BUCKET).createSignedUrl(path, TTL_SECONDS);
+  const { data, error } = await signingClient().storage.from(BUCKET).createSignedUrl(path, ttlSeconds);
   if (error || !data) {
     console.error(`[signUrl] could not sign "${path}":`, error?.message);
     return pathOrUrl;

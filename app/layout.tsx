@@ -5,6 +5,8 @@ import './site-design.css';
 import { AudioProvider } from '@/contexts/AudioContext';
 import MusicToggle from '@/components/MusicToggle';
 import LayoutTransition from '@/components/LayoutTransition';
+import SiteAnalytics from '@/components/SiteAnalytics';
+import { SITE_URL } from '@/lib/site-origin';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -20,13 +22,20 @@ const bebasNeue = Bebas_Neue({
   display: 'swap',
 });
 
+// The shared-link image comes from app/opengraph-image.jpg; gallery pages
+// swap in their own cover photograph.
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'AKIWUMI PHOTO',
   description: 'Photography portfolio — fine art prints, galleries, and videography.',
   openGraph: {
     title: 'AKIWUMI PHOTO',
     description: 'Photography portfolio — fine art prints, galleries, and videography.',
     type: 'website',
+    siteName: 'Akiwumi Photo',
+  },
+  twitter: {
+    card: 'summary_large_image',
   },
 };
 
@@ -40,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </LayoutTransition>
           <MusicToggle />
         </AudioProvider>
+        <SiteAnalytics />
       </body>
     </html>
   );

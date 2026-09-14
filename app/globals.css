@@ -710,6 +710,54 @@ p.contact-status-error {
   letter-spacing: 0.14em;
 }
 
+/* Matches the site's primary buttons (see .prints-enquire in site-design.css). */
+.lightbox-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lightbox-enquire {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid #FFFFFF;
+  background: #FFFFFF;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.lightbox-enquire:hover {
+  background: #DDDDDD;
+}
+
+.lightbox-enquire:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 3px;
+}
+
+/* The footer is too crowded on wide screens once the room controls show,
+   and the top bar is too narrow on small ones: one placement for each. */
+.lightbox-enquire-footer {
+  display: none;
+  margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  .lightbox-enquire-top {
+    display: none;
+  }
+
+  .lightbox-enquire-footer {
+    display: inline-flex;
+  }
+}
+
 .lightbox-controls {
   display: flex;
   max-width: 62vw;

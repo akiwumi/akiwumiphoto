@@ -26,13 +26,17 @@ const SUBJECTS = [
 function ContactForm() {
   const searchParams = useSearchParams();
   const defaultSubject = searchParams.get('subject') || 'General Enquiry';
+  // Set by "Enquire about this print" in the gallery lightbox, so the
+  // enquiry arrives already naming the photograph.
+  const print = searchParams.get('print')?.slice(0, 300);
+  const defaultMessage = print ? `I'd like to enquire about a print of this photograph:\n${print}\n\n` : '';
 
   const EMPTY = {
     firstName: '',
     lastName: '',
     email: '',
     subject: defaultSubject,
-    message: '',
+    message: defaultMessage,
     botcheck: '', // honeypot — see the hidden field below
   };
 
@@ -53,7 +57,7 @@ function ContactForm() {
     // than reporting back what gave it away.
     if (form.botcheck) {
       setStatus('success');
-      setForm(EMPTY);
+      setForm({ ...EMPTY, message: '' });
       return;
     }
 
@@ -91,7 +95,7 @@ function ContactForm() {
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
         setStatus('success');
-        setForm(EMPTY);
+        setForm({ ...EMPTY, message: '' });
         return;
       }
 

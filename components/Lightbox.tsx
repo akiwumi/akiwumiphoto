@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import RoomPreview from '@/components/RoomPreview';
 import type { GalleryImage } from '@/types';
 import {
@@ -19,12 +20,24 @@ import {
 interface Props {
   images: GalleryImage[];
   initialIndex: number;
+  galleryTitle: string;
   onClose: () => void;
 }
 
 type LightboxMode = 'room' | 'photo';
 
-export default function Lightbox({ images, initialIndex, onClose }: Props) {
+/**
+ * How an enquiry names the photograph. Most images have no title, and the
+ * position shifts if a gallery is reordered, so the storage file name is
+ * included as a stable reference to look it up in the admin.
+ */
+function printLabel(image: GalleryImage, galleryTitle: string, index: number, total: number): string {
+  const fileName = image.storage_path.split('?')[0].split('/').pop()?.replace(/\.[a-z0-9]+$/i, '');
+  const name = image.title ? `“${image.title}”, ${galleryTitle}` : galleryTitle;
+  return `${name}, photo ${index + 1} of ${total}${fileName ? ` (ref ${fileName})` : ''}`;
+}
+
+export default function Lightbox({ images, initialIndex, galleryTitle, onClose }: Props) {
   const [current, setCurrent] = useState(initialIndex);
   const [mode, setMode] = useState<LightboxMode>('photo');
   const [selectedRoomId, setSelectedRoomId] = useState(DEFAULT_ROOM_PREVIEW_TEMPLATE_ID);
@@ -113,6 +126,9 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
   };
 
   const image = images[current];
+  // Rendered in the top bar on wide screens and under the caption on narrow
+  // ones, where the top bar has no room; CSS shows exactly one of the two.
+  const enquireHref = `/contact?subject=Print+Enquiry&print=${encodeURIComponent(printLabel(image, galleryTitle, current, images.length))}`;
   const selectedRoom = useMemo(
     () => ROOM_PREVIEW_TEMPLATES.find((room) => room.id === selectedRoomId) ?? ROOM_PREVIEW_TEMPLATES[0],
     [selectedRoomId],
@@ -151,12 +167,17 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
             </button>
           </div>
 
-          <button type="button" onClick={onClose} className="lightbox-close" aria-label="Close lightbox">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <div className="lightbox-topbar-actions">
+            <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-top">
+              Enquire about this print
+            </Link>
+            <button type="button" onClick={onClose} className="lightbox-close" aria-label="Close lightbox">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <button
@@ -205,6 +226,9 @@ export default function Lightbox({ images, initialIndex, onClose }: Props) {
             {image.title && <p className="lightbox-title">{image.title}</p>}
             {image.description && <p className="lightbox-description">{image.description}</p>}
             <p className="lightbox-count">{current + 1} / {images.length}</p>
+            <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-footer">
+              Enquire about this print
+            </Link>
           </div>
 
           {mode === 'room' && (
