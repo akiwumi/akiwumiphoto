@@ -1,17 +1,22 @@
 import { redirect } from 'next/navigation';
 import DashboardClient from './DashboardClient';
 import { createServerClient } from '@/lib/supabase-server';
+import { isAdmin } from '@/lib/admin-auth';
 
 export default async function DashboardPage() {
-  // Verify session server-side
+  // Verified server-side against Supabase Auth (getUser, not the unverified
+  // cookie session), and against the admin role rather than any session.
+  let allowed: boolean;
   try {
     const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) redirect('/admin');
+    const { data: { user } } = await supabase.auth.getUser();
+    allowed = isAdmin(user);
   } catch {
-    // If supabase isn't configured yet, allow access in dev
-    if (process.env.NODE_ENV === 'production') redirect('/admin');
+    // Supabase isn't configured: only the local demo may look around.
+    allowed = process.env.NODE_ENV !== 'production';
   }
+
+  if (!allowed) redirect('/admin');
 
   return <DashboardClient />;
 }

@@ -710,6 +710,25 @@ p.contact-status-error {
   letter-spacing: 0.14em;
 }
 
+/* Secondary actions on the admin sign-in screens. */
+.admin-text-link {
+  align-self: center;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: #999999;
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.admin-text-link:hover,
+.admin-text-link:focus-visible {
+  color: #FFFFFF;
+}
+
 /* Matches the site's primary buttons (see .prints-enquire in site-design.css). */
 .lightbox-topbar-actions {
   display: flex;
