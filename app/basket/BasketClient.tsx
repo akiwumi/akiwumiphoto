@@ -11,7 +11,6 @@ import {
 import { countryOptions } from '@/lib/countries';
 import { formatMoney } from '@/lib/currency';
 import { editionLabel, isPurchasable, remaining } from '@/lib/print-availability';
-import { sendWeb3Form } from '@/lib/web3forms';
 import type { CatalogImage, PrintSize, SoldBySize } from '@/types';
 
 interface Catalog {
@@ -106,20 +105,6 @@ export default function BasketClient() {
         setError(data?.error || 'Your order could not be sent. Please try again.');
         setSending(false);
         return;
-      }
-
-      if (data.reference) {
-        const fields = {
-          subject: data.subject,
-          from_name: 'Akiwumi Photo',
-          replyto: form.email,
-          name: `${form.firstName} ${form.lastName}`.trim(),
-          email: form.email,
-          message: data.emailText,
-        };
-        // The order is already recorded; retry the notification once before
-        // leaving it to the admin's order list.
-        if (!(await sendWeb3Form(fields))) await sendWeb3Form(fields);
       }
 
       setDone({ reference: data.reference, firstName: form.firstName, email: form.email });
