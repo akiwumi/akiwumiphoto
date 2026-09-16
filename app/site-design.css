@@ -7,12 +7,11 @@
   --site-surface: #1a1a1a;
   --site-gutter: 60px;
   --site-title-size: clamp(26px, 3.25vw, 48px);
-  /* Body text: 48px on desktop, easing down on narrow screens so lines stay readable. */
-  --body-size: clamp(28px, 2.5vw + 16px, 48px);
-  /* Navigation links, bold: 42px on desktop. */
-  --nav-size: clamp(22px, 2vw + 16px, 42px);
+  /* Body text and bold navigation links, on every screen size. */
+  --body-size: 18px;
+  --nav-size: 18px;
 }
-/* Body text uses --body-size across the site and admin; headings, labels and captions set their own sizes. */
+/* Body text uses --body-size (18px) across the site and admin; headings, labels and captions set their own sizes. */
 .public-site { font-family: var(--font-space-grotesk), sans-serif; font-size: var(--body-size); background: var(--site-background); color: var(--site-text); }
 .public-site main.full-screen { height: auto; min-height: 80dvh; overflow: visible; background: var(--site-background); }
 .public-site h1 { font-size: var(--site-title-size) !important; font-weight: 500; letter-spacing: -.045em !important; line-height: 1.12; text-transform: none; color: var(--site-text); }
