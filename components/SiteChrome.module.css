@@ -6,17 +6,33 @@
    onto their own row if the wordmark leaves too little room. */
 .wordmark { font-size: var(--nav-size); font-weight: 700; line-height: 1.1; text-transform: uppercase; letter-spacing: .12em; }
 .navigation { display: flex; flex-wrap: wrap; gap: 6px 32px; font-size: var(--nav-size); font-weight: 700; line-height: 1.2; }
-.menuToggle { display: none; }
+/* The bottom tab bar and its menu only exist on small screens. */
+.tabBarRoot { display: none; }
 /* Sized in em so the badge follows the navigation text size. */
 .basketCount { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; margin-left: .35em; padding: 0 .45em; border-radius: .8em; background: var(--site-text); color: var(--site-background); font-size: .5em; font-weight: 700; line-height: 1; vertical-align: .4em; }
 .navigation a:hover, .navigation a[aria-current], .footer a:hover { text-decoration: underline; text-underline-offset: 6px; }
 .footer { border-top: 1px solid var(--site-border); padding: 24px 0 80px; display: flex; justify-content: space-between; gap: 24px; font-size: 12px; color: var(--site-muted); }
 .footer nav { display: flex; flex-wrap: wrap; gap: 24px; }
 @media (max-width: 700px) {
-  .header { flex-wrap: wrap; padding: 12px 0; gap: 0; }
-  .menuToggle { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; background: transparent; color: inherit; cursor: pointer; }
-  .navigation { display: none; flex-basis: 100%; flex-direction: column; gap: 0; padding: 12px 0; border-top: 1px solid var(--site-border); margin-top: 12px; }
-  .navigation.open { display: flex; }
-  .navigation a { display: block; padding: 14px 0; }
-  .footer { flex-direction: column; }
+  .header { padding: 16px 0; }
+  .navigation { display: none; }
+  .footer { flex-direction: column; padding-bottom: 32px; }
+
+  /* Pinned to the layout viewport's bottom edge, so it sits above the browser's
+     own toolbar; the safe-area padding clears the home indicator. */
+  .tabBarRoot { display: block; }
+  .tabBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; align-items: stretch; padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); background: var(--site-background); border-top: 1px solid var(--site-border); font-family: var(--font-space-grotesk), sans-serif; }
+  .tab { flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 2px; border: 0; background: transparent; color: var(--site-muted); text-decoration: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .tab[aria-current], .tab[data-current], .tab[aria-expanded="true"] { color: var(--site-text); }
+  .tabIcon { position: relative; display: flex; }
+  .tabLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 500; letter-spacing: .02em; line-height: 1; }
+  .tabBadge { position: absolute; top: -6px; right: -10px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--site-text); color: var(--site-background); font-size: 10px; font-weight: 700; line-height: 1; }
+
+  .menuScrim { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, .6); }
+  .menuSheet { position: fixed; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 59; max-height: calc(100dvh - 60px - env(safe-area-inset-bottom) - 80px); overflow-y: auto; display: flex; flex-direction: column; padding: 8px max(var(--site-gutter), env(safe-area-inset-left)) 8px; background: var(--site-background); border-top: 1px solid var(--site-border); font-family: var(--font-space-grotesk), sans-serif; font-size: var(--nav-size); font-weight: 700; animation: sheetIn .2s ease-out; }
+  .menuSheet a { display: flex; align-items: center; gap: 14px; min-height: 52px; color: var(--site-text); text-decoration: none; border-bottom: 1px solid var(--site-border); }
+  .menuSheet a:last-child { border-bottom: 0; }
+  .menuSheet a[aria-current] span { text-decoration: underline; text-underline-offset: 6px; }
 }
+@keyframes sheetIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .menuSheet { animation: none; } }

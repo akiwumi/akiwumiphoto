@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, Bebas_Neue } from 'next/font/google';
 import './globals.css';
 import './site-design.css';
@@ -39,6 +39,14 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
   },
+};
+
+// viewport-fit=cover exposes env(safe-area-inset-*) to the mobile bottom tab bar.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#000',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

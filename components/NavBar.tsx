@@ -2,10 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ComponentType } from 'react';
+import { Briefcase, Clapperboard, FileText, Frame, Images, Mail, Menu, Newspaper, ShoppingBag, User, X } from 'lucide-react';
 import styles from './SiteChrome.module.css';
 import { useBasketCount } from '@/lib/basket-store';
 import { useIsPageShown, useNavPages } from './SiteVisibility';
+
+type NavItem = {
+  key: string;
+  href: string;
+  label: string;
+  Icon: ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>;
+  current: boolean;
+};
+
+/** How many links fit in the mobile bottom bar beside the menu button. */
+const BAR_SLOTS = 4;
+/** Pages that earn a bottom-bar slot first; everything else goes in the menu. */
+const BAR_PRIORITY = ['gallery', 'videography', 'prints', 'basket'];
 
 export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
@@ -15,42 +29,98 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
   const basketCount = useBasketCount();
   const shown = useIsPageShown();
   const navPages = useNavPages();
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [menuOpen]);
+
+  const items: NavItem[] = [
+    { key: 'gallery', href: '/home', label: 'Gallery', Icon: Images, current: pathname === '/home' || pathname.startsWith('/gallery/') },
+    { key: 'videography', href: '/videography', label: 'Film', Icon: Clapperboard, current: pathname === '/videography' },
+    { key: 'services', href: '/#services', label: 'Services', Icon: Briefcase, current: false },
+    { key: 'prints', href: '/prints', label: 'Prints', Icon: Frame, current: pathname === '/prints' },
+    { key: 'news', href: '/news', label: 'News', Icon: Newspaper, current: pathname === '/news' },
+    ...navPages.map((page) => ({ key: `page:${page.slug}`, href: `/${page.slug}`, label: page.title, Icon: FileText, current: pathname === `/${page.slug}` })),
+    { key: 'about', href: '/about', label: 'About', Icon: User, current: pathname === '/about' },
+    { key: 'contact', href: '/contact', label: 'Contact', Icon: Mail, current: pathname === '/contact' },
+    { key: 'basket', href: '/basket', label: 'Basket', Icon: ShoppingBag, current: pathname === '/basket' },
+  ].filter((item) => item.key.startsWith('page:') || shown(item.key));
+
+  // Fill the bar in priority order, topping up from the remaining pages when some are hidden.
+  const ranked = [...items].sort((a, b) => rank(a.key) - rank(b.key));
+  const barKeys = new Set(ranked.slice(0, BAR_SLOTS).map((item) => item.key));
+  const barItems = items.filter((item) => barKeys.has(item.key));
+  const menuItems = items.filter((item) => !barKeys.has(item.key));
+
+  const basketLabel = basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket';
+  const menuCurrent = menuItems.some((item) => item.current);
+
   return (
-    <header className={`${styles.header} ${contained ? styles.contained : ''}`}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape' && menuOpen) {
-          setMenuOpen(false);
-          toggleRef.current?.focus();
-        }
-      }}>
-      <Link href="/" className={styles.wordmark}>Akiwumi Photo</Link>
-      <button ref={toggleRef} type="button" className={styles.menuToggle}
-        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-        aria-expanded={menuOpen} aria-controls={menuId}
-        onClick={() => setMenuOpen(!menuOpen)}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-          {menuOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M3 6h18M3 12h18M3 18h18" />}
-        </svg>
-      </button>
-      <nav id={menuId} aria-label="Main navigation" className={`${styles.navigation} ${menuOpen ? styles.open : ''}`}
-        onClick={() => setMenuOpen(false)}>
-        {shown('gallery') && <Link href="/home" aria-current={pathname === '/home' || pathname.startsWith('/gallery/') ? 'page' : undefined}>Gallery</Link>}
-        {shown('videography') && <Link href="/videography" aria-current={pathname === '/videography' ? 'page' : undefined}>Film</Link>}
-        {shown('services') && <Link href="/#services">Services</Link>}
-        {shown('prints') && <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>}
-        {shown('news') && <Link href="/news" aria-current={pathname === '/news' ? 'page' : undefined}>News</Link>}
-        {navPages.map((page) => (
-          <Link key={page.slug} href={`/${page.slug}`} aria-current={pathname === `/${page.slug}` ? 'page' : undefined}>{page.title}</Link>
-        ))}
-        {shown('about') && <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>}
-        {shown('contact') && <Link href="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>}
-        {shown('basket') && (
-          <Link href="/basket" aria-current={pathname === '/basket' ? 'page' : undefined}
-            aria-label={basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket'}>
-            Basket{basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
-          </Link>
+    <>
+      <header className={`${styles.header} ${contained ? styles.contained : ''}`}>
+        <Link href="/" className={styles.wordmark}>Akiwumi Photo</Link>
+        <nav aria-label="Main navigation" className={styles.navigation}>
+          {items.map((item) => (
+            <Link key={item.key} href={item.href} aria-current={item.current ? 'page' : undefined}
+              aria-label={item.key === 'basket' ? basketLabel : undefined}>
+              {item.label}
+              {item.key === 'basket' && basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
+            </Link>
+          ))}
+        </nav>
+      </header>
+
+      {/* Mobile only: an app-style tab bar pinned to the bottom of the screen. */}
+      <div className={styles.tabBarRoot}>
+        {menuOpen && <div className={styles.menuScrim} onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+        {menuOpen && (
+          <nav id={menuId} aria-label="More pages" className={styles.menuSheet} onClick={() => setMenuOpen(false)}>
+            {menuItems.map(({ key, href, label, Icon, current }) => (
+              <Link key={key} href={href} aria-current={current ? 'page' : undefined}>
+                <Icon size={20} strokeWidth={1.5} aria-hidden />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </nav>
         )}
-      </nav>
-    </header>
+        <nav aria-label="Mobile navigation" className={styles.tabBar}>
+          {barItems.map(({ key, href, label, Icon, current }) => (
+            <Link key={key} href={href} className={styles.tab} aria-current={current ? 'page' : undefined}
+              aria-label={key === 'basket' ? basketLabel : undefined}>
+              <span className={styles.tabIcon}>
+                <Icon size={22} strokeWidth={1.5} aria-hidden />
+                {key === 'basket' && basketCount > 0 && <span className={styles.tabBadge} aria-hidden="true">{basketCount}</span>}
+              </span>
+              <span className={styles.tabLabel}>{label}</span>
+            </Link>
+          ))}
+          {menuItems.length > 0 && (
+            <button ref={toggleRef} type="button" className={styles.tab}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen} aria-controls={menuId}
+              data-current={menuCurrent || undefined}
+              onClick={() => setMenuOpen(!menuOpen)}>
+              <span className={styles.tabIcon}>
+                {menuOpen ? <X size={22} strokeWidth={1.5} aria-hidden /> : <Menu size={22} strokeWidth={1.5} aria-hidden />}
+              </span>
+              <span className={styles.tabLabel} aria-hidden="true">Menu</span>
+            </button>
+          )}
+        </nav>
+      </div>
+    </>
   );
+}
+
+function rank(key: string) {
+  const index = BAR_PRIORITY.indexOf(key);
+  return index === -1 ? BAR_PRIORITY.length : index;
 }
