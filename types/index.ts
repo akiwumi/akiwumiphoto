@@ -22,6 +22,24 @@ export interface GalleryImage {
   for_sale?: boolean;
 }
 
+/** A named selection of photographs within a gallery. */
+export interface GallerySection {
+  id: string;
+  gallery_id: string;
+  title: string;
+  slug: string;
+  /** Falls back to the first photograph when null. */
+  cover_image_id: string | null;
+  sort_order: number;
+}
+
+/** A photograph's place in a sub-gallery; a photograph can be in several. */
+export interface GallerySectionImage {
+  section_id: string;
+  image_id: string;
+  sort_order: number;
+}
+
 /** A size every photograph is offered in; each size is its own edition. */
 export interface PrintSize {
   id: string;

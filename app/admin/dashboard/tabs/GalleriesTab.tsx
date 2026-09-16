@@ -22,7 +22,9 @@ import { supabase } from '@/lib/supabase';
 import { extractStoragePath } from '@/lib/storage-utils';
 import { DEMO_GALLERIES, DEMO_IMAGES } from '@/lib/demo-data';
 import NotForSaleStamp from '@/components/NotForSaleStamp';
-import type { Gallery, GalleryImage } from '@/types';
+import { sectionImages, uniqueSlug } from '@/lib/sub-galleries';
+import SubGalleryPanel, { type ImageView } from './SubGalleryPanel';
+import type { Gallery, GalleryImage, GallerySection, GallerySectionImage } from '@/types';
 
 function slugify(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -303,6 +305,10 @@ function GalleryEditor({
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sections, setSections] = useState<GallerySection[]>([]);
+  const [memberships, setMemberships] = useState<GallerySectionImage[]>([]);
+  const [view, setView] = useState<ImageView>('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const fetchImages = useCallback(async () => {
     if (isDemoMode) {
@@ -316,6 +322,21 @@ function GalleryEditor({
       .order('sort_order', { ascending: true });
     const raw = data || [];
     setImages(raw);
+
+    const { data: sectionRows } = await supabase
+      .from('gallery_sections')
+      .select('id, gallery_id, title, slug, cover_image_id, sort_order')
+      .eq('gallery_id', gallery.id)
+      .order('sort_order', { ascending: true });
+    const { data: memberRows } = sectionRows?.length
+      ? await supabase
+          .from('gallery_section_images')
+          .select('section_id, image_id, sort_order')
+          .in('section_id', sectionRows.map((row) => row.id))
+      : { data: [] };
+    setSections(sectionRows ?? []);
+    setMemberships(memberRows ?? []);
+    setSelected((prev) => new Set([...prev].filter((id) => raw.some((img) => img.id === id))));
 
     // Generate 1-hour signed URLs for display (admin is authenticated)
     const urls: Record<string, string> = {};
@@ -338,6 +359,8 @@ function GalleryEditor({
       description: gallery.description || '',
       published: gallery.published,
     });
+    setView('all');
+    setSelected(new Set());
     fetchImages();
   }, [gallery, fetchImages]);
 
@@ -448,6 +471,116 @@ function GalleryEditor({
     fetchImages();
   };
 
+  // Sub-galleries ---------------------------------------------------------------
+
+  const sectionCounts = Object.fromEntries(sections.map((section) => [
+    section.id, memberships.filter((m) => m.section_id === section.id).length,
+  ]));
+  const grouped = new Set(memberships.map((m) => m.image_id));
+  const currentSection = sections.find((section) => section.id === view);
+  const visibleImages = currentSection
+    ? sectionImages(currentSection, images, memberships)
+    : view === 'unassigned'
+      ? images.filter((img) => !grouped.has(img.id))
+      : images;
+
+  const report = (error: { message: string } | null, success: string) => {
+    setMsg(error ? `Could not save: ${error.message}` : success);
+    setTimeout(() => setMsg(''), 2500);
+  };
+
+  const addToSection = async (sectionId: string, imageIds: string[]) => {
+    const existing = memberships.filter((m) => m.section_id === sectionId);
+    const already = new Set(existing.map((m) => m.image_id));
+    // New photos go after the ones already there, in gallery order.
+    const adding = images.filter((img) => imageIds.includes(img.id) && !already.has(img.id));
+    const start = existing.reduce((max, m) => Math.max(max, m.sort_order + 1), 0);
+    if (adding.length === 0) { report(null, 'Those photos are already in that sub-gallery.'); return; }
+    const rows = adding.map((img, i) => ({ section_id: sectionId, image_id: img.id, sort_order: start + i }));
+    const { error } = await supabase.from('gallery_section_images').insert(rows);
+    if (!error) {
+      setMemberships((prev) => [...prev, ...rows]);
+      setSelected(new Set());
+    }
+    report(error, `Added ${rows.length} ${rows.length === 1 ? 'photo' : 'photos'}.`);
+  };
+
+  const createSection = async (title: string) => {
+    const slug = uniqueSlug(title, sections.map((section) => section.slug));
+    const { data, error } = await supabase
+      .from('gallery_sections')
+      .insert({ gallery_id: gallery.id, title, slug, sort_order: sections.length })
+      .select('id, gallery_id, title, slug, cover_image_id, sort_order')
+      .single();
+    if (error || !data) { report(error, ''); return; }
+    setSections((prev) => [...prev, data]);
+    if (selected.size > 0) await addToSection(data.id, [...selected]);
+    else report(null, `Created “${title}”. Tick photos and add them to it.`);
+    setView(data.id);
+  };
+
+  const removeFromCurrentSection = async () => {
+    if (!currentSection) return;
+    const ids = [...selected];
+    const { error } = await supabase
+      .from('gallery_section_images')
+      .delete()
+      .eq('section_id', currentSection.id)
+      .in('image_id', ids);
+    if (!error) {
+      setMemberships((prev) => prev.filter((m) => !(m.section_id === currentSection.id && ids.includes(m.image_id))));
+      setSelected(new Set());
+    }
+    report(error, `Removed from “${currentSection.title}”. The photos stay in the gallery.`);
+  };
+
+  const renameSection = async (sectionId: string, title: string) => {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const slug = uniqueSlug(title, sections.map((s) => s.slug), section.slug);
+    const { error } = await supabase.from('gallery_sections').update({ title, slug }).eq('id', sectionId);
+    if (!error) setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, title, slug } : s)));
+    report(error, 'Renamed.');
+  };
+
+  const moveSection = async (sectionId: string, by: -1 | 1) => {
+    const index = sections.findIndex((s) => s.id === sectionId);
+    const target = index + by;
+    if (index < 0 || target < 0 || target >= sections.length) return;
+    const next = [...sections];
+    [next[index], next[target]] = [next[target], next[index]];
+    const ordered = next.map((s, i) => ({ ...s, sort_order: i }));
+    setSections(ordered);
+    const results = await Promise.all(ordered.map((s) =>
+      supabase.from('gallery_sections').update({ sort_order: s.sort_order }).eq('id', s.id)));
+    report(results.find((r) => r.error)?.error ?? null, 'Order saved.');
+  };
+
+  const deleteSection = async (sectionId: string) => {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section || !confirm(`Delete the sub-gallery “${section.title}”? Its photos stay in the gallery.`)) return;
+    const { error } = await supabase.from('gallery_sections').delete().eq('id', sectionId);
+    if (!error) {
+      setSections((prev) => prev.filter((s) => s.id !== sectionId));
+      setMemberships((prev) => prev.filter((m) => m.section_id !== sectionId));
+      if (view === sectionId) setView('all');
+    }
+    report(error, `Deleted “${section.title}”.`);
+  };
+
+  const setSectionCover = async (sectionId: string, imageId: string) => {
+    const { error } = await supabase.from('gallery_sections').update({ cover_image_id: imageId }).eq('id', sectionId);
+    if (!error) setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, cover_image_id: imageId } : s)));
+    report(error, 'Sub-gallery cover set.');
+  };
+
+  const toggleSelected = (imageId: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(imageId); else next.delete(imageId);
+      return next;
+    });
+
   // Marks a photograph not for sale: it shows a stamp and loses its basket
   // and print-enquiry buttons on the site. The same flag as Prints → Availability.
   const handleForSaleToggle = async (imageId: string, forSale: boolean) => {
@@ -470,6 +603,23 @@ function GalleryEditor({
   const handleImageDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    if (currentSection) {
+      const order = arrayMove(
+        visibleImages,
+        visibleImages.findIndex((img) => img.id === active.id),
+        visibleImages.findIndex((img) => img.id === over.id),
+      );
+      const position = new Map(order.map((img, i) => [img.id, i]));
+      setMemberships((prev) => prev.map((m) =>
+        m.section_id === currentSection.id ? { ...m, sort_order: position.get(m.image_id) ?? m.sort_order } : m));
+      if (imgReorderTimer.current) clearTimeout(imgReorderTimer.current);
+      imgReorderTimer.current = setTimeout(async () => {
+        await Promise.all(order.map((img, i) =>
+          supabase.from('gallery_section_images').update({ sort_order: i })
+            .eq('section_id', currentSection.id).eq('image_id', img.id)));
+      }, 600);
+      return;
+    }
     const oldIndex = images.findIndex((img) => img.id === active.id);
     const newIndex = images.findIndex((img) => img.id === over.id);
     const newOrder = arrayMove(images, oldIndex, newIndex);
@@ -657,20 +807,54 @@ function GalleryEditor({
         )}
       </div>
 
-      {!isDemoMode && images.length > 1 && (
+      {!isDemoMode && images.length > 0 && (
+        <SubGalleryPanel
+          sections={sections}
+          counts={sectionCounts}
+          totalCount={images.length}
+          unassignedCount={images.filter((img) => !grouped.has(img.id)).length}
+          view={view}
+          onView={(next) => { setView(next); setSelected(new Set()); }}
+          selectedCount={selected.size}
+          visibleCount={visibleImages.length}
+          onSelectAll={() => setSelected(new Set(visibleImages.map((img) => img.id)))}
+          onClearSelection={() => setSelected(new Set())}
+          onCreate={createSection}
+          onAddTo={(sectionId) => addToSection(sectionId, [...selected])}
+          onRemoveFromCurrent={removeFromCurrentSection}
+          onRename={renameSection}
+          onMove={moveSection}
+          onDelete={deleteSection}
+        />
+      )}
+
+      {!isDemoMode && visibleImages.length > 1 && view !== 'unassigned' && (
         <p className="text-grey-mid text-xs mb-2" style={{ opacity: 0.5, letterSpacing: '0.08em' }}>
-          Drag images to reorder
+          {currentSection ? `Drag to reorder photos within “${currentSection.title}”` : 'Drag images to reorder'}
+        </p>
+      )}
+      {view !== 'all' && visibleImages.length === 0 && (
+        <p className="text-grey-mid text-base mb-2">
+          {currentSection ? 'No photos in this sub-gallery yet. Go to All photos, tick some and add them.' : 'Every photo is in a sub-gallery.'}
         </p>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleImageDragEnd}>
-        <SortableContext items={images.map((img) => img.id)} strategy={rectSortingStrategy}>
+        <SortableContext items={visibleImages.map((img) => img.id)} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {images.map((img) => (
+            {visibleImages.map((img) => (
               <SortableImageCard
                 key={img.id}
                 image={img}
                 displayUrl={displayUrls[img.id] || null}
                 isDemoMode={isDemoMode}
+                dragDisabled={view === 'unassigned'}
+                selected={selected.has(img.id)}
+                onSelectChange={(on) => toggleSelected(img.id, on)}
+                sectionNames={sections.filter((s) => memberships.some((m) => m.section_id === s.id && m.image_id === img.id)).map((s) => s.title)}
+                sectionCover={currentSection ? {
+                  isCover: (currentSection.cover_image_id ?? visibleImages[0]?.id) === img.id,
+                  onSet: () => setSectionCover(currentSection.id, img.id),
+                } : undefined}
                 isCover={gallery.cover_image === img.storage_path}
                 onSetCover={() => handleSetCover(img.storage_path)}
                 onDelete={() => handleDeleteImage(img.id)}
@@ -688,7 +872,7 @@ function GalleryEditor({
 function SortableImageCard(props: React.ComponentProps<typeof ImageCard>) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: props.image.id,
-    disabled: props.isDemoMode,
+    disabled: props.isDemoMode || props.dragDisabled,
   });
   return (
     <div
@@ -698,7 +882,7 @@ function SortableImageCard(props: React.ComponentProps<typeof ImageCard>) {
         transition,
         zIndex: isDragging ? 10 : undefined,
         opacity: isDragging ? 0.5 : 1,
-        cursor: props.isDemoMode ? 'default' : 'grab',
+        cursor: props.isDemoMode || props.dragDisabled ? 'default' : 'grab',
       }}
       {...attributes}
       {...listeners}
@@ -717,6 +901,10 @@ function ImageCard({
   onDelete,
   onUpdate,
   onForSaleChange,
+  selected,
+  onSelectChange,
+  sectionNames,
+  sectionCover,
 }: {
   image: GalleryImage;
   displayUrl: string | null;
@@ -726,6 +914,13 @@ function ImageCard({
   onDelete: () => void;
   onUpdate: (id: string, field: 'title' | 'description', value: string) => void;
   onForSaleChange: (forSale: boolean) => void;
+  /** Only the sortable wrapper reads this. */
+  dragDisabled?: boolean;
+  selected: boolean;
+  onSelectChange: (selected: boolean) => void;
+  sectionNames: string[];
+  /** Present while the editor shows a single sub-gallery. */
+  sectionCover?: { isCover: boolean; onSet: () => void };
 }) {
   const [title, setTitle] = useState(image.title || '');
   const [desc, setDesc] = useState(image.description || '');
@@ -768,6 +963,29 @@ function ImageCard({
           </div>
         )}
         {image.for_sale === false && <NotForSaleStamp size="small" />}
+        {sectionCover?.isCover && (
+          <div
+            className="absolute top-1 right-9 px-1.5 py-0.5 text-black text-xs"
+            style={{ background: '#fff', fontSize: '0.6rem', letterSpacing: '0.1em' }}
+          >
+            SUB COVER
+          </div>
+        )}
+        {!isDemoMode && (
+          <label
+            className="absolute top-1 right-1 flex items-center justify-center"
+            style={{ width: 28, height: 28, background: selected ? '#E8001C' : 'rgba(0,0,0,0.6)', cursor: 'pointer' }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => onSelectChange(e.target.checked)}
+              aria-label={`Select ${image.title || 'photo'}`}
+              style={{ width: 16, height: 16, cursor: 'pointer' }}
+            />
+          </label>
+        )}
       </div>
 
       {/* stop pointer events here so inputs/buttons never start a drag */}
@@ -788,6 +1006,21 @@ function ImageCard({
           onChange={(e) => setDesc(e.target.value)}
           onBlur={() => onUpdate(image.id, 'description', desc)}
         />
+
+        {sectionNames.length > 0 && (
+          <p className="text-xs mt-2" style={{ color: '#aaa' }}>In: {sectionNames.join(' · ')}</p>
+        )}
+
+        {sectionCover && !sectionCover.isCover && (
+          <button
+            type="button"
+            onClick={sectionCover.onSet}
+            className="w-full mt-2 py-1 text-xs uppercase text-grey-mid hover:text-white transition-colors border border-white/20 hover:border-white/40"
+            style={{ fontFamily: 'inherit', letterSpacing: '0.08em' }}
+          >
+            Use as sub-gallery cover
+          </button>
+        )}
 
         {!isDemoMode && (
           <label className="flex items-center gap-2 mt-2 text-xs text-white cursor-pointer" style={{ letterSpacing: '0.04em' }}>

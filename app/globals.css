@@ -915,6 +915,76 @@ p.contact-status-error {
   }
 }
 
+/* Sub-gallery filters under a gallery heading. */
+.sub-gallery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.sub-gallery-filters button {
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 1px solid var(--site-border, #333333);
+  background: transparent;
+  color: var(--site-text, #FFFFFF);
+  font-family: inherit;
+  font-size: var(--body-size);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sub-gallery-filters button:hover {
+  border-color: var(--site-text, #FFFFFF);
+}
+
+.sub-gallery-filters button[aria-pressed="true"] {
+  border-color: var(--site-text, #FFFFFF);
+  background: var(--site-text, #FFFFFF);
+  color: var(--site-background, #000000);
+}
+
+/* A sub-gallery in a gallery's main view: its cover with the title over it,
+   styled like the project titles. */
+.sub-gallery-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--site-surface, #1A1A1A);
+  color: #FFFFFF;
+}
+
+.sub-gallery-card:hover .media-zoom {
+  transform: scale(1.055);
+}
+
+.sub-gallery-card-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: clamp(20px, 2.6vw, 40px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), 0 6px 28px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.sub-gallery-card-title {
+  font-size: var(--site-title-size);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+
+.sub-gallery-card-count {
+  font-size: var(--body-size);
+}
+
 /* Stamp over photographs marked not for sale; above the image shield. */
 .not-for-sale-stamp {
   position: absolute;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,17 +8,54 @@ import Lightbox from '@/components/Lightbox';
 import TileBasketButton from '@/components/TileBasketButton';
 import NotForSaleStamp from '@/components/NotForSaleStamp';
 import { defaultSize } from '@/lib/print-availability';
-import type { Gallery, GalleryImage, PrintSize, SoldBySize } from '@/types';
+import { sectionCover, sectionImages } from '@/lib/sub-galleries';
+import type { Gallery, GalleryImage, GallerySection, GallerySectionImage, PrintSize, SoldBySize } from '@/types';
 
 interface Props {
   gallery: Gallery;
   images: GalleryImage[];
   sizes: PrintSize[];
   sold: Record<string, SoldBySize>;
+  sections: GallerySection[];
+  memberships: GallerySectionImage[];
+  /** The ?sub= the page was opened with. */
+  initialSub: string | null;
 }
 
-export default function GalleryPageClient({ gallery, images, sizes, sold }: Props) {
+/**
+ * A gallery with optional sub-galleries. The main view shows a card for each
+ * sub-gallery, then the photographs in none of them; choosing a sub-gallery
+ * (card or filter button) shows its photographs. The choice lives in ?sub=
+ * so a sub-gallery can be shared, and switching doesn't reload the page.
+ */
+export default function GalleryPageClient({ gallery, images, sizes, sold, sections, memberships, initialSub }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [activeSlug, setActiveSlug] = useState<string | null>(initialSub);
+
+  // Sub-galleries with no photographs are left out entirely.
+  const groups = useMemo(() => sections
+    .map((section) => ({ section, members: sectionImages(section, images, memberships) }))
+    .filter((group) => group.members.length > 0), [sections, images, memberships]);
+
+  const active = groups.find((group) => group.section.slug === activeSlug) ?? null;
+  const grouped = useMemo(() => new Set(groups.flatMap((group) => group.members.map((m) => m.id))), [groups]);
+  const tiles = active ? active.members : images.filter((image) => !grouped.has(image.id));
+
+  // Back and forward move between sub-galleries.
+  useEffect(() => {
+    const onPopState = () => {
+      setActiveSlug(new URLSearchParams(window.location.search).get('sub'));
+      setLightboxIndex(null);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const choose = (slug: string | null) => {
+    setActiveSlug(slug);
+    setLightboxIndex(null);
+    window.history.pushState(null, '', slug ? `?sub=${encodeURIComponent(slug)}` : window.location.pathname);
+  };
 
   return (
     <>
@@ -47,10 +84,26 @@ export default function GalleryPageClient({ gallery, images, sizes, sold }: Prop
           )}
 
           <div className="red-rule" />
+
+          {groups.length > 0 && (
+            <nav className="sub-gallery-filters" aria-label="Sub-galleries">
+              <button type="button" aria-pressed={!active} onClick={() => choose(null)}>All</button>
+              {groups.map(({ section }) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  aria-pressed={active?.section.id === section.id}
+                  onClick={() => choose(section.slug)}
+                >
+                  {section.title}
+                </button>
+              ))}
+            </nav>
+          )}
         </div>
 
         {/* Image grid — 3 columns, 60px side insets, matching home page */}
-        {images.length > 0 ? (
+        {tiles.length > 0 || (!active && groups.length > 0) ? (
           <div
             className="site-media-grid"
             style={{
@@ -60,7 +113,16 @@ export default function GalleryPageClient({ gallery, images, sizes, sold }: Prop
               padding: '8px 60px 60px',
             }}
           >
-            {images.map((image, i) => (
+            {!active && groups.map(({ section, members }) => (
+              <SubGalleryCard
+                key={section.id}
+                section={section}
+                cover={sectionCover(section, members)}
+                count={members.length}
+                onOpen={() => choose(section.slug)}
+              />
+            ))}
+            {tiles.map((image, i) => (
               <ImageTile
                 key={image.id}
                 image={image}
@@ -80,7 +142,7 @@ export default function GalleryPageClient({ gallery, images, sizes, sold }: Prop
 
       {lightboxIndex !== null && (
         <Lightbox
-          images={images}
+          images={tiles}
           initialIndex={lightboxIndex}
           galleryTitle={gallery.title}
           sizes={sizes}
@@ -89,6 +151,35 @@ export default function GalleryPageClient({ gallery, images, sizes, sold }: Prop
         />
       )}
     </>
+  );
+}
+
+function SubGalleryCard({ section, cover, count, onOpen }: {
+  section: GallerySection;
+  cover: GalleryImage | undefined;
+  count: number;
+  onOpen: () => void;
+}) {
+  return (
+    <a
+      href={`?sub=${encodeURIComponent(section.slug)}`}
+      className="sub-gallery-card"
+      onClick={(e) => {
+        // A real link, so it opens in a new tab too; here it switches in place.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        onOpen();
+      }}
+    >
+      {cover?.storage_path && (
+        <Image src={cover.storage_path} alt="" fill unoptimized draggable={false} className="object-cover media-zoom" sizes="33vw" />
+      )}
+      <div className="img-shield" aria-hidden="true" />
+      <div className="sub-gallery-card-caption">
+        <span className="sub-gallery-card-title">{section.title}</span>
+        <span className="sub-gallery-card-count">{count} {count === 1 ? 'photograph' : 'photographs'}</span>
+      </div>
+    </a>
   );
 }
 
