@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
-type PageKey = 'about' | 'splash';
+export type PageKey = 'about' | 'splash';
 
-export default function PagesTab() {
-  const [activePage, setActivePage] = useState<PageKey>('about');
+/** Edits the built-in pages' content; `only` shows one page without the switcher. */
+export default function PagesTab({ only }: { only?: PageKey } = {}) {
+  const [activePage, setActivePage] = useState<PageKey>(only ?? 'about');
   const [content, setContent] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -108,11 +109,11 @@ export default function PagesTab() {
 
   return (
     <div className="p-6">
-      <div className="flex gap-1 mb-6 border-b border-white/10">
+      {!only && <div className="flex gap-1 mb-6 border-b border-white/10">
         {(['about', 'splash'] as PageKey[]).map((p) => (
           <button key={p} style={TAB_BTN(p)} onClick={() => setActivePage(p)}>{p}</button>
         ))}
-      </div>
+      </div>}
 
       {activePage === 'about' && (
         <div className="max-w-lg flex flex-col gap-4">

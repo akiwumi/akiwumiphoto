@@ -14,6 +14,8 @@ export const SITE_PAGES: { key: string; label: string; matches: (path: string) =
   { key: 'contact', label: 'Contact', matches: (p) => p === '/contact' },
   { key: 'basket', label: 'Basket', matches: (p) => p === '/basket' },
   { key: 'news', label: 'News', matches: (p) => p === '/news' },
+  // Anything else one or two segments deep is a page (or sub page) made in the admin; built-in routes match above.
+  { key: 'created', label: 'Pages you created', matches: (p) => /^\/[a-z0-9]+(-[a-z0-9]+)*(\/[a-z0-9]+(-[a-z0-9]+)*)?$/.test(p) && !['/register', '/home'].includes(p) && !p.startsWith('/register/') },
 ];
 
 export const FREQUENCIES: { value: ModalFrequency; label: string; hint: string }[] = [

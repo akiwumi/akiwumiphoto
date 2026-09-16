@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useId, useRef, useState } from 'react';
 import styles from './SiteChrome.module.css';
 import { useBasketCount } from '@/lib/basket-store';
-import { useIsPageShown } from './SiteVisibility';
+import { useIsPageShown, useNavPages } from './SiteVisibility';
 
 export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
@@ -14,6 +14,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const basketCount = useBasketCount();
   const shown = useIsPageShown();
+  const navPages = useNavPages();
   return (
     <header className={`${styles.header} ${contained ? styles.contained : ''}`}
       onKeyDown={(event) => {
@@ -38,6 +39,9 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
         {shown('services') && <Link href="/#services">Services</Link>}
         {shown('prints') && <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>}
         {shown('news') && <Link href="/news" aria-current={pathname === '/news' ? 'page' : undefined}>News</Link>}
+        {navPages.map((page) => (
+          <Link key={page.slug} href={`/${page.slug}`} aria-current={pathname === `/${page.slug}` ? 'page' : undefined}>{page.title}</Link>
+        ))}
         {shown('about') && <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>}
         {shown('contact') && <Link href="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>}
         {shown('basket') && (

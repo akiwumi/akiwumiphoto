@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import styles from './SiteChrome.module.css';
-import { useIsPageShown } from './SiteVisibility';
+import { useIsPageShown, useNavPages } from './SiteVisibility';
 
 export default function SiteFooter({ contained = false }: { contained?: boolean }) {
   const shown = useIsPageShown();
+  const navPages = useNavPages();
   return (
     <footer className={`${styles.footer} ${contained ? styles.contained : ''}`}>
       <span>Eugene Akiwumi · Stockholm</span>
@@ -14,6 +15,7 @@ export default function SiteFooter({ contained = false }: { contained?: boolean 
         {shown('about') && <Link href="/about">About</Link>}
         {shown('prints') && <Link href="/prints">Prints</Link>}
         {shown('news') && <Link href="/news">News</Link>}
+        {navPages.map((page) => <Link key={page.slug} href={`/${page.slug}`}>{page.title}</Link>)}
         {shown('contact') && <Link href="/contact">Contact</Link>}
       </nav>
     </footer>

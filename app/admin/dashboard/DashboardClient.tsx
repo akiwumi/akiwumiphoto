@@ -10,10 +10,9 @@ import GalleriesOverview from './GalleriesOverview';
 import { useGalleries } from './useGalleries';
 import GalleryEditor from './tabs/GalleriesTab';
 import VideosTab from './tabs/VideosTab';
-import PagesTab from './tabs/PagesTab';
 import PrintsTab from './tabs/PrintsTab';
 import ModalsTab, { useModals } from './tabs/ModalsTab';
-import PageVisibility from './PageVisibility';
+import SitePagesTab, { BUILT_IN_PAGES, pagePath, useSitePages, type PageView } from './tabs/SitePagesTab';
 
 const COLLAPSE_KEY = 'akiwumi-admin-sidebar-collapsed';
 
@@ -21,9 +20,11 @@ export default function DashboardClient() {
   const router = useRouter();
   const galleries = useGalleries();
   const modals = useModals();
+  const sitePages = useSitePages();
   const [section, setSection] = useState<Section>('galleries');
   const [galleryId, setGalleryId] = useState<string | null>(null);
   const [modalId, setModalId] = useState<string | null>(null);
+  const [pageView, setPageView] = useState<PageView>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
@@ -42,6 +43,7 @@ export default function DashboardClient() {
     setSection(next);
     setGalleryId(null);
     setModalId(null);
+    setPageView(null);
     setMobileOpen(false);
   };
 
@@ -74,7 +76,19 @@ export default function DashboardClient() {
       break;
     case 'videos': header = { title: 'Videos', subtitle: 'Films on the Film page', preview: { href: '/videography', label: 'Show preview' } }; break;
     case 'prints': header = { title: 'Prints', subtitle: 'Sizes, prices, availability and orders', preview: { href: '/prints', label: 'Show preview' } }; break;
-    case 'pages': header = { title: 'Pages', subtitle: 'Choose which pages are visible, and edit their content', preview: { href: '/about', label: 'Show preview' } }; break;
+    case 'pages': {
+      const builtIn = BUILT_IN_PAGES.find((p) => p.key === pageView);
+      const created = sitePages.pages.find((p) => p.id === pageView);
+      const parent = pageView?.startsWith('new:') ? sitePages.pages.find((p) => p.id === pageView.slice(4)) : null;
+      if (builtIn) header = { title: builtIn.title, subtitle: builtIn.description, preview: { href: builtIn.href, label: 'Show preview' } };
+      else if (created) header = { title: created.title, subtitle: `${created.parent_id ? 'Sub page' : 'Page'} · ${pagePath(created, sitePages.pages)}`, preview: created.published ? { href: pagePath(created, sitePages.pages), label: 'View on site' } : undefined };
+      else if (pageView) header = { title: parent ? 'New sub page' : 'New page', subtitle: parent ? `Inside ${parent.title}` : 'Build it from text, images and more' };
+      else {
+        const count = sitePages.pages.length;
+        header = { title: 'Pages', subtitle: `${count} created ${count === 1 ? 'page' : 'pages'} · built-in pages · visibility`, onAdd: () => setPageView('new') };
+      }
+      break;
+    }
     case 'modals':
       header = modalId
         ? { title: modalId === 'new' ? 'New modal' : 'Edit modal', subtitle: 'Pops up on the pages you choose, then lives on the News page' }
@@ -151,12 +165,7 @@ export default function DashboardClient() {
           )}
           {section === 'videos' && <div className={`${styles.legacy} ${styles.legacyTheme}`} style={{ height: 'min(760px, 75dvh)', marginTop: 32 }}><VideosTab /></div>}
           {section === 'prints' && <div className={`${styles.legacy} ${styles.legacyTheme}`} style={{ marginTop: 8 }}><PrintsTab /></div>}
-          {section === 'pages' && (
-            <>
-              <div className={styles.contentPad} style={{ paddingBottom: 0 }}><PageVisibility /></div>
-              <div className={`${styles.legacy} ${styles.legacyTheme}`}><PagesTab /></div>
-            </>
-          )}
+          {section === 'pages' && <SitePagesTab state={sitePages} view={pageView} onView={setPageView} />}
           {section === 'modals' && <ModalsTab state={modals} editingId={modalId} onEdit={setModalId} />}
           {section === 'settings' && <SettingsSection />}
         </div>

@@ -7,6 +7,7 @@ import SiteAnalytics from '@/components/SiteAnalytics';
 import { SITE_URL } from '@/lib/site-origin';
 import { connection } from 'next/server';
 import { fetchHiddenPages } from '@/lib/site-visibility';
+import { fetchNavPages } from '@/lib/site-pages';
 import { SiteVisibilityProvider } from '@/components/SiteVisibility';
 
 const spaceGrotesk = Space_Grotesk({
@@ -43,12 +44,12 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Read per request so hiding a page in the admin applies without a redeploy.
   await connection();
-  const hiddenPages = await fetchHiddenPages();
+  const [hiddenPages, navPages] = await Promise.all([fetchHiddenPages(), fetchNavPages()]);
 
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${bebasNeue.variable}`}>
       <body className="bg-black text-white min-h-dvh antialiased" style={{ fontFamily: 'var(--font-space-grotesk), Helvetica Neue, Arial, sans-serif' }}>
-        <SiteVisibilityProvider hidden={hiddenPages}>
+        <SiteVisibilityProvider hidden={hiddenPages} navPages={navPages}>
           <LayoutTransition>
             {children}
           </LayoutTransition>

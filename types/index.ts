@@ -176,3 +176,30 @@ export interface SiteModal {
   created_at: string;
   updated_at: string;
 }
+
+/** A page the admin creates, served at /<slug> or /<parent>/<slug>; see lib/site-pages.ts. */
+export interface SitePage {
+  id: string;
+  /** Set on sub pages; nesting is one level deep. */
+  parent_id: string | null;
+  title: string;
+  slug: string;
+  intro: string;
+  /** Validated with parseBlocks (lib/page-blocks.ts) before rendering. */
+  blocks: unknown;
+  cover_image: string | null;
+  cover_width: number | null;
+  cover_height: number | null;
+  seo_description: string | null;
+  published: boolean;
+  show_in_nav: boolean;
+  nav_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A created page as the menu links to it. */
+export interface NavPage {
+  title: string;
+  slug: string;
+}
