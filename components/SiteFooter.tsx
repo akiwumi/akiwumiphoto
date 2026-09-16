@@ -9,6 +9,7 @@ export default function SiteFooter({ contained = false }: { contained?: boolean 
         <Link href="/videography">Film</Link>
         <Link href="/about">About</Link>
         <Link href="/prints">Prints</Link>
+        <Link href="/news">News</Link>
         <Link href="/contact">Contact</Link>
       </nav>
     </footer>

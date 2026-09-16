@@ -11,7 +11,8 @@ async function getGalleries(): Promise<Gallery[]> {
       .from('galleries')
       .select('id, title, slug, description, cover_image, sort_order, published, created_at, updated_at')
       .eq('published', true)
-      .order('sort_order', { ascending: true });
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
     const galleries = data || [];
@@ -35,7 +36,7 @@ export default async function HomePage() {
   return (
     <main className="full-screen bg-black flex flex-col overflow-hidden">
       <NavBar />
-      <div className="site-page-heading"><h1>Projects</h1><p>Photography by Eugene Akiwumi.</p></div>
+      <div className="site-page-heading"><h1>Gallery</h1><p>Photography by Eugene Akiwumi.</p></div>
       <div className="gallery-feed-scroll flex-1 overflow-y-auto">
         <GalleryCarousel galleries={galleries} />
       </div>

@@ -4,7 +4,7 @@ import type { Gallery } from '@/types';
 import styles from './ProjectGrid.module.css';
 
 export default function GalleryCarousel({ galleries }: { galleries: Gallery[] }) {
-  if (!galleries.length) return <p className={styles.empty}>Projects are coming soon. <Link href="/contact">Get in touch</Link></p>;
+  if (!galleries.length) return <p className={styles.empty}>The gallery is coming soon. <Link href="/contact">Get in touch</Link></p>;
   return (
     <div className={styles.grid}>
       {galleries.map((gallery, index) => (

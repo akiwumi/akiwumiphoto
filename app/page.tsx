@@ -28,6 +28,7 @@ async function getSelectedProjects() {
       .eq('published', true)
       .not('cover_image', 'is', null)
       .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
       .limit(3);
     if (error) throw error;
     return await Promise.all((data || []).map(async (project) => ({
@@ -71,7 +72,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <div className={styles.archiveLink}><Link href="/home">View all projects <span aria-hidden="true">↗</span></Link></div>
+      <div className={styles.archiveLink}><Link href="/home">View the full gallery <span aria-hidden="true">↗</span></Link></div>
 
       <section id="services" className={styles.services} aria-labelledby="services-title">
         <div>
@@ -81,7 +82,7 @@ export default async function HomePage() {
         </div>
         <div className={styles.serviceList}>
           <article><h3>Portrait photography</h3><p>Portraits of people, artists and creative communities.</p><Link href="/home">Explore photography ↗</Link></article>
-          <article><h3>Documentary & editorial</h3><p>Photographic stories about people, culture and place.</p><Link href="/home">Explore projects ↗</Link></article>
+          <article><h3>Documentary & editorial</h3><p>Photographic stories about people, culture and place.</p><Link href="/home">Explore the gallery ↗</Link></article>
           <article><h3>Film & moving image</h3><p>Documentaries, music videos and commercial filmmaking.</p><Link href="/videography">Watch films ↗</Link></article>
         </div>
       </section>

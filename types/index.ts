@@ -152,3 +152,27 @@ export interface PurchaseMessage {
   status: 'received' | 'reviewing' | 'confirmed' | 'rejected';
   created_at: string;
 }
+
+export type ModalFrequency = 'every_view' | 'once_per_session' | 'once';
+
+/** An announcement that pops up on chosen pages; see lib/site-modals.ts. */
+export interface SiteModal {
+  id: string;
+  title: string;
+  body: string;
+  cta_label: string | null;
+  cta_url: string | null;
+  /** Page keys from SITE_PAGES, or 'all'. */
+  pages: string[];
+  delay_seconds: number;
+  /** Null stays open until dismissed. */
+  auto_close_seconds: number | null;
+  frequency: ModalFrequency;
+  starts_at: string | null;
+  ends_at: string | null;
+  active: boolean;
+  show_on_news: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}

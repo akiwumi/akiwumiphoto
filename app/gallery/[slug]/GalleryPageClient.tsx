@@ -69,7 +69,7 @@ export default function GalleryPageClient({ gallery, images, sizes, sold, sectio
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <polyline points="15,18 9,12 15,6" />
             </svg>
-            Projects / {gallery.title}
+            Gallery / {gallery.title}
           </Link>
 
           <h1

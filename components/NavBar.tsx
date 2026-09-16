@@ -31,10 +31,11 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
       </button>
       <nav id={menuId} aria-label="Main navigation" className={`${styles.navigation} ${menuOpen ? styles.open : ''}`}
         onClick={() => setMenuOpen(false)}>
-        <Link href="/home" aria-current={pathname === '/home' || pathname.startsWith('/gallery/') ? 'page' : undefined}>Projects</Link>
+        <Link href="/home" aria-current={pathname === '/home' || pathname.startsWith('/gallery/') ? 'page' : undefined}>Gallery</Link>
         <Link href="/videography" aria-current={pathname === '/videography' ? 'page' : undefined}>Film</Link>
         <Link href="/#services">Services</Link>
         <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>
+        <Link href="/news" aria-current={pathname === '/news' ? 'page' : undefined}>News</Link>
         <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>
         <Link href="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>
         <Link href="/basket" aria-current={pathname === '/basket' ? 'page' : undefined}

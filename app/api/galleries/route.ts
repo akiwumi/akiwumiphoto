@@ -8,7 +8,8 @@ export async function GET() {
       .from('galleries')
       .select('id, title, slug, description, cover_image, sort_order')
       .eq('published', true)
-      .order('sort_order', { ascending: true });
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
     return NextResponse.json(data);

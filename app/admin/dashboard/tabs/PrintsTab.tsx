@@ -339,7 +339,7 @@ function AvailabilitySection() {
         &ldquo;3 of 10 sold&rdquo; and can&apos;t order more than remain.
       </p>
       <div className="max-w-sm">
-        <label style={LABEL}>Project</label>
+        <label style={LABEL}>Gallery</label>
         <select style={INPUT} value={galleryId} onChange={(e) => setGalleryId(e.target.value)}>
           {galleries.map((g) => <option key={g.id} value={g.id}>{g.title}{g.published ? '' : ' (unpublished)'}</option>)}
         </select>

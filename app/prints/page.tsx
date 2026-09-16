@@ -46,7 +46,7 @@ export default async function PrintsPage() {
             <CurrencySelect />
           </div>
           <p className="prints-intro">
-            Every photograph in the projects is available as a print in the sizes below. Each size is
+            Every photograph in the gallery is available as a print in the sizes below. Each size is
             its own numbered edition. Open any photograph and choose <strong>Add to basket</strong>.
           </p>
         </Reveal>

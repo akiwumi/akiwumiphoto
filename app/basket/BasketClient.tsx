@@ -147,8 +147,8 @@ export default function BasketClient() {
       ) : basket.length === 0 ? (
         <div className="basket-empty">
           <p>Your basket is empty.</p>
-          <p>Open any photograph in the projects and choose <strong>Add to basket</strong>.</p>
-          <Link href="/home" className="basket-button">Browse projects</Link>
+          <p>Open any photograph in the gallery and choose <strong>Add to basket</strong>.</p>
+          <Link href="/home" className="basket-button">Browse the gallery</Link>
         </div>
       ) : loadError && !ready ? (
         <p className="basket-error" role="alert">Your basket could not be loaded. Please refresh the page.</p>

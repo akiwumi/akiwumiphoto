@@ -11,6 +11,7 @@ const STATIC_PAGES: { path: string; priority: number }[] = [
   { path: '/home', priority: 0.9 },
   { path: '/prints', priority: 0.9 },
   { path: '/videography', priority: 0.8 },
+  { path: '/news', priority: 0.6 },
   { path: '/about', priority: 0.7 },
   { path: '/contact', priority: 0.7 },
   { path: '/register', priority: 0.3 },
