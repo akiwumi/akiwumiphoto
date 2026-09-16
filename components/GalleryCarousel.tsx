@@ -11,7 +11,7 @@ export default function GalleryCarousel({ galleries }: { galleries: Gallery[] })
         <Link href={`/gallery/${gallery.slug}`} key={gallery.id} className={styles.card}>
           <div className={styles.image}>
             {gallery.cover_image && <Image src={gallery.cover_image} alt={gallery.title} fill unoptimized loading={index < 3 ? 'eager' : 'lazy'} sizes="(max-width: 700px) 100vw, 33vw" />}
-            <div className={styles.caption}><span>{gallery.title}</span><span aria-hidden="true">↗</span></div>
+            <div className={styles.caption}><span>{gallery.title}</span></div>
           </div>
         </Link>
       ))}
