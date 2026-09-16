@@ -6,6 +6,7 @@ import { signUrl } from '@/lib/signed-urls';
 import styles from './page.module.css';
 import NavBar from '@/components/NavBar';
 import SiteFooter from '@/components/SiteFooter';
+import { fetchHiddenPages } from '@/lib/site-visibility';
 
 const introduction = 'Stockholm-based photographer and filmmaker documenting people, culture and place.';
 
@@ -42,7 +43,8 @@ async function getSelectedProjects() {
 }
 
 export default async function HomePage() {
-  const projects = await getSelectedProjects();
+  const [projects, hidden] = await Promise.all([getSelectedProjects(), fetchHiddenPages()]);
+  const shown = (key: string) => !hidden.includes(key);
 
   return (
     <main className={styles.page}>
@@ -53,6 +55,7 @@ export default async function HomePage() {
         <h1 id="intro-title">{introduction}</h1>
       </section>
 
+      {shown('gallery') && <>
       <section aria-label="Selected photographs" className={styles.projects}>
         {projects.length > 0 ? projects.map((project, index) => (
           <Link key={project.id} href={`/gallery/${project.slug}`} className={styles.project}>
@@ -73,19 +76,20 @@ export default async function HomePage() {
       </section>
 
       <div className={styles.archiveLink}><Link href="/home">View the full gallery <span aria-hidden="true">↗</span></Link></div>
+      </>}
 
-      <section id="services" className={styles.services} aria-labelledby="services-title">
+      {shown('services') && <section id="services" className={styles.services} aria-labelledby="services-title">
         <div>
           <p className={styles.eyebrow}>Services</p>
           <h2 id="services-title">Let’s make<br />something meaningful.</h2>
-          <Link href="/contact?subject=Commission" className={styles.contactLink}>Discuss a project <span aria-hidden="true">↗</span></Link>
+          {shown('contact') && <Link href="/contact?subject=Commission" className={styles.contactLink}>Discuss a project <span aria-hidden="true">↗</span></Link>}
         </div>
         <div className={styles.serviceList}>
-          <article><h3>Portrait photography</h3><p>Portraits of people, artists and creative communities.</p><Link href="/home">Explore photography ↗</Link></article>
-          <article><h3>Documentary & editorial</h3><p>Photographic stories about people, culture and place.</p><Link href="/home">Explore the gallery ↗</Link></article>
-          <article><h3>Film & moving image</h3><p>Documentaries, music videos and commercial filmmaking.</p><Link href="/videography">Watch films ↗</Link></article>
+          <article><h3>Portrait photography</h3><p>Portraits of people, artists and creative communities.</p>{shown('gallery') && <Link href="/home">Explore photography ↗</Link>}</article>
+          <article><h3>Documentary & editorial</h3><p>Photographic stories about people, culture and place.</p>{shown('gallery') && <Link href="/home">Explore the gallery ↗</Link>}</article>
+          <article><h3>Film & moving image</h3><p>Documentaries, music videos and commercial filmmaking.</p>{shown('videography') && <Link href="/videography">Watch films ↗</Link>}</article>
         </div>
-      </section>
+      </section>}
       <SiteFooter contained />
     </main>
   );

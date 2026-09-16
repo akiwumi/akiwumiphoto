@@ -13,6 +13,7 @@ import VideosTab from './tabs/VideosTab';
 import PagesTab from './tabs/PagesTab';
 import PrintsTab from './tabs/PrintsTab';
 import ModalsTab, { useModals } from './tabs/ModalsTab';
+import PageVisibility from './PageVisibility';
 
 const COLLAPSE_KEY = 'akiwumi-admin-sidebar-collapsed';
 
@@ -73,7 +74,7 @@ export default function DashboardClient() {
       break;
     case 'videos': header = { title: 'Videos', subtitle: 'Films on the Film page', preview: { href: '/videography', label: 'Show preview' } }; break;
     case 'prints': header = { title: 'Prints', subtitle: 'Sizes, prices, availability and orders', preview: { href: '/prints', label: 'Show preview' } }; break;
-    case 'pages': header = { title: 'Pages', subtitle: 'About page and landing page content', preview: { href: '/about', label: 'Show preview' } }; break;
+    case 'pages': header = { title: 'Pages', subtitle: 'Choose which pages are visible, and edit their content', preview: { href: '/about', label: 'Show preview' } }; break;
     case 'modals':
       header = modalId
         ? { title: modalId === 'new' ? 'New modal' : 'Edit modal', subtitle: 'Pops up on the pages you choose, then lives on the News page' }
@@ -150,7 +151,12 @@ export default function DashboardClient() {
           )}
           {section === 'videos' && <div className={`${styles.legacy} ${styles.legacyTheme}`} style={{ height: 'min(760px, 75dvh)', marginTop: 32 }}><VideosTab /></div>}
           {section === 'prints' && <div className={`${styles.legacy} ${styles.legacyTheme}`} style={{ marginTop: 8 }}><PrintsTab /></div>}
-          {section === 'pages' && <div className={`${styles.legacy} ${styles.legacyTheme}`} style={{ marginTop: 8 }}><PagesTab /></div>}
+          {section === 'pages' && (
+            <>
+              <div className={styles.contentPad} style={{ paddingBottom: 0 }}><PageVisibility /></div>
+              <div className={`${styles.legacy} ${styles.legacyTheme}`}><PagesTab /></div>
+            </>
+          )}
           {section === 'modals' && <ModalsTab state={modals} editingId={modalId} onEdit={setModalId} />}
           {section === 'settings' && <SettingsSection />}
         </div>

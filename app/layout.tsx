@@ -5,6 +5,9 @@ import './site-design.css';
 import LayoutTransition from '@/components/LayoutTransition';
 import SiteAnalytics from '@/components/SiteAnalytics';
 import { SITE_URL } from '@/lib/site-origin';
+import { connection } from 'next/server';
+import { fetchHiddenPages } from '@/lib/site-visibility';
+import { SiteVisibilityProvider } from '@/components/SiteVisibility';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -37,13 +40,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read per request so hiding a page in the admin applies without a redeploy.
+  await connection();
+  const hiddenPages = await fetchHiddenPages();
+
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${bebasNeue.variable}`}>
       <body className="bg-black text-white min-h-dvh antialiased" style={{ fontFamily: 'var(--font-space-grotesk), Helvetica Neue, Arial, sans-serif' }}>
-        <LayoutTransition>
-          {children}
-        </LayoutTransition>
+        <SiteVisibilityProvider hidden={hiddenPages}>
+          <LayoutTransition>
+            {children}
+          </LayoutTransition>
+        </SiteVisibilityProvider>
         <SiteAnalytics />
       </body>
     </html>

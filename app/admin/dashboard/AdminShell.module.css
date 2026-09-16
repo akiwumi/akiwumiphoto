@@ -273,3 +273,10 @@
 .legacyTheme :global(.hover\:bg-red:hover) { background: var(--a-danger); }
 .legacyTheme :global(.border-white\/10) { border-color: var(--a-border); }
 .legacyTheme :global(.bg-black\/40) { background: var(--a-surface); border-radius: 12px; overflow: hidden; }
+
+/* Page visibility */
+.visibilityPanel { max-width: 760px; margin-bottom: 8px; }
+.visibilityList { margin: 0; padding: 0; list-style: none; }
+.visibilityRow { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--a-border); }
+.visibilityName { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.visibilityState { min-width: 52px; }

@@ -1,8 +1,31 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { fetchHiddenPages, hiddenPageFor } from '@/lib/site-visibility';
+
+// Hidden pages are looked up at most this often per server instance, so
+// hiding or showing a page in the admin applies within this many seconds.
+const HIDDEN_PAGES_TTL_MS = 15_000;
+let hiddenCache: { pages: string[]; at: number } | null = null;
+
+async function hiddenPages(): Promise<string[]> {
+  if (!hiddenCache || Date.now() - hiddenCache.at > HIDDEN_PAGES_TTL_MS) {
+    hiddenCache = { pages: await fetchHiddenPages(), at: Date.now() };
+  }
+  return hiddenCache.pages;
+}
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // A page the admin has hidden answers as if it didn't exist.
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/register')) {
+    if (hiddenPageFor(pathname, await hiddenPages())) {
+      return NextResponse.rewrite(new URL('/__hidden-page', request.url), { status: 404 });
+    }
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -31,5 +54,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/register/:path*'],
+  matcher: [
+    '/admin/:path*', '/register/:path*',
+    '/home', '/gallery/:path*', '/videography', '/prints', '/news', '/about', '/contact', '/basket',
+  ],
 };

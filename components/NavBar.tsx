@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useId, useRef, useState } from 'react';
 import styles from './SiteChrome.module.css';
 import { useBasketCount } from '@/lib/basket-store';
+import { useIsPageShown } from './SiteVisibility';
 
 export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
@@ -12,6 +13,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
   const menuId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const basketCount = useBasketCount();
+  const shown = useIsPageShown();
   return (
     <header className={`${styles.header} ${contained ? styles.contained : ''}`}
       onKeyDown={(event) => {
@@ -31,17 +33,19 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
       </button>
       <nav id={menuId} aria-label="Main navigation" className={`${styles.navigation} ${menuOpen ? styles.open : ''}`}
         onClick={() => setMenuOpen(false)}>
-        <Link href="/home" aria-current={pathname === '/home' || pathname.startsWith('/gallery/') ? 'page' : undefined}>Gallery</Link>
-        <Link href="/videography" aria-current={pathname === '/videography' ? 'page' : undefined}>Film</Link>
-        <Link href="/#services">Services</Link>
-        <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>
-        <Link href="/news" aria-current={pathname === '/news' ? 'page' : undefined}>News</Link>
-        <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>
-        <Link href="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>
-        <Link href="/basket" aria-current={pathname === '/basket' ? 'page' : undefined}
-          aria-label={basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket'}>
-          Basket{basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
-        </Link>
+        {shown('gallery') && <Link href="/home" aria-current={pathname === '/home' || pathname.startsWith('/gallery/') ? 'page' : undefined}>Gallery</Link>}
+        {shown('videography') && <Link href="/videography" aria-current={pathname === '/videography' ? 'page' : undefined}>Film</Link>}
+        {shown('services') && <Link href="/#services">Services</Link>}
+        {shown('prints') && <Link href="/prints" aria-current={pathname === '/prints' ? 'page' : undefined}>Prints</Link>}
+        {shown('news') && <Link href="/news" aria-current={pathname === '/news' ? 'page' : undefined}>News</Link>}
+        {shown('about') && <Link href="/about" aria-current={pathname === '/about' ? 'page' : undefined}>About</Link>}
+        {shown('contact') && <Link href="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>}
+        {shown('basket') && (
+          <Link href="/basket" aria-current={pathname === '/basket' ? 'page' : undefined}
+            aria-label={basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket'}>
+            Basket{basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
+          </Link>
+        )}
       </nav>
     </header>
   );
