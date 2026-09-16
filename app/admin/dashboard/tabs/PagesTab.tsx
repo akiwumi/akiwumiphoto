@@ -166,17 +166,7 @@ export default function PagesTab() {
               {uploadingSplashBg ? 'Uploading…' : 'Upload Background Image'}
             </button>
           </div>
-          <div className="flex items-center gap-3">
-            <label style={{ ...LABEL, margin: 0 }}>Ambient Music</label>
-            <button
-              onClick={() => set('splash', 'music_enabled', get('splash', 'music_enabled') === 'true' ? 'false' : 'true')}
-              className="relative w-12 h-6 rounded-full transition-colors"
-              style={{ background: get('splash', 'music_enabled') === 'true' ? '#22c55e' : '#444', fontFamily: 'inherit' }}
-            >
-              <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: get('splash', 'music_enabled') === 'true' ? 'calc(100% - 22px)' : 2 }} />
-            </button>
-          </div>
-          <button onClick={() => save('splash', { title: get('splash', 'title'), music_enabled: get('splash', 'music_enabled'), bg_image: get('splash', 'bg_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
+          <button onClick={() => save('splash', { title: get('splash', 'title'), bg_image: get('splash', 'bg_image') })} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium w-fit" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>

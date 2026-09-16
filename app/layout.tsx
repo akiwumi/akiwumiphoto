@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import { Space_Grotesk, Bebas_Neue } from 'next/font/google';
 import './globals.css';
 import './site-design.css';
-import { AudioProvider } from '@/contexts/AudioContext';
-import MusicToggle from '@/components/MusicToggle';
 import LayoutTransition from '@/components/LayoutTransition';
 import SiteAnalytics from '@/components/SiteAnalytics';
 import { SITE_URL } from '@/lib/site-origin';
@@ -43,12 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${bebasNeue.variable}`}>
       <body className="bg-black text-white min-h-dvh antialiased" style={{ fontFamily: 'var(--font-space-grotesk), Helvetica Neue, Arial, sans-serif' }}>
-        <AudioProvider>
-          <LayoutTransition>
-            {children}
-          </LayoutTransition>
-          <MusicToggle />
-        </AudioProvider>
+        <LayoutTransition>
+          {children}
+        </LayoutTransition>
         <SiteAnalytics />
       </body>
     </html>
