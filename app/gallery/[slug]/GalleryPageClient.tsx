@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Lightbox from '@/components/Lightbox';
 import TileBasketButton from '@/components/TileBasketButton';
+import NotForSaleStamp from '@/components/NotForSaleStamp';
 import { defaultSize } from '@/lib/print-availability';
 import type { Gallery, GalleryImage, PrintSize, SoldBySize } from '@/types';
 
@@ -132,6 +133,7 @@ function ImageTile({ image, priority, index, basketSize, onClick }: TileProps) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent motion-overlay" />
       <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
       {basketSize && <TileBasketButton imageId={image.id} size={basketSize} />}
+      {image.for_sale === false && <NotForSaleStamp raised={Boolean(image.title || image.description)} />}
       <div className="absolute bottom-0 left-0 right-0 p-3">
         {image.title && (
           <p className="text-white font-bold text-sm uppercase" style={{ letterSpacing: '0.08em' }}>

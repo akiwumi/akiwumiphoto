@@ -915,6 +915,41 @@ p.contact-status-error {
   }
 }
 
+/* Stamp over photographs marked not for sale; above the image shield. */
+.not-for-sale-stamp {
+  position: absolute;
+  bottom: clamp(14px, 6%, 32px);
+  left: 50%;
+  z-index: 3;
+  padding: 6px 16px;
+  border: 3px solid #FFFFFF;
+  background: rgba(0, 0, 0, 0.18);
+  color: #FFFFFF;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Clear of the caption on tiles that show a title or description. */
+.not-for-sale-stamp-raised {
+  bottom: 76px;
+}
+
+/* Admin thumbnails are too small for the full stamp. */
+.not-for-sale-stamp-small {
+  bottom: 8px;
+  padding: 2px 6px;
+  border-width: 2px;
+  font-size: 10px;
+}
+
 /* One-click add on gallery tiles; sits above the image shield. */
 .tile-basket {
   position: absolute;

@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { supabase } from '@/lib/supabase';
 import { extractStoragePath } from '@/lib/storage-utils';
 import { DEMO_GALLERIES, DEMO_IMAGES } from '@/lib/demo-data';
+import NotForSaleStamp from '@/components/NotForSaleStamp';
 import type { Gallery, GalleryImage } from '@/types';
 
 function slugify(title: string) {
@@ -447,6 +448,18 @@ function GalleryEditor({
     fetchImages();
   };
 
+  // Marks a photograph not for sale: it shows a stamp and loses its basket
+  // and print-enquiry buttons on the site. The same flag as Prints → Availability.
+  const handleForSaleToggle = async (imageId: string, forSale: boolean) => {
+    if (isDemoMode) return;
+    setImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, for_sale: forSale } : img)));
+    const { error } = await supabase.from('gallery_images').update({ for_sale: forSale }).eq('id', imageId);
+    if (error) {
+      setImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, for_sale: !forSale } : img)));
+      setMsg(`Could not update: ${error.message}`);
+    }
+  };
+
   const handleImageFieldUpdate = async (imageId: string, field: 'title' | 'description', value: string) => {
     if (isDemoMode) return;
     await supabase.from('gallery_images').update({ [field]: value }).eq('id', imageId);
@@ -662,6 +675,7 @@ function GalleryEditor({
                 onSetCover={() => handleSetCover(img.storage_path)}
                 onDelete={() => handleDeleteImage(img.id)}
                 onUpdate={handleImageFieldUpdate}
+                onForSaleChange={(forSale) => handleForSaleToggle(img.id, forSale)}
               />
             ))}
           </div>
@@ -702,6 +716,7 @@ function ImageCard({
   onSetCover,
   onDelete,
   onUpdate,
+  onForSaleChange,
 }: {
   image: GalleryImage;
   displayUrl: string | null;
@@ -710,6 +725,7 @@ function ImageCard({
   onSetCover: () => void;
   onDelete: () => void;
   onUpdate: (id: string, field: 'title' | 'description', value: string) => void;
+  onForSaleChange: (forSale: boolean) => void;
 }) {
   const [title, setTitle] = useState(image.title || '');
   const [desc, setDesc] = useState(image.description || '');
@@ -751,6 +767,7 @@ function ImageCard({
             COVER
           </div>
         )}
+        {image.for_sale === false && <NotForSaleStamp size="small" />}
       </div>
 
       {/* stop pointer events here so inputs/buttons never start a drag */}
@@ -771,6 +788,17 @@ function ImageCard({
           onChange={(e) => setDesc(e.target.value)}
           onBlur={() => onUpdate(image.id, 'description', desc)}
         />
+
+        {!isDemoMode && (
+          <label className="flex items-center gap-2 mt-2 text-xs text-white cursor-pointer" style={{ letterSpacing: '0.04em' }}>
+            <input
+              type="checkbox"
+              checked={image.for_sale === false}
+              onChange={(e) => onForSaleChange(!e.target.checked)}
+            />
+            Not for sale
+          </label>
+        )}
 
         {!isDemoMode && (
           <div className="flex gap-1 mt-2">

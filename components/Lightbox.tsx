@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import RoomPreview from '@/components/RoomPreview';
 import BuyPrintPanel from '@/components/BuyPrintPanel';
+import NotForSaleStamp from '@/components/NotForSaleStamp';
 import type { GalleryImage, PrintSize, SoldBySize } from '@/types';
 import {
   DEFAULT_ROOM_PREVIEW_FRAME,
@@ -138,7 +139,8 @@ export default function Lightbox({ images, initialIndex, galleryTitle, sizes, so
   // under the caption on narrow ones, where the top bar has no room; CSS
   // shows exactly one of each pair.
   const enquireHref = `/contact?subject=Print+Enquiry&print=${encodeURIComponent(printLabel(image, galleryTitle, current, images.length))}`;
-  const forSale = image.for_sale !== false && sizes.length > 0;
+  const notForSale = image.for_sale === false;
+  const forSale = !notForSale && sizes.length > 0;
   const buyButton = (placement: 'top' | 'footer') => forSale && (
     <button
       type="button"
@@ -193,9 +195,11 @@ export default function Lightbox({ images, initialIndex, galleryTitle, sizes, so
 
           <div className="lightbox-topbar-actions">
             {buyButton('top')}
-            <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-secondary lightbox-enquire-top">
-              Enquire about this print
-            </Link>
+            {!notForSale && (
+              <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-secondary lightbox-enquire-top">
+                Enquire about this print
+              </Link>
+            )}
             <button type="button" onClick={onClose} className="lightbox-close" aria-label="Close lightbox">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -244,6 +248,7 @@ export default function Lightbox({ images, initialIndex, galleryTitle, sizes, so
               <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
             </div>
           )}
+          {notForSale && <NotForSaleStamp />}
         </motion.div>
 
         <div className="lightbox-footer">
@@ -253,9 +258,11 @@ export default function Lightbox({ images, initialIndex, galleryTitle, sizes, so
             <p className="lightbox-count">{current + 1} / {images.length}</p>
             <div className="lightbox-footer-actions">
               {buyButton('footer')}
-              <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-secondary lightbox-enquire-footer">
-                Enquire about this print
-              </Link>
+              {!notForSale && (
+                <Link href={enquireHref} className="lightbox-enquire lightbox-enquire-secondary lightbox-enquire-footer">
+                  Enquire about this print
+                </Link>
+              )}
             </div>
           </div>
 
