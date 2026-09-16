@@ -58,15 +58,15 @@ export default async function HomePage() {
             <div className={styles.photograph}>
               <Image src={project.cover_image!} alt={project.title} fill unoptimized
                 preload={index === 0} loading="eager" sizes="(max-width: 700px) 100vw, 33vw" />
+              <div className={styles.caption}><span>{project.title}</span><span aria-hidden="true">↗</span></div>
             </div>
-            <div className={styles.caption}><span>{project.title}</span><span aria-hidden="true">↗</span></div>
           </Link>
         )) : (
           <Link href="/home" className={`${styles.project} ${styles.fallback}`}>
             <div className={styles.photograph}>
               <Image src="/images/intro-background.jpg" alt="Selected photography by Eugene Akiwumi" fill preload sizes="100vw" />
+              <div className={styles.caption}><span>Explore the photography</span><span aria-hidden="true">↗</span></div>
             </div>
-            <div className={styles.caption}><span>Explore the photography</span><span aria-hidden="true">↗</span></div>
           </Link>
         )}
       </section>

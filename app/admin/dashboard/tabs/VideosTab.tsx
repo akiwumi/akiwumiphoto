@@ -167,7 +167,7 @@ function VideoEditor({ video, onSave, onDelete }: { video: Video; onSave: () => 
     setUploadingThumb(false);
   };
 
-  const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '1rem', outline: 'none', width: '100%' };
+  const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: 'var(--body-size)', outline: 'none', width: '100%' };
   const LABEL = { display: 'block', color: '#666', fontSize: '0.7rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 4 };
 
   return (

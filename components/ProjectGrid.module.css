@@ -3,7 +3,10 @@
 .image { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--site-surface); }
 .image img { object-fit: cover; transition: transform .35s ease; }
 .card:hover img { transform: scale(1.025); }
-.caption { display: flex; justify-content: space-between; gap: 16px; padding-top: 14px; font-size: 12px; line-height: 1.5; }
+/* Gallery titles sit over the bottom of the cover in the page-heading style,
+   with a shadow to hold them against light photographs. */
+.caption { position: absolute; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding: clamp(20px, 2.6vw, 40px); color: #fff; font-size: var(--site-title-size); font-weight: 500; letter-spacing: -.045em; line-height: 1.12; text-shadow: 0 2px 4px rgba(0, 0, 0, .55), 0 6px 28px rgba(0, 0, 0, .65); pointer-events: none; }
+.caption > span:last-child { flex-shrink: 0; }
 .empty { padding: 32px var(--site-gutter) 64px; color: var(--site-muted); }
 @media (max-width: 700px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .image img { transition: none; } .card:hover img { transform: none; } }

@@ -32,6 +32,12 @@
   --screen-2xl: 1536px;
 }
 
+/* Tailwind's text-base is the body size, set in site-design.css. */
+@theme inline {
+  --text-base: var(--body-size);
+  --text-base--line-height: 1.5;
+}
+
 :root {
   --color-overlay: rgba(0, 0, 0, 0.92);
   --duration-fast: 150ms;
@@ -699,7 +705,7 @@ p.contact-status-error {
   margin-top: 6px;
   overflow-y: auto;
   color: rgba(255, 255, 255, 0.72);
-  font-size: 1rem;
+  font-size: var(--body-size);
   line-height: 1.45;
 }
 
@@ -804,7 +810,7 @@ p.contact-status-error {
   right: 84px;
   z-index: 6;
   /* Clear of the next-photo arrow on the right edge. */
-  width: min(380px, calc(100vw - 168px));
+  width: min(640px, calc(100vw - 168px));
   max-height: calc(100dvh - 120px);
   overflow-y: auto;
   padding: 16px 18px 18px;
@@ -846,7 +852,7 @@ p.contact-status-error {
 }
 
 .buy-panel-size {
-  font-size: 1rem;
+  font-size: var(--body-size);
   font-weight: 500;
 }
 
@@ -1465,7 +1471,7 @@ select.register-field {
   border-radius: 12px;
   background: rgba(232, 0, 28, 0.12);
   color: #FFFFFF;
-  font-size: 1rem;
+  font-size: var(--body-size);
   line-height: 1.5;
 }
 
@@ -1494,7 +1500,7 @@ select.register-field {
 .register-confirmation p {
   max-width: 46ch;
   color: rgba(255, 255, 255, 0.76);
-  font-size: 1rem;
+  font-size: var(--body-size);
   line-height: 1.6;
 }
 
@@ -1559,7 +1565,7 @@ select.register-field {
 
 .register-aside-item p {
   color: rgba(255, 255, 255, 0.66);
-  font-size: 1rem;
+  font-size: var(--body-size);
   line-height: 1.55;
 }
 
@@ -1580,7 +1586,7 @@ select.register-field {
 
 .register-summary dd {
   color: #FFFFFF;
-  font-size: 1rem;
+  font-size: var(--body-size);
   overflow-wrap: anywhere;
 }
 
@@ -1636,13 +1642,13 @@ select.register-field {
   background: var(--site-background, #000000);
   color: var(--site-text, #FFFFFF);
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--body-size);
 }
 
 .currency-note {
   flex-basis: 100%;
   color: var(--site-muted, #AAAAAA);
-  font-size: 16px;
+  font-size: var(--body-size);
   line-height: 1.5;
 }
 
@@ -1656,7 +1662,7 @@ select.register-field {
 }
 
 .prints-intro {
-  max-width: 640px;
+  max-width: 1100px;
   margin: -12px 0 32px;
   color: var(--site-muted, #AAAAAA);
   line-height: 1.6;
@@ -1695,7 +1701,7 @@ select.register-field {
 
 .basket-thanks p {
   color: var(--site-muted, #AAAAAA);
-  font-size: 16px;
+  font-size: var(--body-size);
 }
 
 .basket-thanks strong,
@@ -1707,20 +1713,20 @@ select.register-field {
 .basket-loading,
 .basket-total-note {
   color: var(--site-muted, #AAAAAA);
-  font-size: 16px;
+  font-size: var(--body-size);
   line-height: 1.5;
 }
 
 .basket-error,
 .basket-line-problem {
   color: #FF6B6B;
-  font-size: 16px;
+  font-size: var(--body-size);
   line-height: 1.5;
 }
 
 .basket-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 560px);
   align-items: start;
   gap: 48px;
 }
@@ -1747,7 +1753,7 @@ select.register-field {
 
 .basket-line-title {
   margin-bottom: 12px;
-  font-size: 16px;
+  font-size: var(--body-size);
   font-weight: 500;
 }
 
@@ -1779,7 +1785,7 @@ select.register-field {
   background: var(--site-background, #000000);
   color: var(--site-text, #FFFFFF);
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--body-size);
 }
 
 .basket-quantity > div {
@@ -1813,7 +1819,7 @@ select.register-field {
 .basket-line-edition {
   margin-top: 10px;
   color: var(--site-muted, #AAAAAA);
-  font-size: 16px;
+  font-size: var(--body-size);
 }
 
 .basket-line-problem {
@@ -1829,7 +1835,7 @@ select.register-field {
 }
 
 .basket-line-total {
-  font-size: 16px;
+  font-size: var(--body-size);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1881,7 +1887,7 @@ select.register-field {
 
 .basket-form h2 {
   margin: 8px 0 4px;
-  font-size: 16px;
+  font-size: var(--body-size);
   font-weight: 500;
 }
 
@@ -1909,7 +1915,7 @@ select.register-field {
   background: var(--site-background, #000000);
   color: var(--site-text, #FFFFFF);
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--body-size);
 }
 
 .basket-form input:focus,

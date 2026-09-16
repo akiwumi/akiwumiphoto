@@ -147,18 +147,18 @@ export default function RegisterClient({
             </p>
           )}
 
-          <p style={{ fontSize: '1rem' }}>
+          <p style={{ fontSize: 'var(--body-size)' }}>
             The link expires after an hour. If nothing arrives within a few minutes, check your spam
             folder before requesting another.
           </p>
 
           {resent && (
-            <p style={{ color: '#FFFFFF', fontSize: '1rem' }} role="status">
+            <p style={{ color: '#FFFFFF', fontSize: 'var(--body-size)' }} role="status">
               A new link is on its way.
             </p>
           )}
           {formError && (
-            <p style={{ color: '#FF6A7B', fontSize: '1rem' }} role="alert">
+            <p style={{ color: '#FF6A7B', fontSize: 'var(--body-size)' }} role="alert">
               {formError}
             </p>
           )}

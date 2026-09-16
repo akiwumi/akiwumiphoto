@@ -481,7 +481,7 @@ function GalleryEditor({
     color: '#fff',
     padding: '8px 12px',
     fontFamily: 'inherit',
-    fontSize: '1rem',
+    fontSize: 'var(--body-size)',
     outline: 'none',
     width: '100%',
   };

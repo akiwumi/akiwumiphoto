@@ -9,7 +9,7 @@ import type { Gallery, GalleryImage, PrintOrder, PrintSize } from '@/types';
 
 type Section = 'sizes' | 'details' | 'availability' | 'orders';
 
-const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '1rem', outline: 'none', width: '100%' };
+const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: 'var(--body-size)', outline: 'none', width: '100%' };
 const LABEL = { display: 'block', color: '#888', fontSize: '0.7rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 4 };
 const BUTTON = { background: '#E8001C', color: '#fff', letterSpacing: '0.1em', fontFamily: 'inherit', border: 'none', cursor: 'pointer' };
 const QUIET_BUTTON = { background: 'transparent', color: '#aaa', border: '1px solid #444', fontFamily: 'inherit', cursor: 'pointer' };
@@ -363,11 +363,11 @@ function AvailabilitySection() {
               {sizes.map((size) => {
                 const key = `${image.id}:${size.id}`;
                 return (
-                  <label key={size.id} className="flex flex-col text-xs" style={{ color: '#888', width: 96 }}>
+                  <label key={size.id} className="flex flex-col text-xs" style={{ color: '#888', minWidth: 96 }}>
                     <span>{size.name} sold</span>
                     <span className="flex items-center gap-1">
                       <input
-                        style={{ ...INPUT, width: 52, padding: '6px 8px' }}
+                        style={{ ...INPUT, width: 'calc(3ch + 16px)', padding: '6px 8px' }}
                         inputMode="numeric"
                         value={sold[key] ?? '0'}
                         onChange={(e) => setSold((p) => ({ ...p, [key]: e.target.value }))}

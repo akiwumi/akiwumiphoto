@@ -9,7 +9,8 @@
 .photograph { position: relative; height: clamp(280px, 39vw, 600px); background: #1a1a1a; overflow: hidden; }
 .photograph img { object-fit: cover; transition: transform .35s ease; }
 .project:hover img { transform: scale(1.025); }
-.caption { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; font-size: 12px; line-height: 1.5; }
+/* Project titles sit over the bottom of the photograph in the page-heading style. */
+.caption { position: absolute; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding: clamp(20px, 2.6vw, 40px); color: #fff; font-size: var(--site-title-size); font-weight: 500; letter-spacing: -.045em; line-height: 1.12; text-shadow: 0 2px 4px rgba(0, 0, 0, .55), 0 6px 28px rgba(0, 0, 0, .65); pointer-events: none; }
 .caption > span:last-child { flex-shrink: 0; }
 .fallback { grid-column: 1 / -1; }
 .archiveLink { display: flex; justify-content: flex-end; padding: 20px 0 56px; font-size: 14px; }
@@ -20,7 +21,7 @@
 .serviceList article { padding: 24px 0; border-bottom: 1px solid var(--site-border); }
 .serviceList article:first-child { padding-top: 0; }
 .serviceList h3 { font-size: 19px; font-weight: 500; margin-bottom: 10px; }
-.serviceList p { color: var(--site-muted); font-size: 16px; line-height: 1.6; margin-bottom: 14px; }
+.serviceList p { color: var(--site-muted); font-size: var(--body-size); line-height: 1.6; margin-bottom: 14px; }
 .serviceList a { font-size: 12px; }
 @media (max-width: 900px) { .page { padding: 0 24px; } .services { gap: 40px; } }
 @media (max-width: 700px) {
