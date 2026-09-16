@@ -109,7 +109,7 @@ function VideoCard({ video, priority, index, onClick }: { video: Video; priority
           {video.title}
         </h3>
         {video.description && (
-          <p className="text-grey-mid text-xs mt-1 line-clamp-2">{video.description}</p>
+          <p className="text-grey-mid text-base mt-1 line-clamp-2">{video.description}</p>
         )}
       </div>
     </motion.div>

@@ -70,7 +70,7 @@ export default function VideosTab() {
           className="flex-1 overflow-y-auto"
           style={{ padding: 0, margin: 0 }}
         >
-          {loading && <p className="text-grey-mid text-xs p-3">Loading…</p>}
+          {loading && <p className="text-grey-mid text-base p-3">Loading…</p>}
           {videos.map((v) => (
             <Reorder.Item
               key={v.id}
@@ -103,7 +103,7 @@ export default function VideosTab() {
       <div className="flex-1 overflow-y-auto p-6">
         {!selected ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-grey-mid text-sm">Select or create a video</p>
+            <p className="text-grey-mid text-base">Select or create a video</p>
           </div>
         ) : (
           <VideoEditor video={selected} onSave={fetchVideos} onDelete={() => handleDelete(selected.id)} />
@@ -167,7 +167,7 @@ function VideoEditor({ video, onSave, onDelete }: { video: Video; onSave: () => 
     setUploadingThumb(false);
   };
 
-  const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '0.875rem', outline: 'none', width: '100%' };
+  const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '1rem', outline: 'none', width: '100%' };
   const LABEL = { display: 'block', color: '#666', fontSize: '0.7rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 4 };
 
   return (
@@ -219,7 +219,7 @@ function VideoEditor({ video, onSave, onDelete }: { video: Video; onSave: () => 
         <button onClick={handleSave} disabled={saving} className="px-6 h-9 text-white text-xs uppercase font-medium" style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Saving…' : 'Save'}
         </button>
-        {msg && <span className="text-grey-mid text-xs self-center">{msg}</span>}
+        {msg && <span className="text-grey-mid text-base self-center">{msg}</span>}
       </div>
     </div>
   );

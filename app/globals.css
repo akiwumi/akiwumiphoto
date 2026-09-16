@@ -699,7 +699,7 @@ p.contact-status-error {
   margin-top: 6px;
   overflow-y: auto;
   color: rgba(255, 255, 255, 0.72);
-  font-size: 0.82rem;
+  font-size: 1rem;
   line-height: 1.45;
 }
 
@@ -846,7 +846,7 @@ p.contact-status-error {
 }
 
 .buy-panel-size {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -1465,7 +1465,7 @@ select.register-field {
   border-radius: 12px;
   background: rgba(232, 0, 28, 0.12);
   color: #FFFFFF;
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -1494,7 +1494,7 @@ select.register-field {
 .register-confirmation p {
   max-width: 46ch;
   color: rgba(255, 255, 255, 0.76);
-  font-size: 0.92rem;
+  font-size: 1rem;
   line-height: 1.6;
 }
 
@@ -1559,7 +1559,7 @@ select.register-field {
 
 .register-aside-item p {
   color: rgba(255, 255, 255, 0.66);
-  font-size: 0.84rem;
+  font-size: 1rem;
   line-height: 1.55;
 }
 
@@ -1580,7 +1580,7 @@ select.register-field {
 
 .register-summary dd {
   color: #FFFFFF;
-  font-size: 0.84rem;
+  font-size: 1rem;
   overflow-wrap: anywhere;
 }
 
@@ -1636,13 +1636,13 @@ select.register-field {
   background: var(--site-background, #000000);
   color: var(--site-text, #FFFFFF);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .currency-note {
   flex-basis: 100%;
   color: var(--site-muted, #AAAAAA);
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -1707,14 +1707,14 @@ select.register-field {
 .basket-loading,
 .basket-total-note {
   color: var(--site-muted, #AAAAAA);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
 .basket-error,
 .basket-line-problem {
   color: #FF6B6B;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -1779,7 +1779,7 @@ select.register-field {
   background: var(--site-background, #000000);
   color: var(--site-text, #FFFFFF);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .basket-quantity > div {
@@ -1813,7 +1813,7 @@ select.register-field {
 .basket-line-edition {
   margin-top: 10px;
   color: var(--site-muted, #AAAAAA);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .basket-line-problem {

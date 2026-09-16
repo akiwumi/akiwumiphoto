@@ -80,12 +80,12 @@ export default function ResetPasswordPage() {
         </div>
 
         {status === 'checking' && (
-          <p className="text-grey-mid text-sm text-center" role="status">Checking your link…</p>
+          <p className="text-grey-mid text-base text-center" role="status">Checking your link…</p>
         )}
 
         {status === 'invalid' && (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-white text-sm leading-relaxed">
+            <p className="text-white text-base leading-relaxed">
               This reset link has expired, has already been used, or was opened in a different
               browser from the one that requested it.
             </p>
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
 
         {status === 'done' && (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-white text-sm leading-relaxed">
+            <p className="text-white text-base leading-relaxed">
               Your password has been changed, but this account does not have admin access.
             </p>
             <Link href="/admin" className="admin-text-link">Back to login</Link>
@@ -142,13 +142,13 @@ export default function ResetPasswordPage() {
               />
             </div>
 
-            <label className="flex items-center gap-2 text-grey-mid text-xs cursor-pointer">
+            <label className="flex items-center gap-2 text-grey-mid text-base cursor-pointer">
               <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
               Show passwords
             </label>
 
             {error && (
-              <p className="text-sm text-center" style={{ color: '#E8001C' }} role="alert">{error}</p>
+              <p className="text-base text-center" style={{ color: '#E8001C' }} role="alert">{error}</p>
             )}
 
             <button

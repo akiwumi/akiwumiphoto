@@ -106,7 +106,7 @@ export default function VideoModal({ video, onClose }: Props) {
               {video.title}
             </h2>
             {video.description && (
-              <p className="text-white/75 text-sm mt-2 max-w-[700px]">{video.description}</p>
+              <p className="text-white/75 text-base mt-2 max-w-[700px]">{video.description}</p>
             )}
           </div>
         </motion.div>

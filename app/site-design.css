@@ -8,7 +8,8 @@
   --site-gutter: 60px;
   --site-title-size: clamp(26px, 3.25vw, 48px);
 }
-.public-site { font-family: var(--font-space-grotesk), sans-serif; background: var(--site-background); color: var(--site-text); }
+/* Body text is 16px across the site; headings, navigation, labels and captions set their own sizes. */
+.public-site { font-family: var(--font-space-grotesk), sans-serif; font-size: 16px; background: var(--site-background); color: var(--site-text); }
 .public-site main.full-screen { height: auto; min-height: 80dvh; overflow: visible; background: var(--site-background); }
 .public-site h1 { font-size: var(--site-title-size) !important; font-weight: 500; letter-spacing: -.045em !important; line-height: 1.12; text-transform: none; color: var(--site-text); }
 .public-site h2, .public-site h3 { font-weight: 500; text-transform: none; letter-spacing: -.015em !important; }
@@ -22,7 +23,7 @@
 .public-site .about-portrait { height: auto !important; aspect-ratio: 4 / 5; }
 .public-site .about-bio { height: auto; overflow: visible; padding: 0; margin: 0; background: transparent; }
 .public-site .about-bio h2 { color: var(--site-text); font-size: 22px !important; margin-bottom: 24px; }
-.public-site .about-bio-copy { color: var(--site-muted); font-size: 15px; line-height: 1.75; width: 100%; }
+.public-site .about-bio-copy { color: var(--site-muted); font-size: 16px; line-height: 1.75; width: 100%; }
 .public-site .contact-layout { grid-template-columns: minmax(0, 680px) !important; padding-top: 32px; }
 .public-site .contact-form { padding: 0; gap: 24px; max-width: 680px; background: transparent; }
 .public-site .contact-form-title { font-size: 22px; margin-bottom: 8px; }

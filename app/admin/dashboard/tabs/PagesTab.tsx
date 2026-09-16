@@ -87,7 +87,7 @@ export default function PagesTab() {
     setUploadingPortrait(false);
   };
 
-  const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '0.875rem', outline: 'none', width: '100%' };
+  const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '1rem', outline: 'none', width: '100%' };
   const LABEL = { display: 'block', color: '#666', fontSize: '0.7rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 4 };
 
   const TAB_BTN = (tab: PageKey) => ({
@@ -104,7 +104,7 @@ export default function PagesTab() {
     fontFamily: 'inherit',
   });
 
-  if (loading) return <div className="p-6 text-grey-mid text-sm">Loading…</div>;
+  if (loading) return <div className="p-6 text-grey-mid text-base">Loading…</div>;
 
   return (
     <div className="p-6">
@@ -182,7 +182,7 @@ export default function PagesTab() {
         </div>
       )}
 
-      {msg && <p className="text-grey-mid text-xs mt-4">{msg}</p>}
+      {msg && <p className="text-grey-mid text-base mt-4">{msg}</p>}
     </div>
   );
 }

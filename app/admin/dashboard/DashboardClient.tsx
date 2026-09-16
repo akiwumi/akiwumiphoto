@@ -94,7 +94,7 @@ function SettingsTab() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-10 px-3 bg-black text-white text-sm"
+          className="h-10 px-3 bg-black text-white text-base"
           style={{ border: '1px solid #666', outline: 'none', fontFamily: 'inherit' }}
         />
         <label className="text-grey-mid text-xs uppercase" style={{ letterSpacing: '0.1em' }}>Confirm Password</label>
@@ -102,7 +102,7 @@ function SettingsTab() {
           type="password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="h-10 px-3 bg-black text-white text-sm"
+          className="h-10 px-3 bg-black text-white text-base"
           style={{ border: '1px solid #666', outline: 'none', fontFamily: 'inherit' }}
         />
         <button
@@ -112,7 +112,7 @@ function SettingsTab() {
         >
           Update Password
         </button>
-        {status && <p className="text-sm text-grey-mid">{status}</p>}
+        {status && <p className="text-base text-grey-mid">{status}</p>}
       </form>
     </div>
   );

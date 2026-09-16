@@ -65,7 +65,7 @@ export default async function PrintsPage() {
                   {size.name}
                 </h2>
                 {size.dimensions && (
-                  <p className="text-white text-sm mb-3" style={{ opacity: 0.76 }}>{size.dimensions}</p>
+                  <p className="text-white text-base mb-3" style={{ opacity: 0.76 }}>{size.dimensions}</p>
                 )}
                 <p
                   className="text-white font-medium uppercase text-base mb-4"
@@ -90,7 +90,7 @@ export default async function PrintsPage() {
                   <h3 className="text-white font-bold uppercase mb-3" style={{ letterSpacing: '0.08em' }}>
                     {section.heading}
                   </h3>
-                  <ul className="text-white text-sm space-y-1">
+                  <ul className="text-white text-base space-y-1">
                     {section.items.map((item) => <li key={item}>{item}</li>)}
                   </ul>
                 </div>

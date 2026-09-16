@@ -65,7 +65,7 @@ export default async function VerifiedPage() {
                 ACCOUNT VERIFIED
               </h1>
               <div className="red-rule" style={{ margin: '12px 0 20px' }} />
-              <p style={{ maxWidth: '62ch', marginBottom: 32, color: 'rgba(255, 255, 255, 0.72)', fontSize: '0.95rem', lineHeight: 1.65 }}>
+              <p style={{ maxWidth: '62ch', marginBottom: 32, color: 'rgba(255, 255, 255, 0.72)', fontSize: '1rem', lineHeight: 1.65 }}>
                 Thank you, {collector.first_name} — your email address is confirmed and your details
                 are on record. Now tell us about the photograph you bought.
               </p>
@@ -83,7 +83,7 @@ export default async function VerifiedPage() {
                     <dt>Status</dt>
                     <dd style={{ color: '#E8001C' }}>Verified</dd>
                   </dl>
-                  <p style={{ marginTop: 20, color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.84rem', lineHeight: 1.6 }}>
+                  <p style={{ marginTop: 20, color: 'rgba(255, 255, 255, 0.6)', fontSize: '1rem', lineHeight: 1.6 }}>
                     Every message you send is logged against this account with a reference number, so
                     there is always a record of what you told us and when.
                   </p>

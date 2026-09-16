@@ -100,7 +100,7 @@ export default function AdminLoginPage() {
 
         {mode === 'sent' && (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-white text-sm leading-relaxed">
+            <p className="text-white text-base leading-relaxed">
               If that email belongs to the admin account, a reset link is on its way.
               Open it in this browser, within the hour.
             </p>
@@ -112,7 +112,7 @@ export default function AdminLoginPage() {
 
         {mode === 'forgot' && (
           <form onSubmit={handleForgot} className="flex flex-col gap-4">
-            <p className="text-grey-mid text-sm leading-relaxed">
+            <p className="text-grey-mid text-base leading-relaxed">
               Enter the admin email and we&apos;ll send a link to choose a new password.
             </p>
             <div>
@@ -134,7 +134,7 @@ export default function AdminLoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-center" style={{ color: '#E8001C' }} role="alert">{error}</p>
+              <p className="text-base text-center" style={{ color: '#E8001C' }} role="alert">{error}</p>
             )}
 
             <button
@@ -215,7 +215,7 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-center" style={{ color: '#E8001C' }}>{error}</p>
+            <p className="text-base text-center" style={{ color: '#E8001C' }}>{error}</p>
           )}
 
           <button

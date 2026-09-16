@@ -20,7 +20,7 @@
 .serviceList article { padding: 24px 0; border-bottom: 1px solid var(--site-border); }
 .serviceList article:first-child { padding-top: 0; }
 .serviceList h3 { font-size: 19px; font-weight: 500; margin-bottom: 10px; }
-.serviceList p { color: var(--site-muted); font-size: 14px; line-height: 1.6; margin-bottom: 14px; }
+.serviceList p { color: var(--site-muted); font-size: 16px; line-height: 1.6; margin-bottom: 14px; }
 .serviceList a { font-size: 12px; }
 @media (max-width: 900px) { .page { padding: 0 24px; } .services { gap: 40px; } }
 @media (max-width: 700px) {

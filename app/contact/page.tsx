@@ -228,12 +228,12 @@ function ContactForm() {
       </button>
 
       {status === 'success' && (
-        <p className="contact-status text-center text-sm" role="status">
+        <p className="contact-status text-center text-base" role="status">
           Thank you — your message has been sent. We&apos;ll be in touch.
         </p>
       )}
       {status === 'error' && (
-        <p className="contact-status contact-status-error text-center text-sm" role="alert">
+        <p className="contact-status contact-status-error text-center text-base" role="alert">
           {error}
         </p>
       )}
@@ -261,7 +261,7 @@ export default function ContactPage() {
           {/* Left column — form */}
           <div>
             <Reveal delay={0.1}>
-              <Suspense fallback={<div className="text-black text-sm">Loading…</div>}>
+              <Suspense fallback={<div className="text-black text-base">Loading…</div>}>
                 <ContactForm />
               </Suspense>
             </Reveal>

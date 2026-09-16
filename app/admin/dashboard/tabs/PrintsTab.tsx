@@ -9,7 +9,7 @@ import type { Gallery, GalleryImage, PrintOrder, PrintSize } from '@/types';
 
 type Section = 'sizes' | 'details' | 'availability' | 'orders';
 
-const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '0.875rem', outline: 'none', width: '100%' };
+const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: '1rem', outline: 'none', width: '100%' };
 const LABEL = { display: 'block', color: '#888', fontSize: '0.7rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 4 };
 const BUTTON = { background: '#E8001C', color: '#fff', letterSpacing: '0.1em', fontFamily: 'inherit', border: 'none', cursor: 'pointer' };
 const QUIET_BUTTON = { background: 'transparent', color: '#aaa', border: '1px solid #444', fontFamily: 'inherit', cursor: 'pointer' };
@@ -148,11 +148,11 @@ function SizesSection() {
     await load();
   };
 
-  if (loading) return <p className="text-grey-mid text-sm">Loading…</p>;
+  if (loading) return <p className="text-grey-mid text-base">Loading…</p>;
 
   return (
     <div className="max-w-4xl flex flex-col gap-4">
-      <p className="text-grey-mid text-sm">
+      <p className="text-grey-mid text-base">
         Every photograph is sold in these sizes, and each size is its own edition. Prices are in US dollars;
         buyers can view them in their own currency. Leave the price empty to show POA (not purchasable).
       </p>
@@ -176,7 +176,7 @@ function SizesSection() {
             <input style={INPUT} inputMode="numeric" value={d.edition} onChange={(e) => update(index, { edition: e.target.value })} placeholder="10" />
           </div>
           <div className="flex items-end gap-3 flex-wrap">
-            <label className="flex items-center gap-2 text-white text-xs" style={{ height: 38 }}>
+            <label className="flex items-center gap-2 text-white text-base" style={{ height: 38 }}>
               <input type="checkbox" checked={d.active} onChange={(e) => update(index, { active: e.target.checked })} />
               Offered
             </label>
@@ -199,7 +199,7 @@ function SizesSection() {
           {saving ? 'Saving…' : 'Save sizes'}
         </button>
       </div>
-      {msg && <p className="text-grey-mid text-xs">{msg}</p>}
+      {msg && <p className="text-grey-mid text-base">{msg}</p>}
     </div>
   );
 }
@@ -234,7 +234,7 @@ function DetailsSection() {
     setMsg(error ? `Could not save: ${error.message}` : 'Saved. The prints page shows the new text now.');
   };
 
-  if (loading) return <p className="text-grey-mid text-sm">Loading…</p>;
+  if (loading) return <p className="text-grey-mid text-base">Loading…</p>;
 
   const field = (key: (typeof DETAIL_KEYS)[number]) => ({
     value: values[key] ?? '',
@@ -243,7 +243,7 @@ function DetailsSection() {
 
   return (
     <div className="max-w-2xl flex flex-col gap-6">
-      <p className="text-grey-mid text-sm">One point per line. Leave a list empty to hide that section.</p>
+      <p className="text-grey-mid text-base">One point per line. Leave a list empty to hide that section.</p>
       {(['paper', 'certification'] as const).map((group) => (
         <div key={group} className="flex flex-col gap-3">
           <div>
@@ -259,7 +259,7 @@ function DetailsSection() {
       <button type="button" onClick={save} disabled={saving} className="px-6 h-9 text-xs uppercase font-medium w-fit" style={BUTTON}>
         {saving ? 'Saving…' : 'Save'}
       </button>
-      {msg && <p className="text-grey-mid text-xs">{msg}</p>}
+      {msg && <p className="text-grey-mid text-base">{msg}</p>}
     </div>
   );
 }
@@ -334,7 +334,7 @@ function AvailabilitySection() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-grey-mid text-sm max-w-3xl">
+      <p className="text-grey-mid text-base max-w-3xl">
         Orders never change these numbers: update a sold count once a buyer has paid. Buyers see
         &ldquo;3 of 10 sold&rdquo; and can&apos;t order more than remain.
       </p>
@@ -344,7 +344,7 @@ function AvailabilitySection() {
           {galleries.map((g) => <option key={g.id} value={g.id}>{g.title}{g.published ? '' : ' (unpublished)'}</option>)}
         </select>
       </div>
-      {status && <p className="text-grey-mid text-xs" role="status">{status}</p>}
+      {status && <p className="text-grey-mid text-base" role="status">{status}</p>}
 
       <div className="flex flex-col">
         {images.map((image, index) => (
@@ -353,7 +353,7 @@ function AvailabilitySection() {
               {thumbs[image.id] && <Image src={thumbs[image.id]} alt={`Photo ${index + 1}`} fill unoptimized className="object-cover" sizes="56px" />}
             </div>
             <div style={{ minWidth: 90 }}>
-              <p className="text-white text-sm">Photo {index + 1}</p>
+              <p className="text-white text-base">Photo {index + 1}</p>
               <label className="flex items-center gap-2 text-xs mt-1" style={{ color: image.for_sale === false ? '#888' : '#fff' }}>
                 <input type="checkbox" checked={image.for_sale !== false} onChange={() => toggleForSale(image)} />
                 For sale
@@ -412,23 +412,23 @@ function OrdersSection() {
     setMsg(error ? `Could not update ${order.reference}: ${error.message}` : `${order.reference} marked ${status}.`);
   };
 
-  if (!orders) return <p className="text-grey-mid text-sm">Loading…</p>;
+  if (!orders) return <p className="text-grey-mid text-base">Loading…</p>;
 
   return (
     <div className="max-w-4xl flex flex-col gap-4">
-      <p className="text-grey-mid text-sm">
+      <p className="text-grey-mid text-base">
         Every checkout is recorded here as well as emailed to you. Marking an order paid doesn&apos;t change sold
         counts; update those under Availability &amp; sold.
       </p>
-      {msg && <p className="text-grey-mid text-xs" role="status">{msg}</p>}
-      {orders.length === 0 && <p className="text-white text-sm">No orders yet.</p>}
+      {msg && <p className="text-grey-mid text-base" role="status">{msg}</p>}
+      {orders.length === 0 && <p className="text-white text-base">No orders yet.</p>}
 
       {orders.map((order) => (
         <div key={order.id} className="p-4 flex flex-col gap-3" style={{ border: '1px solid #333' }}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-white text-sm font-bold">{order.reference} · {formatMoney(Number(order.total_usd), 'USD')}</p>
-              <p className="text-grey-mid text-xs mt-1">
+              <p className="text-white text-base font-bold">{order.reference} · {formatMoney(Number(order.total_usd), 'USD')}</p>
+              <p className="text-grey-mid text-base mt-1">
                 {new Date(order.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
                 {order.currency !== 'USD' && ` · viewed in ${order.currency} (≈ ${formatMoney(Number(order.total_usd) * Number(order.exchange_rate), order.currency)})`}
               </p>
@@ -443,15 +443,15 @@ function OrdersSection() {
             </select>
           </div>
 
-          <p className="text-white text-sm">
+          <p className="text-white text-base">
             {order.first_name} {order.last_name} · <a href={`mailto:${order.email}?subject=${encodeURIComponent(`Your print order ${order.reference}`)}`} className="underline">{order.email}</a>
             {order.phone && ` · ${order.phone}`}{order.country && ` · ${order.country}`}
           </p>
-          {order.message && <p className="text-grey-mid text-sm whitespace-pre-line">&ldquo;{order.message}&rdquo;</p>}
+          {order.message && <p className="text-grey-mid text-base whitespace-pre-line">&ldquo;{order.message}&rdquo;</p>}
 
           <ul className="flex flex-col gap-1">
             {order.lines.map((line) => (
-              <li key={`${line.image_id}:${line.size_id}`} className="text-sm" style={{ color: '#ccc' }}>
+              <li key={`${line.image_id}:${line.size_id}`} className="text-base" style={{ color: '#ccc' }}>
                 {line.quantity} × {line.gallery_title}, photo {line.position} (ref {line.file_ref}) · {line.size_name}
                 {line.dimensions && ` ${line.dimensions}`} · {formatMoney(Number(line.unit_price_usd), 'USD')} each ·{' '}
                 {line.sold} of {line.edition_size} sold at the time

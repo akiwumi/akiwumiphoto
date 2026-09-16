@@ -82,7 +82,7 @@ export default async function AboutPage() {
                   {heading}
                 </h2>
               )}
-              <div className="about-bio-copy text-black text-sm leading-relaxed">
+              <div className="about-bio-copy text-black text-base leading-relaxed">
                 {bio
                   .split(/\n\s*\n/)
                   .map((para) => para.trim())

@@ -42,7 +42,7 @@ export default function GalleryPageClient({ gallery, images, sizes, sold }: Prop
           </h1>
 
           {gallery.description && (
-            <p className="text-grey-mid text-sm mb-3 max-w-2xl line-clamp-1">{gallery.description}</p>
+            <p className="text-grey-mid text-base mb-3 max-w-2xl line-clamp-1">{gallery.description}</p>
           )}
 
           <div className="red-rule" />

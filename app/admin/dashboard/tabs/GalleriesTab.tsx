@@ -210,7 +210,7 @@ export default function GalleriesTab() {
             className="flex-1 overflow-y-auto"
             style={{ padding: 0, margin: 0 }}
           >
-            {loading && <p className="text-grey-mid text-xs p-3">Loading…</p>}
+            {loading && <p className="text-grey-mid text-base p-3">Loading…</p>}
             {galleries.map((g) => (
               <Reorder.Item
                 key={g.id}
@@ -261,7 +261,7 @@ export default function GalleriesTab() {
         <div className="flex-1 overflow-y-auto p-6">
           {!selectedGallery ? (
             <div className="flex items-center justify-center h-full">
-              <p className="text-grey-mid text-sm">Select a gallery to edit</p>
+              <p className="text-grey-mid text-base">Select a gallery to edit</p>
             </div>
           ) : (
             <GalleryEditor
@@ -481,7 +481,7 @@ function GalleryEditor({
     color: '#fff',
     padding: '8px 12px',
     fontFamily: 'inherit',
-    fontSize: '0.875rem',
+    fontSize: '1rem',
     outline: 'none',
     width: '100%',
   };
@@ -576,7 +576,7 @@ function GalleryEditor({
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
-        {msg && <span className="text-grey-mid text-xs self-center">{msg}</span>}
+        {msg && <span className="text-grey-mid text-base self-center">{msg}</span>}
       </div>
 
       <div className="h-px bg-white/10 mb-6" />
