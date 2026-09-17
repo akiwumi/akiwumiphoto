@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { validatePurchaseMessage } from '@/lib/collector-validation';
+import { serviceClient } from '@/lib/stripe';
+import { sendRegistrationReceipt } from '@/lib/registration-email';
 
 export const runtime = 'nodejs';
 
@@ -58,16 +60,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: saved, error: writeError } = await supabase
-    .from('purchase_messages')
-    .insert({ collector_id: collector.id, ...values })
-    .select('id, created_at')
-    .single();
+  const { data: saved, error: writeError } = await supabase.rpc('submit_print_registration', {
+    p_submission_id: typeof body.submission_id === 'string' ? body.submission_id : crypto.randomUUID(),
+    p_artwork_title: values.artwork_title,
+    p_purchase_reference: values.purchase_reference,
+    p_purchased_on: values.purchased_on,
+    p_purchased_from: values.purchased_from,
+    p_payment_method: values.payment_method,
+    p_message: values.message,
+    p_gallery_image_id: values.gallery_image_id,
+  });
 
   if (writeError) {
     console.error('[purchase-message] Could not save the message:', writeError);
     return NextResponse.json({ error: 'Your message could not be sent. Please try again.' }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, reference: saved.id, received_at: saved.created_at });
+  const registration = saved as Record<string, unknown>;
+  after(async () => {
+    const { data } = await serviceClient().from('purchase_messages').select('*').eq('id', registration.id).single();
+    if (data) await sendRegistrationReceipt(data as never);
+  });
+  return NextResponse.json({ ok: true, reference: registration.id, received_at: registration.created_at });
 }

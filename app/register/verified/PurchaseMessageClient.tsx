@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import { validatePurchaseMessage, type FieldErrors } from '@/lib/collector-validation';
@@ -11,6 +11,8 @@ const EMPTY = {
   purchased_on: '',
   purchased_from: '',
   message: '',
+  payment_method: 'unknown',
+  gallery_image_id: '',
   botcheck: '',
 };
 
@@ -27,9 +29,10 @@ export default function PurchaseMessageClient({ email }: { email: string }) {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState('');
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const submissionId = useRef(crypto.randomUUID());
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -59,7 +62,7 @@ export default function PurchaseMessageClient({ email }: { email: string }) {
       const res = await fetch('/api/purchase-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, submission_id: submissionId.current }),
       });
       const data = await res.json().catch(() => null);
 
@@ -122,6 +125,7 @@ export default function PurchaseMessageClient({ email }: { email: string }) {
               className="register-linkish"
               onClick={() => {
                 setForm(EMPTY);
+                submissionId.current = crypto.randomUUID();
                 setReceipt(null);
               }}
             >
@@ -218,6 +222,13 @@ export default function PurchaseMessageClient({ email }: { email: string }) {
                 optional: true,
                 placeholder: 'Gallery, exhibition, or direct from the studio',
               })}
+            </div>
+
+            <div>
+              <label className="register-label" htmlFor="purchase-payment_method">How was it paid for?</label>
+              <select id="purchase-payment_method" name="payment_method" value={form.payment_method} onChange={handleChange} className="register-field field-focus">
+                <option value="unknown">Unknown / other</option><option value="card">Card</option><option value="bank_transfer">Bank transfer</option><option value="cash">Cash</option><option value="other">Other</option>
+              </select>
             </div>
 
             <div className="register-grid-full">
