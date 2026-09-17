@@ -51,6 +51,7 @@ export default function PurchaseMessageClient({ email }: { email: string }) {
     if (Object.keys(found).length > 0) {
       setErrors(found);
       setFormError('Some details need checking before we can send this.');
+      setTimeout(() => document.getElementById(`purchase-${Object.keys(found)[0]}`)?.focus(), 0);
       return;
     }
 
@@ -180,6 +181,7 @@ export default function PurchaseMessageClient({ email }: { email: string }) {
     <Reveal>
       <form onSubmit={handleSubmit} noValidate className="register-panel">
         {formError && <div className="register-notice" role="alert">{formError}</div>}
+        {Object.keys(errors).length > 0 && <div className="register-notice" role="alert" aria-live="polite"><strong>Please complete these fields:</strong><ul>{Object.entries(errors).filter(([, message]) => message).map(([name, message]) => <li key={name}>{message}</li>)}</ul></div>}
 
         {/* Honeypot — off-screen and out of tab order, so only bots reach it. */}
         <input

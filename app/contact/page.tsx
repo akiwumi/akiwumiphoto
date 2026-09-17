@@ -61,6 +61,18 @@ function ContactForm() {
       return;
     }
 
+    const missing = [
+      !form.firstName && 'First name', !form.lastName && 'Last name',
+      !form.email && 'Email address', !form.message && 'Message',
+    ].filter(Boolean) as string[];
+    if (missing.length) {
+      setError(`Please complete: ${missing.join(', ')}.`);
+      setStatus('error');
+      const first = ['firstName', 'lastName', 'email', 'message'].find((name) => !form[name as keyof typeof form]);
+      if (first) setTimeout(() => document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${first}"]`)?.focus(), 0);
+      return;
+    }
+
     if (!ACCESS_KEY) {
       console.error('[contact] NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY is not set');
       setError('The form is not configured yet. Please try again later.');
@@ -111,6 +123,7 @@ function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="contact-form flex flex-col gap-4 w-full max-w-lg">
       <h2 className="contact-form-title text-black font-bold">Send us a message</h2>
+      {status === 'error' && error && <div role="alert" aria-live="polite" className="contact-error">{error}</div>}
 
       {/* Name */}
       <div>

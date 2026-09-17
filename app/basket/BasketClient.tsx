@@ -105,6 +105,12 @@ export default function BasketClient() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canCheckout) return;
+    const missing = [!form.firstName && 'First name', !form.lastName && 'Last name', !form.email && 'Email address', !form.country && 'Country'].filter(Boolean) as string[];
+    if (missing.length) {
+      setError(`Please complete: ${missing.join(', ')}.`);
+      setTimeout(() => document.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${['firstName','lastName','email','country'].find((name) => !form[name as keyof typeof form])}"]`)?.focus(), 0);
+      return;
+    }
     setSending(true);
     setError('');
 
@@ -253,6 +259,7 @@ export default function BasketClient() {
             </p>
 
             <form onSubmit={handleCheckout} className="basket-form">
+              {error && <p className="basket-error" role="alert" aria-live="polite">{error}</p>}
               <h2>Your details</h2>
               <div className="basket-form-row">
                 <label>
