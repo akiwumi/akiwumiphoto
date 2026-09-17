@@ -32,6 +32,22 @@
   --screen-2xl: 1536px;
 }
 
+.certificate-page { min-height:100vh; background:#eee; padding:40px 20px; color:#161616; font-family:Georgia,serif; }
+.certificate-sheet { max-width:820px; margin:0 auto; background:#fff; border:12px double #9b7b39; padding:42px 48px; box-shadow:0 3px 20px #0002; }
+.certificate-sheet header { text-align:center; border-bottom:1px solid #c9b98f; padding-bottom:18px; }
+.certificate-brand { letter-spacing:.24em; font:12px Arial,sans-serif; }
+.certificate-sheet h1 { margin:12px 0 4px; font-size:34px; }
+.certificate-body { display:grid; grid-template-columns:150px 1fr; gap:34px; margin:28px 0; }
+.certificate-photo { width:150px; height:190px; border:1px solid #c9b98f; padding:6px; align-self:start; }
+.certificate-photo img { width:100%; height:100%; object-fit:cover; }
+.certificate-sheet dl { margin:0; }
+.certificate-sheet dl div { margin-bottom:12px; }
+.certificate-sheet dt { font:11px Arial,sans-serif; text-transform:uppercase; letter-spacing:.08em; color:#765d2d; }
+.certificate-sheet dd { margin:3px 0 0; white-space:pre-wrap; }
+.certificate-sheet footer { border-top:1px solid #c9b98f; padding-top:18px; font-size:13px; }
+.signature-line { margin:28px 0 12px; border-bottom:1px solid #222; width:240px; padding-bottom:8px; }
+@media print { .certificate-page { padding:0; background:#fff; } .certificate-sheet { box-shadow:none; max-width:none; } .certificate-sheet button { display:none; } }
+
 /* Tailwind's text-base is the body size, set in site-design.css. */
 @theme inline {
   --text-base: var(--body-size);
