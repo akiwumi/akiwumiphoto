@@ -284,6 +284,7 @@ function AvailabilitySection() {
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [sold, setSold] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('');
+  const totalSold = Object.values(sold).reduce((sum, count) => sum + Number(count), 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -354,6 +355,7 @@ function AvailabilitySection() {
           {galleries.map((g) => <option key={g.id} value={g.id}>{g.title}{g.published ? '' : ' (unpublished)'}</option>)}
         </select>
       </div>
+      {galleryId && <p className="text-white text-base"><strong>{totalSold}</strong> total prints sold in this gallery across all sizes</p>}
       {status && <p className="text-grey-mid text-base" role="status">{status}</p>}
 
       <div className="flex flex-col">
@@ -453,6 +455,7 @@ function OrdersSection() {
                 {order.currency !== 'USD' && ` · viewed in ${order.currency} (≈ ${formatMoney(Number(order.total_usd) * Number(order.exchange_rate), order.currency)})`}
               </p>
             </div>
+            <button type="button" style={{ ...QUIET_BUTTON, padding: '6px 10px', alignSelf: 'flex-start' }} onClick={async () => { if (!confirm(`Erase order ${order.reference}?`)) return; const { error } = await supabase.rpc('admin_reset_purchases', { p_order_id: order.id }); setMsg(error ? error.message : `${order.reference} erased.`); if (!error) setOrders((prev) => prev?.filter((o) => o.id !== order.id) ?? []); }}>Erase</button>
             <select
               style={{ ...INPUT, width: 140 }}
               value={order.status}
