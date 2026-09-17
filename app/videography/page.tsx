@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
 import VideographyClient from './VideographyClient';
 import { createServerClient } from '@/lib/supabase-server';
 import { DEMO_VIDEOS } from '@/lib/demo-data';
 import type { Video } from '@/types';
+
+export const metadata: Metadata = {
+  title: 'Films & Music Videos | Eugene Akiwumi, Stockholm Filmmaker',
+  description: 'Documentaries, music videos, commercials and social-impact films directed by Eugene Akiwumi.',
+  alternates: { canonical: '/videography' },
+};
 
 async function getVideos(): Promise<Video[]> {
   try {

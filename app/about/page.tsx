@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
 import Image from 'next/image';
 import { createServerClient } from '@/lib/supabase-server';
 import Reveal from '@/components/Reveal';
+
+export const metadata: Metadata = {
+  title: 'About Eugene Akiwumi | Photographer & Filmmaker in Stockholm',
+  description: 'Eugene “Pebbles” Akiwumi is a British-Ghanaian photographer, filmmaker and director based in Stockholm, working across documentary, portraiture, music videos and fine art.',
+  alternates: { canonical: '/about' },
+};
 
 async function getAboutContent(): Promise<{ heading: string; bio: string; portrait: string | null }> {
   try {

@@ -10,6 +10,7 @@ export const revalidate = 3600;
 const STATIC_PAGES: { path: string; priority: number }[] = [
   { path: '', priority: 1 },
   { path: '/home', priority: 0.9 },
+  { path: '/portrait-photographer-stockholm', priority: 0.9 },
   { path: '/prints', priority: 0.9 },
   { path: '/videography', priority: 0.8 },
   { path: '/news', priority: 0.6 },

@@ -13,6 +13,7 @@ const introduction = 'Stockholm-based photographer and filmmaker documenting peo
 export const metadata: Metadata = {
   title: 'Stockholm Photographer & Filmmaker | Eugene Akiwumi',
   description: introduction,
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Eugene Akiwumi — Photography & Film',
     description: introduction,
@@ -85,7 +86,7 @@ export default async function HomePage() {
           {shown('contact') && <Link href="/contact?subject=Commission" className={styles.contactLink}>Discuss a project <span aria-hidden="true">↗</span></Link>}
         </div>
         <div className={styles.serviceList}>
-          <article><h3>Portrait photography</h3><p>Portraits of people, artists and creative communities.</p>{shown('gallery') && <Link href="/home">Explore photography ↗</Link>}</article>
+          <article><h3>Portrait photography</h3><p>Portraits of people, artists and creative communities.</p><Link href="/portrait-photographer-stockholm">Portraits in Stockholm ↗</Link></article>
           <article><h3>Documentary & editorial</h3><p>Photographic stories about people, culture and place.</p>{shown('gallery') && <Link href="/home">Explore the gallery ↗</Link>}</article>
           <article><h3>Film & moving image</h3><p>Documentaries, music videos and commercial filmmaking.</p>{shown('videography') && <Link href="/videography">Watch films ↗</Link>}</article>
         </div>

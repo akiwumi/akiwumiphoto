@@ -28,11 +28,11 @@ const bebasNeue = Bebas_Neue({
 // swap in their own cover photograph.
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'AKIWUMI PHOTO',
-  description: 'Photography portfolio — fine art prints, galleries, and videography.',
+  title: 'Eugene Akiwumi | Photographer & Filmmaker in Stockholm',
+  description: 'Portrait, documentary and fine art photography and film by Stockholm-based Eugene Akiwumi.',
   openGraph: {
-    title: 'AKIWUMI PHOTO',
-    description: 'Photography portfolio — fine art prints, galleries, and videography.',
+    title: 'Eugene Akiwumi | Photographer & Filmmaker in Stockholm',
+    description: 'Portrait, documentary and fine art photography and film by Stockholm-based Eugene Akiwumi.',
     type: 'website',
     siteName: 'Akiwumi Photo',
   },

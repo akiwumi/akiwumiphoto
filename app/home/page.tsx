@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
 import GalleryCarousel from '@/components/GalleryCarousel';
 import { createServerClient } from '@/lib/supabase-server';
 import { signUrl } from '@/lib/signed-urls';
 import type { Gallery } from '@/types';
+
+export const metadata: Metadata = {
+  title: 'Photography Portfolio | Eugene Akiwumi, Stockholm',
+  description: 'Portrait, documentary, street and landscape photography by Stockholm-based photographer Eugene Akiwumi.',
+  alternates: { canonical: '/home' },
+};
 
 async function getGalleries(): Promise<Gallery[]> {
   try {

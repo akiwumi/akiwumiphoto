@@ -4,7 +4,7 @@ import type { NavPage } from '@/types';
 /** Addresses the site already uses; a created page can't take them. */
 export const RESERVED_SLUGS = new Set([
   'home', 'gallery', 'galleries', 'videography', 'film', 'prints', 'news', 'about', 'contact', 'basket',
-  'register', 'admin', 'api', 'auth', 'services', 'sitemap', 'robots', 'favicon', 'opengraph-image', 'images', '_next',
+  'register', 'portrait-photographer-stockholm', 'admin', 'api', 'auth', 'services', 'sitemap', 'robots', 'favicon', 'opengraph-image', 'images', '_next',
 ]);
 
 export function slugify(title: string): string {
