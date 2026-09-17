@@ -99,7 +99,18 @@ export interface PrintOrder {
   exchange_rate: number;
   lines: PrintOrderLine[];
   total_usd: number;
-  status: 'new' | 'contacted' | 'paid' | 'cancelled';
+  /** 'new' and 'contacted' are orders from before card payment. */
+  status: 'new' | 'contacted' | 'pending_payment' | 'paid' | 'expired' | 'cancelled';
+  hold_expires_at: string | null;
+  stripe_session_id: string | null;
+  shipping_usd: number | null;
+  /** Name, address and phone as collected by Stripe Checkout. */
+  shipping_address: {
+    name: string;
+    address: { line1: string | null; line2: string | null; city: string | null; state: string | null; postal_code: string | null; country: string | null };
+    phone: string | null;
+  } | null;
+  paid_at: string | null;
   created_at: string;
 }
 

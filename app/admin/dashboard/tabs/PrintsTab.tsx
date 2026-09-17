@@ -390,7 +390,16 @@ function AvailabilitySection() {
 
 // Orders ---------------------------------------------------------------------------------
 
-const STATUSES: PrintOrder['status'][] = ['new', 'contacted', 'paid', 'cancelled'];
+const STATUSES: PrintOrder['status'][] = ['pending_payment', 'paid', 'expired', 'cancelled', 'new', 'contacted'];
+
+const STATUS_LABELS: Record<PrintOrder['status'], string> = {
+  pending_payment: 'awaiting payment',
+  paid: 'paid',
+  expired: 'not paid',
+  cancelled: 'cancelled',
+  new: 'new',
+  contacted: 'contacted',
+};
 
 function OrdersSection() {
   const [orders, setOrders] = useState<PrintOrder[] | null>(null);
@@ -409,7 +418,7 @@ function OrdersSection() {
   const setStatus = async (order: PrintOrder, status: PrintOrder['status']) => {
     setOrders((prev) => prev?.map((o) => (o.id === order.id ? { ...o, status } : o)) ?? prev);
     const { error } = await supabase.from('print_orders').update({ status }).eq('id', order.id);
-    setMsg(error ? `Could not update ${order.reference}: ${error.message}` : `${order.reference} marked ${status}.`);
+    setMsg(error ? `Could not update ${order.reference}: ${error.message}` : `${order.reference} marked ${STATUS_LABELS[status]}.`);
   };
 
   if (!orders) return <p className="text-grey-mid text-base">Loading…</p>;
@@ -417,8 +426,9 @@ function OrdersSection() {
   return (
     <div className="max-w-4xl flex flex-col gap-4">
       <p className="text-grey-mid text-base">
-        Every checkout is recorded here as well as emailed to you. Marking an order paid doesn&apos;t change sold
-        counts; update those under Availability &amp; sold.
+        Every checkout is recorded here. Card payments mark their order paid, update sold counts and email you on
+        their own. An order left awaiting payment holds its prints for 30 minutes, then lapses to not paid. Changing
+        a status by hand doesn&apos;t change sold counts; update those under Availability &amp; sold.
       </p>
       {msg && <p className="text-grey-mid text-base" role="status">{msg}</p>}
       {orders.length === 0 && <p className="text-white text-base">No orders yet.</p>}
@@ -439,7 +449,7 @@ function OrdersSection() {
               onChange={(e) => setStatus(order, e.target.value as PrintOrder['status'])}
               aria-label={`Status of ${order.reference}`}
             >
-              {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
             </select>
           </div>
 
@@ -448,6 +458,14 @@ function OrdersSection() {
             {order.phone && ` · ${order.phone}`}{order.country && ` · ${order.country}`}
           </p>
           {order.message && <p className="text-grey-mid text-base whitespace-pre-line">&ldquo;{order.message}&rdquo;</p>}
+          {order.shipping_address && (
+            <p className="text-grey-mid text-base">
+              Deliver to: {[order.shipping_address.name, order.shipping_address.address.line1, order.shipping_address.address.line2,
+                [order.shipping_address.address.postal_code, order.shipping_address.address.city].filter(Boolean).join(' '),
+                order.shipping_address.address.state, order.shipping_address.address.country].filter(Boolean).join(', ')}
+              {order.shipping_usd != null && ` · shipping ${formatMoney(Number(order.shipping_usd), 'USD')}`}
+            </p>
+          )}
 
           <ul className="flex flex-col gap-1">
             {order.lines.map((line) => (

@@ -1,9 +1,10 @@
 /**
- * Server-only. The email the studio receives for every print order, sent
+ * Server-only. The email the studio receives for every paid print order, sent
  * through Resend from the verified akiwumiphoto.com domain. Sending happens
- * on the server as soon as the order is recorded, so it doesn't depend on
+ * from the Stripe webhook once payment completes, so it doesn't depend on
  * the buyer's browser staying open or on anything it might block.
  */
+import type Stripe from 'stripe';
 import { formatMoney } from './currency';
 import { SITE_URL } from './site-origin';
 import type { PrintOrderLine } from '@/types';
@@ -25,10 +26,24 @@ export interface OrderForEmail {
   currency: string;
   exchange_rate: number;
   created_at: Date;
+  paid?: {
+    /** In the smallest unit of the currency the buyer was charged in. */
+    amount: number;
+    currency: string;
+    shipping_usd: number | null;
+    address: Stripe.Checkout.Session.CollectedInformation.ShippingDetails | null;
+  };
+}
+
+function chargedAmount(paid: NonNullable<OrderForEmail['paid']>): string {
+  const currency = paid.currency.toUpperCase();
+  // Stripe counts most currencies in hundredths; resolvedOptions knows which don't.
+  const digits = new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  return formatMoney(paid.amount / 10 ** digits, currency);
 }
 
 export function orderEmailSubject(order: OrderForEmail): string {
-  return `New print order ${order.reference} — ${order.first_name} ${order.last_name} — ${formatMoney(Number(order.total_usd), 'USD')}`;
+  return `${order.paid ? 'Paid' : 'New'} print order ${order.reference} — ${order.first_name} ${order.last_name} — ${formatMoney(Number(order.total_usd), 'USD')}`;
 }
 
 export function orderEmailText(order: OrderForEmail, ratesDate: string | null = null): string {
@@ -50,6 +65,13 @@ export function orderEmailText(order: OrderForEmail, ratesDate: string | null = 
     ].join('\n');
   });
 
+  const paid = order.paid;
+  const address = paid?.address
+    ? [paid.address.name, paid.address.address.line1, paid.address.address.line2,
+       [paid.address.address.postal_code, paid.address.address.city].filter(Boolean).join(' '),
+       paid.address.address.state, paid.address.address.country].filter(Boolean)
+    : [];
+
   const rate = Number(order.exchange_rate);
   const converted = order.currency === 'USD'
     ? []
@@ -57,8 +79,9 @@ export function orderEmailText(order: OrderForEmail, ratesDate: string | null = 
        + ` (1 USD = ${rate} ${order.currency}, ECB rate${ratesDate ? ` of ${ratesDate}` : ''}).`];
 
   return [
-    `New print order ${order.reference}`,
+    `${paid ? 'Paid' : 'New'} print order ${order.reference}`,
     `Placed ${placed} (Stockholm time)`,
+    ...(paid ? [`Paid by card through Stripe: ${chargedAmount(paid)} including shipping`] : []),
     '',
     'BUYER',
     `Name: ${order.first_name} ${order.last_name}`,
@@ -67,14 +90,18 @@ export function orderEmailText(order: OrderForEmail, ratesDate: string | null = 
     `Country: ${order.country || 'not given'}`,
     ...(order.message ? ['Message:', order.message] : []),
     '',
+    ...(address.length ? ['DELIVER TO', ...address, ''] : []),
     'PRINTS',
     ...lines,
     '',
-    `TOTAL: ${usd(order.total_usd)} USD`,
+    ...(paid?.shipping_usd != null ? [`PRINTS: ${usd(order.total_usd)} USD`, `SHIPPING: ${usd(paid.shipping_usd)} USD`] : []),
+    `TOTAL: ${usd(Number(order.total_usd) + Number(paid?.shipping_usd ?? 0))} USD`,
     ...converted,
     '',
     'Reply to this email to write to the buyer.',
-    'Next: send the buyer payment links, then record each sale under Admin → Prints → Availability & sold.',
+    paid
+      ? 'Sold counts have been updated. Next: produce and ship the prints.'
+      : 'Next: send the buyer payment links, then record each sale under Admin → Prints → Availability & sold.',
   ].join('\n');
 }
 

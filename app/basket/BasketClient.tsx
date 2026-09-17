@@ -5,11 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import CurrencySelect from '@/components/CurrencySelect';
 import {
-  changeLineSize, clearBasket, removeLine, setLineQuantity, useBasket, useMoney,
+  changeLineSize, releaseAbandonedCheckout, rememberCheckout, removeLine, setLineQuantity, useBasket, useMoney,
   type BasketLine,
 } from '@/lib/basket-store';
 import { countryOptions } from '@/lib/countries';
 import { formatMoney } from '@/lib/currency';
+import { SHIPPING_USD } from '@/lib/shipping';
 import { editionLabel, isPurchasable, remaining } from '@/lib/print-availability';
 import type { CatalogImage, PrintSize, SoldBySize } from '@/types';
 
@@ -44,7 +45,6 @@ export default function BasketClient() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState<{ reference: string | null; firstName: string; email: string } | null>(null);
   const countries = useMemo(() => countryOptions(), []);
 
   // Refetch only when the set of photographs changes, not on every quantity.
@@ -53,7 +53,9 @@ export default function BasketClient() {
   useEffect(() => {
     if (!idsKey) return;
     let cancelled = false;
-    fetch(`/api/prints/catalog?ids=${idsKey}`)
+    // Back from Stripe without paying: free those prints before counting what remains.
+    releaseAbandonedCheckout()
+      .then(() => fetch(`/api/prints/catalog?ids=${idsKey}`))
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
       .then((data: Catalog) => {
         if (cancelled) return;
@@ -64,6 +66,18 @@ export default function BasketClient() {
       .catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
   }, [idsKey]);
+
+  // The browser's back button can restore this page from its cache, mid-"opening
+  // payment" and without rerunning the effects above.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      setSending(false);
+      releaseAbandonedCheckout();
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
 
   const priced: PricedLine[] = basket.map((line) => {
     const image = catalog?.images.find((i) => i.id === line.imageId);
@@ -101,39 +115,26 @@ export default function BasketClient() {
         body: JSON.stringify({ customer: form, currency: money.currency, items: basket }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) {
-        setError(data?.error || 'Your order could not be sent. Please try again.');
+      if (res.ok && data?.ok && !data.url) {
+        // The honeypot tripped: act as though nothing happened.
+        setSending(false);
+        return;
+      }
+      if (!res.ok || !data?.url) {
+        setError(data?.error || 'Payment could not be started. Please try again.');
         setSending(false);
         return;
       }
 
-      setDone({ reference: data.reference, firstName: form.firstName, email: form.email });
-      clearBasket();
-      setForm(EMPTY_FORM);
+      // The basket is kept until payment completes, in case the buyer comes back.
+      if (data.sessionId) rememberCheckout(data.sessionId);
+      window.location.assign(data.url);
+      return;
     } catch {
       setError('Could not reach the server. Please check your connection and try again.');
     }
     setSending(false);
   };
-
-  if (done) {
-    return (
-      <div className="basket-content page-enter">
-        <div className="basket-thanks" role="status">
-          <h1>Thank you{done.firstName ? `, ${done.firstName}` : ''}</h1>
-          <p>
-            Thank you for your interest in my work and for your purchase. Your order
-            {done.reference && <> <strong>{done.reference}</strong></>} has been received.
-          </p>
-          <p>
-            You will be contacted soon{done.email ? <> at <strong>{done.email}</strong></> : ''} with payment links
-            to complete your purchase.
-          </p>
-          <Link href="/home" className="basket-button basket-button-secondary">Continue browsing</Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="basket-content page-enter">
@@ -247,7 +248,8 @@ export default function BasketClient() {
               <p className="basket-total-note">Prices are set in US dollars: {formatMoney(totalUsd, 'USD')}.</p>
             )}
             <p className="basket-total-note">
-              Shipping and any taxes are confirmed with your payment link. Nothing is charged now.
+              Plus flat-rate shipping: {money.format(SHIPPING_USD.sweden)} within Sweden,{' '}
+              {money.format(SHIPPING_USD.europe)} within Europe, {money.format(SHIPPING_USD.world)} elsewhere.
             </p>
 
             <form onSubmit={handleCheckout} className="basket-form">
@@ -271,10 +273,10 @@ export default function BasketClient() {
                 <input type="tel" name="phone" value={form.phone} onChange={handleChange} maxLength={40} autoComplete="tel" />
               </label>
               <label>
-                <span>Country</span>
-                <select name="country" value={form.country} onChange={handleChange} autoComplete="country-name">
+                <span>Deliver to*</span>
+                <select name="country" value={form.country} onChange={handleChange} required autoComplete="country">
                   <option value="">Select a country</option>
-                  {countries.map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+                  {countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
                 </select>
               </label>
               <label>
@@ -294,10 +296,11 @@ export default function BasketClient() {
               {!canCheckout && <p className="basket-total-note">Resolve the notes on your basket to check out.</p>}
 
               <button type="submit" className="basket-button" disabled={!canCheckout || sending}>
-                {sending ? 'Sending your order…' : 'Checkout'}
+                {sending ? 'Opening secure payment…' : 'Continue to payment'}
               </button>
               <p className="basket-total-note">
-                Your order is sent to the studio. You will be contacted with payment links.
+                You&apos;ll pay by card on Stripe&apos;s secure page, where you can also enter your delivery
+                address. Your prints are reserved for 30 minutes while you pay.
               </p>
             </form>
           </aside>

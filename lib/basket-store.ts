@@ -133,6 +133,44 @@ export function clearBasket() {
   writeLines(EMPTY);
 }
 
+// Checkout ------------------------------------------------------------------------
+// The Stripe session the buyer was last sent to. Released when they come back
+// to the basket without paying, so their own hold doesn't block a retry.
+
+const CHECKOUT_KEY = 'akiwumi-checkout-session';
+
+export function rememberCheckout(sessionId: string) {
+  try {
+    window.sessionStorage.setItem(CHECKOUT_KEY, sessionId);
+  } catch {
+    // Without it the hold simply lapses after 30 minutes.
+  }
+}
+
+export function forgetCheckout() {
+  try {
+    window.sessionStorage.removeItem(CHECKOUT_KEY);
+  } catch {
+    // Nothing to forget.
+  }
+}
+
+export async function releaseAbandonedCheckout(): Promise<void> {
+  let sessionId: string | null = null;
+  try {
+    sessionId = window.sessionStorage.getItem(CHECKOUT_KEY);
+  } catch {
+    return;
+  }
+  if (!sessionId) return;
+  forgetCheckout();
+  await fetch('/api/print-orders/release', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId }),
+  }).catch(() => {});
+}
+
 // Currency ------------------------------------------------------------------------
 
 function currentCurrency(): CurrencyCode {

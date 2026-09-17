@@ -10,7 +10,32 @@ environment settings for the deployed site.
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL. Galleries, videos and page content all come from here. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key. Also signs the private gallery-images bucket, which its RLS policy permits. |
 | `NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY` | yes | Relays contact form enquiries. Public by Web3Forms' design — the form posts to them from the browser, since server-side posting is a paid feature. The destination inbox is bound to the key itself, not configured here. |
-| `NEXT_PUBLIC_SITE_URL` | deployed only | Origin the print-registration verification link points back to, e.g. `https://www.akiwumiphoto.com` (the canonical www host). Without it the link is built from the incoming request, which is right in local dev but wrong behind a proxy or on a preview deployment. |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes | Server only. Used by the Stripe webhook to mark orders paid and update sold counts, which the anon key can't do. |
+| `STRIPE_SECRET_KEY` | yes | Server only. Opens Checkout sessions for print orders. Use the `sk_test_…` key until the shop goes live. |
+| `STRIPE_WEBHOOK_SECRET` | yes | Server only. Verifies calls to `/api/stripe/webhook`. Locally, the `whsec_…` printed by `stripe listen`; deployed, the signing secret of the webhook endpoint in the Stripe dashboard. |
+| `NEXT_PUBLIC_SITE_URL` | deployed only | Origin the print-registration verification link and Stripe's return pages point back to, e.g. `https://www.akiwumiphoto.com` (the canonical www host). Without it the link is built from the incoming request, which is right in local dev but wrong behind a proxy or on a preview deployment. |
+
+## Print payments
+
+The basket posts to `/api/print-orders`, which records the order (holding its
+prints for 30 minutes) and sends the buyer to Stripe Checkout. Prices are in
+USD; Adaptive Pricing lets Stripe charge in the buyer's currency. Shipping is a
+flat rate per region, set in `lib/shipping.ts`.
+
+Stripe then calls `/api/stripe/webhook`. `checkout.session.completed` marks the
+order paid, adds to the sold counts and emails the studio;
+`checkout.session.expired` releases the hold. The webhook endpoint must
+subscribe to `checkout.session.completed`, `checkout.session.expired`,
+`checkout.session.async_payment_succeeded` and
+`checkout.session.async_payment_failed`.
+
+To test locally:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+and pay with card `4242 4242 4242 4242`, any future expiry and any CVC.
 
 If a page renders empty where you expect content, check the dev server output —
 the data fetchers log why they came back with nothing.

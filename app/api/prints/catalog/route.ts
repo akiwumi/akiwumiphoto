@@ -10,6 +10,9 @@ const MAX_IDS = 50;
  * What the basket needs to show and price its lines: the current size options
  * and, for each requested photograph, its details and sold counts. Photographs
  * that no longer exist are simply absent.
+ *
+ * Prints held by another buyer who is paying count as sold here, so the
+ * basket doesn't offer what checkout would refuse.
  */
 export async function GET(request: NextRequest) {
   const ids = [...new Set((request.nextUrl.searchParams.get('ids') ?? '').split(','))]
@@ -62,6 +65,13 @@ export async function GET(request: NextRequest) {
       })),
       getSoldCounts(ids),
     ]);
+
+    const { data: held, error: heldError } = await supabase.rpc('held_print_counts', { p_image_ids: ids });
+    if (heldError) console.error('[prints/catalog] could not load held prints:', heldError);
+    for (const row of (held ?? []) as { image_id: string; size_id: string; held: number }[]) {
+      const counts = (sold[row.image_id] ??= {});
+      counts[row.size_id] = (counts[row.size_id] ?? 0) + row.held;
+    }
 
     return NextResponse.json({ sizes, images, sold });
   } catch (err) {
