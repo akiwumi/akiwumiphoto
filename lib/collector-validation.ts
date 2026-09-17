@@ -33,6 +33,8 @@ export interface PurchaseMessageDetails {
   purchased_on: string | null;
   purchased_from: string | null;
   message: string;
+  payment_method: 'card' | 'bank_transfer' | 'cash' | 'other' | 'unknown';
+  gallery_image_id: string | null;
 }
 
 // Trims and collapses runs of whitespace, so " John   Q " and "John Q" are
@@ -222,6 +224,8 @@ export function validatePurchaseMessage(input: Record<string, unknown>): {
   const purchased_on = optional(input.purchased_on);
   // Message keeps its line breaks; only the ends are trimmed.
   const message = typeof input.message === 'string' ? input.message.trim() : '';
+  const payment_method = clean(input.payment_method) as PurchaseMessageDetails['payment_method'];
+  const gallery_image_id = optional(input.gallery_image_id);
 
   if (!artwork_title) {
     errors.artwork_title = 'Tell us which photograph you bought.';
@@ -258,8 +262,12 @@ export function validatePurchaseMessage(input: Record<string, unknown>): {
     errors.message = 'Message must be 2000 characters or fewer.';
   }
 
+  if (!['card', 'bank_transfer', 'cash', 'other', 'unknown'].includes(payment_method)) {
+    errors.payment_method = 'Choose how the print was paid for.';
+  }
+
   return {
-    values: { artwork_title, purchase_reference, purchased_on, purchased_from, message },
+    values: { artwork_title, purchase_reference, purchased_on, purchased_from, message, payment_method, gallery_image_id },
     errors,
   };
 }

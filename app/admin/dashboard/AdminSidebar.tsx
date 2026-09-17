@@ -102,6 +102,9 @@ export default function AdminSidebar(props: Props) {
             {id === 'galleries' && galleries.length > 0 && <span className={`${styles.badge} ${styles.badgeGreen}`}>{galleries.length}</span>}
           </button>
         ))}
+        <a href="/admin/dashboard/registrations" target="_blank" rel="noopener noreferrer" className={styles.navItem}>
+          <FileText size={20} aria-hidden="true" /><span className={styles.navLabel}>Registrations</span>
+        </a>
 
         {galleries.length > 0 && (
           <>
