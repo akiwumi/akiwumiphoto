@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { Reorder } from 'framer-motion';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { EllipsisVertical, Eye, EyeOff, ExternalLink, Film, GripVertical, Pencil, Trash2 } from 'lucide-react';
+import styles from '../AdminShell.module.css';
 import { supabase } from '@/lib/supabase';
 import type { Video } from '@/types';
 
@@ -49,68 +53,14 @@ export default function VideosTab() {
 
   const selected = videos.find((v) => v.id === selectedId) || null;
 
-  return (
-    <div className="flex h-full overflow-hidden">
-      <div className="w-56 flex-shrink-0 border-r border-white/10 flex flex-col overflow-hidden">
-        <div className="p-3 border-b border-white/10">
-          <p className="text-grey-mid text-xs uppercase mb-2" style={{ letterSpacing: '0.12em' }}>Videos</p>
-          <button
-            onClick={handleCreate}
-            className="w-full h-8 text-white text-xs uppercase font-medium"
-            style={{ background: '#E8001C', letterSpacing: '0.1em', fontFamily: 'inherit' }}
-          >
-            + Add Video
-          </button>
-        </div>
-        <Reorder.Group
-          as="div"
-          axis="y"
-          values={videos}
-          onReorder={handleReorder}
-          className="flex-1 overflow-y-auto"
-          style={{ padding: 0, margin: 0 }}
-        >
-          {loading && <p className="text-grey-mid text-base p-3">Loading…</p>}
-          {videos.map((v) => (
-            <Reorder.Item
-              key={v.id}
-              value={v}
-              as="div"
-              className="border-b border-white/5"
-              style={{ listStyle: 'none', cursor: 'grab' }}
-              whileDrag={{ backgroundColor: 'rgba(255,255,255,0.10)', zIndex: 10 }}
-            >
-              <button
-                onClick={() => setSelectedId(v.id)}
-                className="w-full text-left px-3 py-3 hover:bg-white/5 transition-colors"
-                style={{ background: selectedId === v.id ? 'rgba(255,255,255,0.07)' : 'transparent', fontFamily: 'inherit', cursor: 'inherit' }}
-              >
-                <div className="flex items-center gap-2">
-                  <svg width="8" height="12" viewBox="0 0 8 12" fill="#444" className="flex-shrink-0">
-                    <circle cx="2" cy="2" r="1.2" /><circle cx="6" cy="2" r="1.2" />
-                    <circle cx="2" cy="6" r="1.2" /><circle cx="6" cy="6" r="1.2" />
-                    <circle cx="2" cy="10" r="1.2" /><circle cx="6" cy="10" r="1.2" />
-                  </svg>
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v.published ? '#22c55e' : '#666' }} />
-                  <span className="text-white text-xs truncate">{v.title}</span>
-                </div>
-              </button>
-            </Reorder.Item>
-          ))}
-        </Reorder.Group>
-      </div>
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const onDragEnd = ({ active, over }: DragEndEvent) => { if (!over || active.id === over.id) return; handleReorder(arrayMove(videos, videos.findIndex(v => v.id === active.id), videos.findIndex(v => v.id === over.id))); };
+  return <div className={styles.contentPad}>{loading && <p className={styles.empty}>Loading videos…</p>}{!loading && videos.length === 0 && <p className={styles.empty}>No videos yet.</p>}<div className={styles.toolbar}><span className={styles.subtitle}>Drag cards to set the Film page order.</span><button type="button" className={styles.primaryButton} onClick={handleCreate}>+ Add video</button></div><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}><SortableContext items={videos.map(v => v.id)} strategy={rectSortingStrategy}><div className={styles.cardGrid}>{videos.map(v => <VideoCard key={v.id} video={v} selected={selectedId === v.id} onOpen={() => setSelectedId(v.id)} onDelete={() => handleDelete(v.id)} />)}</div></SortableContext></DndContext>{selected && <div className={styles.panel} style={{ marginTop: 32 }}><VideoEditor video={selected} onSave={fetchVideos} onDelete={() => handleDelete(selected.id)} /></div>}</div>;
+}
 
-      <div className="flex-1 overflow-y-auto p-6">
-        {!selected ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-grey-mid text-base">Select or create a video</p>
-          </div>
-        ) : (
-          <VideoEditor video={selected} onSave={fetchVideos} onDelete={() => handleDelete(selected.id)} />
-        )}
-      </div>
-    </div>
-  );
+function VideoCard({ video, selected, onOpen, onDelete }: { video: Video; selected: boolean; onOpen: () => void; onDelete: () => void }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: video.id });
+  return <article ref={setNodeRef} className={`${styles.card} ${isDragging ? styles.dragging : ''}`} style={{ transform: CSS.Transform.toString(transform), transition }}><button type="button" className={styles.cardButton} onClick={onOpen} aria-label={`Edit ${video.title}`}>{video.thumbnail ? <Image src={video.thumbnail} alt="" fill unoptimized sizes="(max-width: 860px) 100vw, 45vw" /> : <span className={styles.cardEmpty}><Film size={40} /></span>}<span className={styles.cardShade} /><span className={styles.cardText}><span className={styles.cardMeta}>{video.published ? 'Published' : 'Draft'} <i /> Film</span><span className={styles.cardTitle}>{video.title}</span></span></button>{!video.published && <span className={styles.draftTag}>Draft</span>}<div className={styles.cardTools}><button type="button" ref={setActivatorNodeRef} className={`${styles.cardIcon} ${styles.cardGrip}`} aria-label={`Move ${video.title}`} {...attributes} {...listeners}><GripVertical size={18} /></button><button type="button" className={styles.cardIcon} onClick={onOpen} aria-label="Edit video"><Pencil size={17} /></button></div></article>;
 }
 
 function VideoEditor({ video, onSave, onDelete }: { video: Video; onSave: () => void; onDelete: () => void }) {
