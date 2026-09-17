@@ -107,6 +107,12 @@
 .primaryButton:hover { background: var(--a-blue-hover); }
 .primaryButton:disabled { opacity: 0.6; cursor: default; }
 .primaryButton svg { width: 20px; height: 20px; padding: 2px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
+.tableAction { display: inline-flex; width: max-content; max-width: 100%; min-height: 36px; height: 36px; padding: 0 14px; border-radius: 9px; font-size: 13px; line-height: 1; white-space: nowrap; }
+.dataTable { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+.dataTable th { padding: 0 14px 14px; color: var(--a-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+.dataTable td { padding: 16px 14px; border-top: 1px solid var(--a-border); vertical-align: top; color: #dedee2; }
+.dataTable th:first-child, .dataTable td:first-child { padding-left: 0; }
+.dataTable th:last-child, .dataTable td:last-child { padding-right: 0; }
 .content { flex: 1; min-height: 0; overflow-y: auto; }
 .contentPad { padding: 32px 64px 64px; }
 
