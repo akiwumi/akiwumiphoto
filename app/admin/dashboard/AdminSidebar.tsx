@@ -103,7 +103,7 @@ export default function AdminSidebar(props: Props) {
           </button>
         ))}
         <a href="/admin/dashboard/registrations" target="_blank" rel="noopener noreferrer" className={styles.navItem}>
-          <FileText size={20} aria-hidden="true" /><span className={styles.navLabel}>Registrations</span>
+          <FileText size={20} aria-hidden="true" /><span className={styles.navLabel}>Print registrations</span>
         </a>
 
         {galleries.length > 0 && (
