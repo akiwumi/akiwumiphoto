@@ -18,6 +18,7 @@ interface Catalog {
   sizes: PrintSize[];
   images: CatalogImage[];
   sold: Record<string, SoldBySize>;
+  unavailableSizes: Record<string, string[]>;
 }
 
 interface PricedLine {
@@ -82,11 +83,12 @@ export default function BasketClient() {
   const priced: PricedLine[] = basket.map((line) => {
     const image = catalog?.images.find((i) => i.id === line.imageId);
     const size = catalog?.sizes.find((s) => s.id === line.sizeId);
+    const sizeUnavailable = Boolean(catalog?.unavailableSizes[ line.imageId ]?.includes(line.sizeId));
     const sold = catalog?.sold[line.imageId];
     const left = size ? remaining(size, sold) : 0;
     let problem: string | null = null;
     if (!image || !image.forSale) problem = 'This photograph is no longer available.';
-    else if (!size) problem = 'This size is no longer offered. Please choose another.';
+    else if (!size || sizeUnavailable) problem = 'This size is not offered for this photograph. Please choose another.';
     else if (size.price_usd === null) problem = 'This size is priced on application. Please choose another or enquire.';
     else if (left === 0) problem = 'This size has sold out. Please choose another.';
     else if (line.quantity > left) problem = `Only ${left} of this edition ${left === 1 ? 'remains' : 'remain'}.`;
@@ -195,7 +197,7 @@ export default function BasketClient() {
                               <option
                                 key={option.id}
                                 value={option.id}
-                                disabled={option.id !== line.sizeId && !isPurchasable(option, sold)}
+                                disabled={option.id !== line.sizeId && (!isPurchasable(option, sold) || catalog?.unavailableSizes[line.imageId]?.includes(option.id))}
                               >
                                 {option.name}{option.dimensions ? ` ${option.dimensions}` : ''} ·{' '}
                                 {option.price_usd === null ? 'POA' : money.format(option.price_usd)} ·{' '}

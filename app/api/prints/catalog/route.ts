@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getPrintSizes, getSoldCounts, publicClient } from '@/lib/print-shop';
+import { getPrintSizes, getSoldCounts, getSizeExclusions, publicClient } from '@/lib/print-shop';
 import { signUrl } from '@/lib/signed-urls';
 import type { CatalogImage } from '@/types';
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     .slice(0, MAX_IDS);
 
   const sizes = await getPrintSizes();
-  if (ids.length === 0) return NextResponse.json({ sizes, images: [], sold: {} });
+  if (ids.length === 0) return NextResponse.json({ sizes, images: [], sold: {}, unavailableSizes: {} });
 
   try {
     const supabase = publicClient();
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       positions.set(sibling.id, next);
     }
 
-    const [images, sold] = await Promise.all([
+    const [images, sold, unavailableSizes] = await Promise.all([
       Promise.all((rows ?? []).map(async (row): Promise<CatalogImage> => {
         // A to-one embed; typed loosely by supabase-js.
         const gallery = row.galleries as unknown as { title: string; slug: string; published: boolean };
@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
         };
       })),
       getSoldCounts(ids),
+      getSizeExclusions(ids),
     ]);
 
     const { data: held, error: heldError } = await supabase.rpc('held_print_counts', { p_image_ids: ids });
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
       counts[row.size_id] = (counts[row.size_id] ?? 0) + row.held;
     }
 
-    return NextResponse.json({ sizes, images, sold });
+    return NextResponse.json({ sizes, images, sold, unavailableSizes });
   } catch (err) {
     console.error('[prints/catalog] could not load basket details:', err);
     return NextResponse.json({ error: 'The basket could not be loaded.' }, { status: 500 });

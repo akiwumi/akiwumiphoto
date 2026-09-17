@@ -65,6 +65,16 @@ export async function getSoldCounts(imageIds: string[]): Promise<Record<string, 
   return sold;
 }
 
+export async function getSizeExclusions(imageIds: string[]): Promise<Record<string, string[]>> {
+  if (imageIds.length === 0) return {};
+  try {
+    const { data } = await publicClient().from('print_size_exclusions').select('image_id,size_id').in('image_id', imageIds);
+    const out: Record<string, string[]> = {};
+    for (const row of data ?? []) (out[row.image_id] ??= []).push(row.size_id);
+    return out;
+  } catch { return {}; }
+}
+
 /** The editable prints page text: headings and one list item per line. */
 export async function getPrintsPageContent(): Promise<Record<string, string>> {
   try {

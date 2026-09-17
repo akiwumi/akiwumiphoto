@@ -7,7 +7,7 @@ import { extractStoragePath } from '@/lib/storage-utils';
 import { formatMoney } from '@/lib/currency';
 import type { Gallery, GalleryImage, PrintOrder, PrintSize } from '@/types';
 
-type Section = 'sizes' | 'details' | 'availability' | 'orders';
+type Section = 'sizes' | 'details' | 'availability' | 'orders' | 'maintenance';
 
 const INPUT = { background: '#111', border: '1px solid #444', color: '#fff', padding: '8px 12px', fontFamily: 'inherit', fontSize: 'var(--body-size)', outline: 'none', width: '100%' };
 const LABEL = { display: 'block', color: '#888', fontSize: '0.7rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 4 };
@@ -37,14 +37,24 @@ export default function PrintsTab() {
         <button style={TAB_BTN('details')} onClick={() => setSection('details')}>Paper &amp; certification</button>
         <button style={TAB_BTN('availability')} onClick={() => setSection('availability')}>Availability &amp; sold</button>
         <button style={TAB_BTN('orders')} onClick={() => setSection('orders')}>Orders</button>
+        <button style={TAB_BTN('maintenance')} onClick={() => setSection('maintenance')}>Admin reset &amp; photo sizes</button>
       </div>
 
       {section === 'sizes' && <SizesSection />}
       {section === 'details' && <DetailsSection />}
       {section === 'availability' && <AvailabilitySection />}
       {section === 'orders' && <OrdersSection />}
+      {section === 'maintenance' && <MaintenanceSection />}
     </div>
   );
+}
+
+function MaintenanceSection() {
+  const [images, setImages] = useState<any[]>([]); const [sizes, setSizes] = useState<any[]>([]); const [excluded, setExcluded] = useState<Record<string, string[]>>({}); const [imageId, setImageId] = useState(''); const [msg, setMsg] = useState('');
+  useEffect(() => { Promise.all([supabase.from('gallery_images').select('id,title').order('title'), supabase.from('print_sizes').select('id,name').order('sort_order'), supabase.from('print_size_exclusions').select('image_id,size_id')]).then(([im, sz, ex]) => { setImages(im.data || []); setSizes(sz.data || []); const map: Record<string,string[]> = {}; (ex.data || []).forEach((r:any) => (map[r.image_id] ||= []).push(r.size_id)); setExcluded(map); }); }, []);
+  const toggleSize = async (sizeId: string) => { if (!imageId) return; const off = excluded[imageId]?.includes(sizeId); const result = off ? await supabase.from('print_size_exclusions').delete().match({image_id:imageId,size_id:sizeId}) : await supabase.from('print_size_exclusions').insert({image_id:imageId,size_id:sizeId}); if (result.error) setMsg(result.error.message); else setExcluded(p => ({ ...p, [imageId]: off ? (p[imageId] || []).filter(id => id !== sizeId) : [...(p[imageId] || []), sizeId] })); };
+  const reset = async (kind: 'sales'|'purchases'|'registrations') => { if (!window.confirm(`Reset ${kind} permanently? This cannot be undone.`)) return; const rpc = kind === 'sales' ? 'admin_reset_image_sales' : kind === 'purchases' ? 'admin_reset_purchases' : 'admin_reset_registrations'; const { error } = await supabase.rpc(rpc, kind === 'sales' ? { p_image_id: imageId } : {}); setMsg(error ? error.message : `${kind} reset complete.`); };
+  return <div className="max-w-3xl flex flex-col gap-6"><div><h2 className="text-white text-xl">Photograph size availability</h2><p className="text-grey-mid text-base">All sizes are available by default. Turn a size off for one photograph without changing the global size catalogue.</p><label style={LABEL}>Photograph</label><select style={INPUT} value={imageId} onChange={e=>setImageId(e.target.value)}><option value="">Select a photograph</option>{images.map(i=><option key={i.id} value={i.id}>{i.title || i.id}</option>)}</select>{imageId && <div className="flex flex-wrap gap-3 mt-4">{sizes.map(s=>{const on=!excluded[imageId]?.includes(s.id); return <button key={s.id} type="button" onClick={()=>toggleSize(s.id)} style={{...QUIET_BUTTON,padding:'10px 14px',color:on?'#fff':'#888',borderColor:on?'#33c9a0':'#444'}}>{s.name}: {on?'Available':'Removed'}</button>;})}</div>}</div><div><h2 className="text-white text-xl">Reset data</h2><p className="text-grey-mid text-base">These actions are permanent and should only be used to clear test data or correct a mistaken entry.</p><div className="flex flex-wrap gap-3"><button type="button" style={{...QUIET_BUTTON,padding:'10px 14px'}} onClick={()=>reset('sales')} disabled={!imageId}>Reset sold count for selected photograph</button><button type="button" style={{...QUIET_BUTTON,padding:'10px 14px'}} onClick={()=>reset('purchases')}>Erase all purchases</button><button type="button" style={{...QUIET_BUTTON,padding:'10px 14px'}} onClick={()=>reset('registrations')}>Erase all registrations</button></div></div>{msg&&<p className="text-grey-mid text-base">{msg}</p>}</div>;
 }
 
 // Sizes & prices ----------------------------------------------------------------------
