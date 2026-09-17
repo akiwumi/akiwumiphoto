@@ -21,6 +21,8 @@ Give the administrator a controlled way to create and print a certificate of aut
 4. Save. A transaction validates the serial belongs to that photograph and is unused, validates the edition position against the selected size, snapshots all certificate fields, consumes the serial, and links the certificate to the registration and image.
 5. Preview the certificate, then Print / Save as PDF. The admin can mark it Printed after printing. A printed certificate cannot be edited; create a replacement certificate with a new serial if a correction is needed.
 
+6. The saved certificate appears in the registration record's Certificates section. Opening the registration shows every certificate created for that print, its status, serial number, edition position, creation/printed dates, and a View / Print action.
+
 ## Certificate content and layout
 
 The printable document includes:
@@ -41,7 +43,7 @@ The screen preview and print view use the same data. Print CSS hides navigation 
 
 Add `photo_serial_numbers` with photograph id, six-digit serial, state (`available`, `reserved`, `printed`, `released`), certificate id when used, timestamps, and release reason. The photograph is the ownership boundary; print size is not part of serial uniqueness.
 
-Add `print_certificates` with registration id, photograph id, print size id, serial registry id, edition position and total, order number, location, capture year, technical information, image history, immutable purchaser snapshot, immutable image snapshot, status (`draft`, `printed`, `void`), created/printed timestamps, and the creating administrator. Store snapshots so later profile, catalogue, or image edits cannot change a certificate that was printed.
+Add `print_certificates` with a required foreign key `registration_id` to `purchase_messages`, photograph id, print size id, serial registry id, edition position and total, order number, location, capture year, technical information, image history, immutable purchaser snapshot, immutable image snapshot, status (`draft`, `printed`, `void`), created/printed timestamps, and the creating administrator. Index `registration_id` and `serial_registry_id`. Store snapshots so later profile, catalogue, or image edits cannot change a certificate that was printed. The registration detail query returns certificates through this foreign key; the certificate detail query returns its registration and linked print data through the same relationship. Deleting a registration is restricted while certificates exist, preserving the audit trail.
 
 The database exposes administrator-only functions for adding/removing registry entries, creating certificates, marking printed, and voiding drafts. Creation locks the serial row and verifies all ownership and edition constraints before consuming it. Direct client writes are revoked. Existing registrations and catalogue images remain unchanged.
 
@@ -57,6 +59,7 @@ The database exposes administrator-only functions for adding/removing registry e
 - Unit-test six-digit validation, edition-position parsing, field escaping, receipt/certificate formatting, and passport-image sizing.
 - Database-test serial ownership, duplicate registry rejection, concurrent certificate creation, edition bounds, snapshot immutability, administrator-only writes, draft voiding, and printed-certificate immutability.
 - Browser-test the admin create flow, field-specific errors, certificate preview, print stylesheet, and the collector's restricted access.
+- Browser-test retrieving a certificate from its registration and retrieving the registration from its certificate, including a void certificate's history.
 - Run TypeScript, lint, production build, and migration checks before deployment.
 
 ## Deployment
