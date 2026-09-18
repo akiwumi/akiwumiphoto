@@ -64,7 +64,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
     ...navPages.map((page) => ({ key: `page:${page.slug}`, href: `/${page.slug}`, label: page.title, Icon: FileText, current: pathname === `/${page.slug}` })),
     { key: 'about', href: '/about', label: 'About', Icon: User, current: pathname === '/about' },
     { key: 'contact', href: '/contact', label: 'Contact', Icon: Mail, current: pathname === '/contact' },
-    { key: 'basket', href: '/basket', label: 'Basket', Icon: ShoppingBag, current: pathname === '/basket' },
+    ...(basketCount > 0 ? [{ key: 'basket', href: '/basket', label: 'Basket', Icon: ShoppingBag, current: pathname === '/basket' }] : []),
     ...(signedIn
       ? [{ key: 'account', href: '/account', label: 'Account', Icon: User, current: pathname === '/account' }]
       : [{ key: 'login', href: '/account?mode=login', label: 'Login', Icon: User, current: false }, { key: 'register-account', href: '/account?mode=signup', label: 'Register', Icon: User, current: false }]),
@@ -93,8 +93,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
             <Link key={item.key} href={item.href} aria-current={item.current ? 'page' : undefined}
               className={item.key === 'login' || item.key === 'register-account' ? styles.accountAction : undefined}
               aria-label={item.key === 'basket' ? basketLabel : undefined}>
-              {item.label}
-              {item.key === 'basket' && basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
+              {item.key === 'basket' ? <><ShoppingBag size={18} strokeWidth={1.8} aria-hidden /><span className={styles.srOnly}>Basket</span><span className={styles.basketCount} aria-hidden="true">{basketCount}</span></> : item.label}
             </Link>
           ))}
           {signedIn && <button type="button" onClick={signOut} style={{ background: 'none', border: 0, color: 'inherit', cursor: 'pointer', font: 'inherit', padding: 0 }}>Sign out</button>}

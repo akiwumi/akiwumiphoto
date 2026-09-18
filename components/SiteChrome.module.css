@@ -10,6 +10,7 @@
 .tabBarRoot { display: none; }
 /* Sized in em so the badge follows the navigation text size. */
 .basketCount { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; margin-left: .35em; padding: 0 .45em; border-radius: .8em; background: var(--site-text); color: var(--site-background); font-size: .5em; font-weight: 700; line-height: 1; vertical-align: .4em; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .navigation a:hover, .navigation a[aria-current], .footer a:hover { text-decoration: underline; text-underline-offset: 6px; }
 .accountAction { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid currentColor; border-radius: 999px; text-decoration: none !important; }
 .accountAction:hover { background: var(--site-text); color: var(--site-background) !important; text-decoration: none !important; }
