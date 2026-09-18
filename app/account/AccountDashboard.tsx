@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { AccountData, AccountOrderLine } from '@/lib/account-data';
+import SerialNumberRequestButton from './SerialNumberRequestButton';
 
 function money(value: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD' }).format(value);
@@ -57,7 +58,7 @@ export default function AccountDashboard({ email, data }: { email: string; data:
         </section>
         <section className="register-panel" aria-labelledby="account-certificates-title">
           <h2 id="account-certificates-title" className="register-section-title">Certificates</h2>
-          {data.certificates.length === 0 ? <p>No certificates have been created for your registered prints yet.</p> : <div className="flex flex-col gap-4">{data.certificates.map((certificate) => <article key={certificate.id} style={{ borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 14 }}><strong>{certificate.image_snapshot?.title ?? 'Registered print'}</strong><p style={{ margin: '6px 0', color: 'rgba(255,255,255,.68)' }}>Certificate {certificate.print_number}/{certificate.edition_total} · {certificate.status}</p><p style={{ margin: 0, color: 'rgba(255,255,255,.68)', fontSize: 14 }}>Order {certificate.order_number} · {certificate.location}</p><Link href={`/account/certificates/${certificate.id}`} className="register-submit btn-lift" style={{ display: 'inline-flex', justifyContent: 'center', textDecoration: 'none', marginTop: 12 }}>View certificate</Link></article>)}</div>}
+          {data.certificates.length === 0 ? <p>No certificates have been created for your registered prints yet.</p> : <div className="flex flex-col gap-4">{data.certificates.map((certificate) => <article key={certificate.id} style={{ borderTop: '1px solid rgba(255,255,255,.18)', paddingTop: 14 }}><strong>{certificate.image_snapshot?.title ?? 'Registered print'}</strong><p style={{ margin: '6px 0', color: 'rgba(255,255,255,.68)' }}>Certificate {certificate.print_number}/{certificate.edition_total} · {certificate.status}</p><p style={{ margin: 0, color: 'rgba(255,255,255,.68)', fontSize: 14 }}>Order {certificate.order_number} · {certificate.location}</p>{certificate.serial_number ? <p style={{ margin: '8px 0', color: 'rgba(255,255,255,.85)' }}>Registered number: <strong>{certificate.serial_number}</strong></p> : <SerialNumberRequestButton certificateId={certificate.id} status={certificate.serial_request_status} />}<Link href={`/account/certificates/${certificate.id}`} className="register-submit btn-lift" style={{ display: 'inline-flex', justifyContent: 'center', textDecoration: 'none', marginTop: 12 }}>View certificate</Link></article>)}</div>}
         </section>
       </aside>
     </div>
