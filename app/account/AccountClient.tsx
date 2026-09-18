@@ -56,7 +56,7 @@ export default function AccountClient({ accountError = false }: { accountError?:
       const path = mode === 'login' ? '/api/account/login' : mode === 'signup' ? '/api/account/signup' : mode === 'reset' ? '/api/account/password-reset' : '/api/account/resend-verification';
       const data = await send(path, payload);
       setMessage(data.message || (mode === 'login' ? 'You are signed in.' : 'Check your inbox for the next step.'));
-      if (mode === 'login') router.replace('/account');
+      if (mode === 'login') window.location.assign('/account');
       if (mode === 'signup' || mode === 'reset' || mode === 'resend') setPassword('');
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Something went wrong. Please try again.'); }
     finally { setBusy(false); }
