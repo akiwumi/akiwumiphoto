@@ -100,3 +100,14 @@ CREATE POLICY "Collectors can read their own certificates"
        AND c.email_verified
   ));
 
+GRANT SELECT ON public.registration_receipts TO authenticated;
+CREATE POLICY "Collectors can read their own registration receipts"
+  ON public.registration_receipts FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1
+      FROM public.purchase_messages pm
+      JOIN public.collectors c ON c.id = pm.collector_id
+     WHERE pm.id = registration_receipts.registration_id
+       AND c.auth_user_id = (SELECT auth.uid())
+       AND c.email_verified
+  ));
