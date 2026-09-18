@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
 import SiteFooter from './SiteFooter';
 import SiteModalHost from './SiteModalHost';
+import LogoutModal from './LogoutModal';
 
 export default function LayoutTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -13,7 +14,7 @@ export default function LayoutTransition({ children }: { children: ReactNode }) 
     // Preserve the existing home/gallery composition while other pages use
     // the editorial design system's spacing and type scale.
     const protectedLayout = pathname === '/' || pathname === '/home' || pathname.startsWith('/gallery/');
-    return <div className="public-site" data-layout={protectedLayout ? 'portfolio' : 'editorial'}>{children}{pathname !== '/' && <SiteFooter />}<SiteModalHost /></div>;
+    return <div className="public-site" data-layout={protectedLayout ? 'portfolio' : 'editorial'}>{children}{pathname !== '/' && <SiteFooter />}<SiteModalHost /><LogoutModal /></div>;
   }
 
   return (

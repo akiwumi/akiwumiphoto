@@ -1,5 +1,14 @@
 import { createServerClient as createSSRServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import type { CookieOptions } from '@supabase/ssr';
+
+export type SupabaseAuthCookie = { name: string; value: string; options: CookieOptions };
+
+export function applySupabaseAuthCookies(response: Response, authCookies: SupabaseAuthCookie[]) {
+  const responseWithCookies = response as Response & { cookies?: { set: (name: string, value: string, options?: CookieOptions) => void } };
+  if (!responseWithCookies.cookies) return;
+  for (const { name, value, options } of authCookies) responseWithCookies.cookies.set(name, value, options);
+}
 
 const PLACEHOLDER = ['your-project', 'your-anon', 'your-service'];
 
@@ -14,7 +23,7 @@ function isConfigured(): boolean {
   );
 }
 
-export async function createServerClient() {
+export async function createServerClient(options: { onSetAll?: (cookiesToSet: SupabaseAuthCookie[]) => void } = {}) {
   if (!isConfigured()) {
     throw new Error('Supabase not configured — using demo data');
   }
@@ -28,6 +37,9 @@ export async function createServerClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
+          // Route handlers need to attach these values to their own response;
+          // capture them even if the async request cookie store is immutable.
+          options.onSetAll?.(cookiesToSet);
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)

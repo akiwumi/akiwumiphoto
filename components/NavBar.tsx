@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState, type ComponentType } from 'react';
 import { Briefcase, Clapperboard, FileText, Frame, Images, Mail, Menu, Newspaper, ShoppingBag, User, X } from 'lucide-react';
 import styles from './SiteChrome.module.css';
@@ -24,6 +24,7 @@ const BAR_PRIORITY = ['gallery', 'videography', 'prints', 'basket'];
 
 export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const menuId = useId();
@@ -77,9 +78,11 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
   const basketLabel = basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket';
   const menuCurrent = menuItems.some((item) => item.current);
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) return;
     setSignedIn(false);
     setMenuOpen(false);
+    router.replace('/?logged_out=1');
   };
 
   return (

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
-import { createServerClient } from '@/lib/supabase-server';
+import { applySupabaseAuthCookies, createServerClient, type SupabaseAuthCookie } from '@/lib/supabase-server';
 import { PASSWORD_RESET_COOKIE } from '@/lib/admin-auth';
 
 /**
@@ -35,9 +35,11 @@ export async function GET(request: NextRequest) {
   // admin reset screen without having started the admin flow in this browser.
   const accountRecovery = type === 'recovery' && params.get('next') === '/account' && !adminResetCookie;
   const resettingPassword = !accountRecovery && (type === 'recovery' || adminResetCookie);
+  const authCookies: SupabaseAuthCookie[] = [];
 
   const go = (path: string) => {
     const response = NextResponse.redirect(`${origin}${path}`);
+    applySupabaseAuthCookies(response, authCookies);
     if (resettingPassword) response.cookies.delete(PASSWORD_RESET_COOKIE);
     return response;
   };
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
 
   let supabase;
   try {
-    supabase = await createServerClient();
+    supabase = await createServerClient({ onSetAll: (cookies) => authCookies.push(...cookies) });
   } catch {
     return failure('unavailable');
   }

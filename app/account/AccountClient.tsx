@@ -74,7 +74,13 @@ export default function AccountClient({ accountError = false }: { accountError?:
     finally { setBusy(false); }
   };
 
-  const signOut = async () => { setBusy(true); await supabase.auth.signOut(); setUser(null); setBusy(false); router.refresh(); };
+  const signOut = async () => {
+    setBusy(true);
+    const { error: signOutError } = await supabase.auth.signOut();
+    if (signOutError) setError('We could not sign you out. Please try again.');
+    else { setUser(null); router.replace('/?logged_out=1'); }
+    setBusy(false);
+  };
   if (user && recoveryMode) return <section className="register-panel" style={{ maxWidth: 620 }}>
     <h2 className="register-section-title">Choose a new password</h2>
     {message && <p role="status" className="register-notice">{message}</p>}

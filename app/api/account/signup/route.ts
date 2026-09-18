@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { applySupabaseAuthCookies, createServerClient, type SupabaseAuthCookie } from '@/lib/supabase-server';
 import { siteOrigin } from '@/lib/site-origin';
 
 export const runtime = 'nodejs';
@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Enter a valid email and a password of at least 8 characters.' }, { status: 422 });
   }
   let supabase;
-  try { supabase = await createServerClient(); } catch (error) {
+  const authCookies: SupabaseAuthCookie[] = [];
+  try { supabase = await createServerClient({ onSetAll: (cookies) => authCookies.push(...cookies) }); } catch (error) {
     console.error('[account/signup] Supabase unavailable:', error);
     return NextResponse.json({ error: 'Account registration is temporarily unavailable.' }, { status: 503 });
   }
@@ -30,5 +31,7 @@ export async function POST(request: Request) {
     if (error.status !== 429) return NextResponse.json({ ok: true, message: GENERIC });
     return NextResponse.json({ error: 'Too many verification emails have been requested. Please try again shortly.' }, { status: 429 });
   }
-  return NextResponse.json({ ok: true, message: GENERIC });
+  const response = NextResponse.json({ ok: true, message: GENERIC });
+  applySupabaseAuthCookies(response, authCookies);
+  return response;
 }

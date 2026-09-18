@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { applySupabaseAuthCookies, createServerClient, type SupabaseAuthCookie } from '@/lib/supabase-server';
 import { validateCollector } from '@/lib/collector-validation';
 import { emailDomainAcceptsMail } from '@/lib/email-domain';
 import { siteOrigin } from '@/lib/site-origin';
@@ -34,8 +34,9 @@ export async function POST(request: Request) {
   }
 
   let supabase;
+  const authCookies: SupabaseAuthCookie[] = [];
   try {
-    supabase = await createServerClient();
+    supabase = await createServerClient({ onSetAll: (cookies) => authCookies.push(...cookies) });
   } catch (err) {
     console.error('[register] Supabase is not configured:', err);
     return NextResponse.json({ error: 'Registration is unavailable right now.' }, { status: 503 });
@@ -86,9 +87,11 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     ok: true,
     status: outcome === 'already_verified' ? 'already_registered' : 'verification_sent',
     email: values.email,
   });
+  applySupabaseAuthCookies(response, authCookies);
+  return response;
 }
