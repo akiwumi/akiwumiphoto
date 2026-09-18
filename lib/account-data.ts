@@ -63,6 +63,8 @@ export type AccountCertificate = {
   location: string;
   capture_year: number;
   image_snapshot: { title?: string; [key: string]: unknown } | null;
+  serial_number: string | null;
+  serial_request_status: 'pending' | 'approved' | 'denied' | null;
 };
 
 export type AccountData = {
@@ -101,6 +103,12 @@ export async function loadAccountData(db: SupabaseClient, user: User): Promise<A
   if (certificateError) throw certificateError;
 
   const collectorIds = (collectorRows ?? []).map((row) => row.id);
+  const certificateIds = (certificateRows ?? []).map((row) => row.id);
+  const { data: requestRows, error: requestError } = certificateIds.length > 0
+    ? await db.from('serial_number_requests').select('certificate_id,status,serial_number').in('certificate_id', certificateIds)
+    : { data: [], error: null };
+  if (requestError) throw requestError;
+  const requestByCertificate = new Map((requestRows ?? []).map((row) => [row.certificate_id, row]));
   let registrations: AccountRegistration[] = [];
   if (collectorIds.length > 0) {
     const { data, error } = await db
@@ -122,6 +130,10 @@ export async function loadAccountData(db: SupabaseClient, user: User): Promise<A
       lines: linesFrom(row.lines),
     })) as AccountOrder[],
     registrations,
-    certificates: (certificateRows ?? []) as AccountCertificate[],
+    certificates: (certificateRows ?? []).map((certificate) => ({
+      ...(certificate as AccountCertificate),
+      serial_number: requestByCertificate.get(certificate.id)?.status === 'approved' ? requestByCertificate.get(certificate.id)?.serial_number ?? null : null,
+      serial_request_status: requestByCertificate.get(certificate.id)?.status ?? null,
+    })),
   };
 }

@@ -26,6 +26,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [registered, setRegistered] = useState(false);
   const menuId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const basketCount = useBasketCount();
@@ -37,8 +38,10 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
     supabase.auth.getUser().then(({ data }) => {
       if (active) setSignedIn(Boolean(data.user?.email_confirmed_at));
     });
+    fetch('/api/account/status').then((response) => response.json()).then((data) => { if (active) setRegistered(Boolean(data.registered)); }).catch(() => {});
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSignedIn(Boolean(session?.user?.email_confirmed_at));
+      if (!session?.user) setRegistered(false);
     });
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
@@ -65,9 +68,8 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
     { key: 'about', href: '/about', label: 'About', Icon: User, current: pathname === '/about' },
     { key: 'contact', href: '/contact', label: 'Contact', Icon: Mail, current: pathname === '/contact' },
     ...(basketCount > 0 ? [{ key: 'basket', href: '/basket', label: 'Basket', Icon: ShoppingBag, current: pathname === '/basket' }] : []),
-    ...(signedIn
-      ? [{ key: 'account', href: '/account', label: 'Account', Icon: User, current: pathname === '/account' }]
-      : [{ key: 'login', href: '/account?mode=login', label: 'Login', Icon: User, current: false }, { key: 'register-account', href: '/account?mode=signup', label: 'Register', Icon: User, current: false }]),
+    ...(signedIn ? [{ key: 'account', href: '/account', label: 'Account', Icon: User, current: pathname === '/account' }] : [{ key: 'login', href: '/account?mode=login', label: 'Login', Icon: User, current: false }]),
+    ...(!registered ? [{ key: 'register-account', href: '/account?mode=signup', label: 'Register', Icon: User, current: false }] : []),
   ].filter((item) => item.key.startsWith('page:') || shown(item.key));
 
   // Fill the bar in priority order, topping up from the remaining pages when some are hidden.
