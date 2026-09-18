@@ -39,7 +39,7 @@ function chargedAmount(paid: NonNullable<OrderForEmail['paid']>): string {
   const currency = paid.currency.toUpperCase();
   // Stripe counts most currencies in hundredths; resolvedOptions knows which don't.
   const digits = new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
-  return formatMoney(paid.amount / 10 ** digits, currency);
+  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(paid.amount / 10 ** digits);
 }
 
 export function orderEmailSubject(order: OrderForEmail): string {
@@ -47,7 +47,7 @@ export function orderEmailSubject(order: OrderForEmail): string {
 }
 
 export function orderEmailText(order: OrderForEmail, ratesDate: string | null = null): string {
-  const usd = (amount: number) => formatMoney(Number(amount), 'USD');
+  const usd = (amount: number) => new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' }).format(Number(amount));
   const placed = new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Stockholm',
   }).format(order.created_at);

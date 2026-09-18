@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { sendOrderNotification } from '@/lib/order-email';
-import { fromCents, serviceClient, stripe } from '@/lib/stripe';
+import { serviceClient, stripe } from '@/lib/stripe';
+import { shippingUsdForSession } from '@/lib/shipping';
 import type { PrintOrder } from '@/types';
 
 export const runtime = 'nodejs';
@@ -56,7 +57,7 @@ async function settle(session: Stripe.Checkout.Session) {
   const details = session.collected_information?.shipping_details ?? null;
   const { data, error } = await serviceClient().rpc('mark_print_order_paid', {
     p_session_id: session.id,
-    p_shipping_usd: session.shipping_cost ? fromCents(session.shipping_cost.amount_total) : null,
+    p_shipping_usd: shippingUsdForSession(session),
     p_shipping_address: details
       ? { name: details.name, address: details.address, phone: session.customer_details?.phone ?? null }
       : null,

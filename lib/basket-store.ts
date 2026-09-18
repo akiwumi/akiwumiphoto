@@ -25,6 +25,8 @@ const listeners = new Set<() => void>();
 
 let lines: BasketLine[] | null = null;
 let currency: CurrencyCode | null = null;
+let locationRequested = false;
+let currencyChosen = false;
 type RatesState = ExchangeRates & { status: 'loading' | 'ready' | 'failed' };
 const RATES_LOADING: RatesState = { ...USD_ONLY, status: 'loading' };
 let rates: RatesState = RATES_LOADING;
@@ -47,7 +49,11 @@ function readLines(): BasketLine[] {
 function readCurrency(): CurrencyCode {
   try {
     const saved = window.localStorage.getItem(CURRENCY_KEY);
-    return isCurrencyCode(saved) ? saved : 'USD';
+    if (isCurrencyCode(saved)) {
+      currencyChosen = true;
+      return saved;
+    }
+    return 'USD';
   } catch {
     return 'USD';
   }
@@ -59,7 +65,11 @@ function emit() {
 
 function onStorage(event: StorageEvent) {
   if (event.key === BASKET_KEY) lines = readLines();
-  else if (event.key === CURRENCY_KEY) currency = readCurrency();
+  else if (event.key === CURRENCY_KEY) {
+    currency = readCurrency();
+    // A currency arriving from another tab is an explicit buyer choice.
+    currencyChosen = true;
+  }
   else return;
   emit();
 }
@@ -67,6 +77,19 @@ function onStorage(event: StorageEvent) {
 function subscribe(listener: () => void) {
   if (listeners.size === 0) window.addEventListener('storage', onStorage);
   listeners.add(listener);
+  if (!locationRequested) {
+    locationRequested = true;
+    // Initialize storage before the asynchronous location response arrives.
+    currentCurrency();
+    fetch('/api/location', { cache: 'no-store' })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!currencyChosen && isCurrencyCode(data?.currency)) {
+          currency = data.currency;
+          emit();
+        }
+      }).catch(() => {});
+  }
   return () => {
     listeners.delete(listener);
     if (listeners.size === 0) window.removeEventListener('storage', onStorage);
@@ -179,6 +202,7 @@ function currentCurrency(): CurrencyCode {
 }
 
 export function setCurrency(next: CurrencyCode) {
+  currencyChosen = true;
   currency = next;
   try {
     window.localStorage.setItem(CURRENCY_KEY, next);
@@ -211,6 +235,7 @@ export interface Money {
   /** The chosen currency, or USD while its rate is unavailable. */
   currency: CurrencyCode;
   rate: number;
+  exchange: ExchangeRates;
   ratesDate: string | null;
   ratesStatus: RatesState['status'];
   format: (usd: number) => string;
@@ -226,6 +251,7 @@ export function useMoney(): Money {
   return {
     currency: active,
     rate: activeRate,
+    exchange: loaded,
     ratesDate: loaded.date,
     ratesStatus: loaded.status,
     format: (usd: number) => formatMoney(usd * activeRate, active),

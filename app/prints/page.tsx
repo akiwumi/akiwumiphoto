@@ -6,6 +6,7 @@ import Reveal from '@/components/Reveal';
 import CurrencySelect from '@/components/CurrencySelect';
 import PriceTag from '@/components/PriceTag';
 import { getPrintSizes, getPrintsPageContent, listItems } from '@/lib/print-shop';
+import { SHIPPING_POLICY, DISPATCH_NOTICE } from '@/lib/shipping';
 
 export const metadata: Metadata = {
   title: 'Limited Edition Prints | Eugene Akiwumi',
@@ -82,6 +83,11 @@ export default async function PrintsPage() {
         </div>
 
         {/* Info sections */}
+        <section className="prints-panel p-6 mb-8 text-white" aria-labelledby="shipping-heading">
+          <h2 id="shipping-heading" className="font-bold uppercase mb-3">Post &amp; packaging</h2>
+          <p>{SHIPPING_POLICY}</p>
+          <p className="mt-2">{DISPATCH_NOTICE}</p>
+        </section>
         {sections.length > 0 && (
           <div className="prints-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             {sections.map((section, index) => (

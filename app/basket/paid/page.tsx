@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import ClearBasket from './ClearBasket';
+import { DISPATCH_NOTICE } from '@/lib/shipping';
 
 export const metadata: Metadata = {
   title: 'Thank you | Akiwumi Photo',
@@ -31,6 +32,7 @@ export default async function PaidPage({ searchParams }: { searchParams: Promise
             A receipt is on its way to your email. Each print is produced to order, then signed and numbered
             by hand. I will be in touch when yours ships.
           </p>
+          <p>{DISPATCH_NOTICE}</p>
           <Link href="/home" className="basket-button basket-button-secondary">Continue browsing</Link>
         </div>
       </div>

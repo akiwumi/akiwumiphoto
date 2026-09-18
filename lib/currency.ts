@@ -1,7 +1,7 @@
 /**
  * Prices are set and recorded in US dollars. Buyers may view them in another
- * currency, converted at the European Central Bank reference rate; the
- * converted figure is indicative and the invoice is what they pay.
+ * currency, converted at the European Central Bank reference rate.
+ * Checkout charges the selected currency using the server's current rate.
  */
 export const BASE_CURRENCY = 'USD';
 
@@ -34,6 +34,22 @@ export interface ExchangeRates {
 }
 
 export const USD_ONLY: ExchangeRates = { date: null, rates: { USD: 1 } };
+
+export function validRate(rate: unknown): rate is number {
+  return typeof rate === 'number' && Number.isFinite(rate) && rate > 0;
+}
+
+export function toMinorUnits(amount: number, currency: CurrencyCode): number {
+  return Math.round(amount * (currency === 'JPY' ? 1 : 100));
+}
+
+export function fromMinorUnits(amount: number, currency: CurrencyCode): number {
+  return amount / (currency === 'JPY' ? 1 : 100);
+}
+
+export function formatMinorUnits(amount: number, currency: CurrencyCode): string {
+  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(fromMinorUnits(amount, currency));
+}
 
 /**
  * Whole units: prices are whole dollars, and a converted amount shown to the

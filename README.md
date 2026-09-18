@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Regional print pricing and shipping
+
+New visitors default to SEK in Sweden, GBP in the UK, EUR elsewhere in the EU, and USD elsewhere. `/api/location` reads Vercel's `x-vercel-ip-country` request header; missing location data (including local development) defaults to USD. A buyer's saved manual currency choice takes precedence. Non-Vercel hosting must supply equivalent country information before automatic location detection will work.
+
+Delivery country, selected in the basket, determines one shipping fee per order: Sweden free, EU outside Sweden EUR 25, UK GBP 30, and everywhere else USD 45. The basket shows shipping and the total. Stripe collects an address only in that selected country; changing country requires returning to the basket for a new quote. Visitor location never determines shipping.
+
+Checkout uses server-side exchange rates and charges prints and shipping in the chosen currency with adaptive pricing disabled. Shipping remains exact in its native currency and is converted when a different payment currency is selected. Required missing exchange rates block checkout before stock is reserved. Session metadata preserves the shipping USD equivalent and the quote's currency, country and minor-unit amount for webhook verification. Existing USD checkout sessions remain supported.
+
+Dispatch promise: prints ship within 7 working days of order placement.
+
+Regression checks: `node --test tests/regional-pricing.test.cjs tests/registration-receipt.test.cjs`.
+
 ## Environment variables
 
 Set these in `.env.local` for local development, and in the hosting project's

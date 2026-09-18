@@ -1,4 +1,4 @@
-import { CURRENCIES, USD_ONLY, type ExchangeRates } from './currency';
+import { CURRENCIES, USD_ONLY, validRate, type ExchangeRates } from './currency';
 
 // European Central Bank reference rates, published once each working day.
 const ENDPOINT = 'https://api.frankfurter.dev/v1/latest';
@@ -18,7 +18,7 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
     const rates: ExchangeRates['rates'] = { USD: 1 };
     for (const { code } of CURRENCIES) {
       const rate = data.rates?.[code];
-      if (typeof rate === 'number' && rate > 0) rates[code] = rate;
+      if (validRate(rate)) rates[code] = rate;
     }
     return { date: data.date ?? null, rates };
   } catch (err) {

@@ -24,7 +24,7 @@ export default function CurrencySelect() {
       {chosen !== 'USD' && ratesStatus !== 'loading' && (
         <p className="currency-note">
           {currency === chosen
-            ? `Converted from US dollars at the ECB rate${ratesDate ? ` of ${ratesDate}` : ''}. Approximate; your invoice confirms the amount.`
+            ? `Print prices converted from US dollars at the ECB rate${ratesDate ? ` of ${ratesDate}` : ''}. Checkout confirms the final amount in ${currency}.`
             : 'Exchange rates are unavailable right now, so prices are shown in US dollars.'}
         </p>
       )}

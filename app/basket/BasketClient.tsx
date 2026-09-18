@@ -8,9 +8,9 @@ import {
   changeLineSize, releaseAbandonedCheckout, rememberCheckout, removeLine, setLineQuantity, useBasket, useMoney,
   type BasketLine,
 } from '@/lib/basket-store';
-import { countryOptions } from '@/lib/countries';
-import { formatMoney } from '@/lib/currency';
-import { SHIPPING_USD } from '@/lib/shipping';
+import { countryOptions, isCountryCode } from '@/lib/countries';
+import { formatMoney, formatMinorUnits, toMinorUnits } from '@/lib/currency';
+import { shippingQuote, canPayByCard, SHIPPING_POLICY, DISPATCH_NOTICE } from '@/lib/shipping';
 import { editionLabel, isPurchasable, remaining } from '@/lib/print-availability';
 import type { CatalogImage, PrintSize, SoldBySize } from '@/types';
 
@@ -100,6 +100,12 @@ export default function BasketClient() {
   const ready = catalog !== null && idsKey.split(',').every((id) => loadedIds.has(id));
   const totalUsd = priced.reduce((sum, p) => sum + (p.problem || !p.size?.price_usd ? 0 : p.size.price_usd * p.line.quantity), 0);
   const canCheckout = ready && basket.length > 0 && priced.every((p) => !p.problem);
+  const subtotalMinor = priced.reduce((sum, p) => sum + (p.problem || p.size?.price_usd == null
+    ? 0 : toMinorUnits(p.size.price_usd * money.rate, money.currency) * p.line.quantity), 0);
+  const deliveryCountry = isCountryCode(form.country) ? form.country : null;
+  const shipping = deliveryCountry ? shippingQuote(deliveryCountry, money.currency, money.exchange) : null;
+  const cardDelivery = !deliveryCountry || canPayByCard(deliveryCountry);
+  const shippingReady = Boolean(shipping) && cardDelivery && money.ratesStatus !== 'loading';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -113,6 +119,7 @@ export default function BasketClient() {
       setTimeout(() => document.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${['firstName','lastName','email','country'].find((name) => !form[name as keyof typeof form])}"]`)?.focus(), 0);
       return;
     }
+    if (!shippingReady) return;
     setSending(true);
     setError('');
 
@@ -236,7 +243,8 @@ export default function BasketClient() {
 
                   <div className="basket-line-side">
                     <p className="basket-line-total">
-                      {!problem && size?.price_usd != null ? money.format(size.price_usd * line.quantity) : '—'}
+                      {!problem && size?.price_usd != null
+                        ? formatMinorUnits(toMinorUnits(size.price_usd * money.rate, money.currency) * line.quantity, money.currency) : '—'}
                     </p>
                     <button type="button" className="basket-remove" onClick={() => removeLine(line.imageId, line.sizeId)}>
                       Remove
@@ -249,16 +257,35 @@ export default function BasketClient() {
 
           <aside className="basket-summary" aria-label="Order summary">
             <div className="basket-total">
-              <span>Total</span>
-              <strong>{money.format(totalUsd)}</strong>
+              <span>Prints</span>
+              <strong>{formatMinorUnits(subtotalMinor, money.currency)}</strong>
+            </div>
+            <div aria-live="polite">
+              <div className="basket-total">
+                <span>Post and packaging</span>
+                <strong>{shipping ? shipping.minorAmount === 0 ? 'Free' : formatMinorUnits(shipping.minorAmount, money.currency) : '—'}</strong>
+              </div>
+              {shipping && (
+                <>
+                  <p className="basket-total-note">
+                    {shipping.name}
+                    {shipping.amount > 0 && shipping.currency !== money.currency && <> · {formatMoney(shipping.amount, shipping.currency)} converted to {money.currency}</>}
+                  </p>
+                  <div className="basket-total">
+                    <span>Total including shipping</span>
+                    <strong>{formatMinorUnits(subtotalMinor + shipping.minorAmount, money.currency)}</strong>
+                  </div>
+                </>
+              )}
+              {!deliveryCountry && <p className="basket-total-note">Choose your delivery country below to calculate shipping and your total.</p>}
+              {deliveryCountry && !shipping && <p className="basket-total-note">Shipping conversion is unavailable. Please refresh or try again shortly.</p>}
+              {!cardDelivery && <p className="basket-error">Card payment is unavailable for this destination. Please contact us to arrange your order.</p>}
             </div>
             {money.currency !== 'USD' && (
               <p className="basket-total-note">Prices are set in US dollars: {formatMoney(totalUsd, 'USD')}.</p>
             )}
-            <p className="basket-total-note">
-              Plus flat-rate shipping: {money.format(SHIPPING_USD.sweden)} within Sweden,{' '}
-              {money.format(SHIPPING_USD.europe)} within Europe, {money.format(SHIPPING_USD.world)} elsewhere.
-            </p>
+            <p className="basket-total-note">{SHIPPING_POLICY}</p>
+            <p className="basket-total-note">{DISPATCH_NOTICE}</p>
 
             <form onSubmit={handleCheckout} className="basket-form">
               {error && <p className="basket-error" role="alert" aria-live="polite">{error}</p>}
@@ -304,12 +331,13 @@ export default function BasketClient() {
               {error && <p className="basket-error" role="alert">{error}</p>}
               {!canCheckout && <p className="basket-total-note">Resolve the notes on your basket to check out.</p>}
 
-              <button type="submit" className="basket-button" disabled={!canCheckout || sending}>
+              <button type="submit" className="basket-button" disabled={!canCheckout || !shippingReady || sending}>
                 {sending ? 'Opening secure payment…' : 'Continue to payment'}
               </button>
               <p className="basket-total-note">
                 You&apos;ll pay by card on Stripe&apos;s secure page, where you can also enter your delivery
-                address. Your prints are reserved for 30 minutes while you pay.
+                address in the country selected above. To change delivery country, return to your basket
+                for an updated shipping charge. Your prints are reserved for 30 minutes while you pay.
               </p>
             </form>
           </aside>

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { publicClient } from '@/lib/print-shop';
 import { getExchangeRates } from '@/lib/exchange-rates';
-import { isCurrencyCode, type CurrencyCode } from '@/lib/currency';
+import { isCurrencyCode, toMinorUnits, validRate, type CurrencyCode } from '@/lib/currency';
 import { countryOptions, isCountryCode } from '@/lib/countries';
-import { canPayByCard, shippingFor } from '@/lib/shipping';
-import { serviceClient, stripe, toCents } from '@/lib/stripe';
+import { canPayByCard, shippingQuote, DISPATCH_NOTICE } from '@/lib/shipping';
+import { serviceClient, stripe } from '@/lib/stripe';
 import { siteOrigin } from '@/lib/site-origin';
 import type { PrintOrderLine } from '@/types';
 
@@ -66,7 +66,6 @@ export async function POST(request: Request) {
       error: `Card payment isn't available for delivery to ${countryName}. Please get in touch and we'll arrange your order.`,
     }, { status: 422 });
   }
-  const shipping = shippingFor(customer.country);
 
   const items = Array.isArray(body.items)
     ? body.items.slice(0, 50).map((item) => ({
@@ -83,8 +82,15 @@ export async function POST(request: Request) {
   const exchange = await getExchangeRates();
   const requested: CurrencyCode = isCurrencyCode(body.currency) ? body.currency : 'USD';
   const rate = exchange.rates[requested];
-  const currency: CurrencyCode = rate ? requested : 'USD';
-  const exchangeRate = rate ?? 1;
+  if (!validRate(rate)) {
+    return NextResponse.json({ error: 'Exchange rates are unavailable. Please refresh the basket and try again.' }, { status: 503 });
+  }
+  const currency = requested;
+  const exchangeRate = rate;
+  const shipping = shippingQuote(customer.country, currency, exchange);
+  if (!shipping) {
+    return NextResponse.json({ error: 'Shipping conversion is unavailable. Please try again shortly.' }, { status: 503 });
+  }
 
   const { data, error } = await publicClient().rpc('submit_print_order', {
     p_first_name: customer.firstName,
@@ -121,13 +127,13 @@ export async function POST(request: Request) {
       client_reference_id: order.reference,
       customer_email: customer.email,
       expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_MINUTES * 60,
-      // Prices stay in USD; Stripe shows and charges the buyer's local currency where it can.
-      adaptive_pricing: { enabled: true },
+      // Quote and charge the same currency; Stripe must not re-convert fixed shipping fees.
+      adaptive_pricing: { enabled: false },
       line_items: order.lines.map((line) => ({
         quantity: line.quantity,
         price_data: {
-          currency: 'usd',
-          unit_amount: toCents(line.unit_price_usd),
+          currency: currency.toLowerCase(),
+          unit_amount: toMinorUnits(line.unit_price_usd * exchangeRate, currency),
           product_data: {
             name: `${line.image_title ? `“${line.image_title}”, ` : ''}${line.gallery_title}, photo ${line.position}`,
             description: `${line.size_name}${line.dimensions ? ` ${line.dimensions}` : ''} · archival print, signed and numbered`,
@@ -141,11 +147,20 @@ export async function POST(request: Request) {
         shipping_rate_data: {
           type: 'fixed_amount',
           display_name: shipping.name,
-          fixed_amount: { amount: toCents(shipping.usd), currency: 'usd' },
+          fixed_amount: { amount: shipping.minorAmount, currency: currency.toLowerCase() },
         },
       }],
       phone_number_collection: { enabled: !customer.phone },
-      metadata: { reference: order.reference },
+      custom_text: { shipping_address: { message: `${DISPATCH_NOTICE} To change delivery country, return to your basket for an updated shipping charge.` } },
+      metadata: {
+        reference: order.reference,
+        shipping_quote_version: '1',
+        shipping_country: customer.country,
+        shipping_currency: currency,
+        shipping_minor: String(shipping.minorAmount),
+        shipping_usd: String(shipping.usd),
+        exchange_rate: String(exchangeRate),
+      },
       payment_intent_data: {
         description: `Print order ${order.reference}`,
         metadata: { reference: order.reference },
