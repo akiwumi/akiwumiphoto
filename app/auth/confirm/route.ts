@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
   // Stay on the host the link arrived on, not the configured site URL: the
   // session cookies set below belong to this host, so a page on any other
   // domain would open signed out.
-  const origin = request.nextUrl.origin;
-  const params = request.nextUrl.searchParams;
+  const origin = request.nextUrl?.origin ?? new URL(request.url).origin;
+  const params = request.nextUrl?.searchParams ?? new URL(request.url).searchParams;
   const tokenHash = params.get('token_hash');
   const type = params.get('type') as EmailOtpType | null;
   const code = params.get('code');
@@ -38,9 +38,12 @@ export async function GET(request: NextRequest) {
     return response;
   };
 
-  const success = () => go(resettingPassword ? '/admin/reset-password' : '/register/verified');
+  // Only this internal destination is accepted from email links. Keep the
+  // existing registration and admin recovery destinations unchanged.
+  const accountConfirmation = !resettingPassword && params.get('next') === '/account';
+  const success = () => go(resettingPassword ? '/admin/reset-password' : accountConfirmation ? '/account' : '/register/verified');
   const failure = (reason: string) =>
-    go(resettingPassword ? `/admin/reset-password?error=${reason}` : `/register?verify=${reason}`);
+    go(resettingPassword ? `/admin/reset-password?error=${reason}` : accountConfirmation ? `/account?verify=${reason}` : `/register?verify=${reason}`);
 
   // Supabase reports a rejected or expired link before it ever reaches us.
   if (params.get('error')) {

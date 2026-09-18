@@ -1,0 +1,73 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+type Mode = 'login' | 'signup' | 'reset' | 'resend';
+type User = { email?: string | null } | null;
+
+async function send(path: string, payload: Record<string, string>) {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+  return data;
+}
+
+export default function AccountClient() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const [mode, setMode] = useState<Mode>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [user, setUser] = useState<User>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => { if (active) setUser(data.user); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => { active = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  const verify = params.get('verify');
+  const verificationError = verify === 'expired'
+    ? 'That verification link has expired. Request a fresh one below.'
+    : verify ? 'We could not confirm that link. Request a fresh one below.' : '';
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('');
+    try {
+      const payload = { email: email.trim().toLowerCase(), ...(mode === 'login' || mode === 'signup' ? { password } : {}) };
+      const path = mode === 'login' ? '/api/account/login' : mode === 'signup' ? '/api/account/signup' : mode === 'reset' ? '/api/account/password-reset' : '/api/account/resend-verification';
+      const data = await send(path, payload);
+      setMessage(data.message || (mode === 'login' ? 'You are signed in.' : 'Check your inbox for the next step.'));
+      if (mode === 'login') router.refresh();
+      if (mode === 'signup' || mode === 'reset' || mode === 'resend') setPassword('');
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Something went wrong. Please try again.'); }
+    finally { setBusy(false); }
+  };
+
+  const signOut = async () => { setBusy(true); await supabase.auth.signOut(); setUser(null); setBusy(false); router.refresh(); };
+  if (user) return <section className="register-panel" style={{ maxWidth: 620 }}><h2 className="register-section-title">Welcome back</h2><p style={{ color: 'rgba(255,255,255,.72)', marginBottom: 24 }}>{user.email}</p><p>Your purchases and certificates will appear here once your paid print order is linked to this account.</p><button type="button" className="register-linkish" onClick={signOut} disabled={busy}>{busy ? 'Signing out…' : 'Sign out'}</button></section>;
+
+  const labels: Record<Mode, string> = { login: 'Sign in', signup: 'Create account', reset: 'Reset password', resend: 'Resend verification' };
+  return <section className="register-panel" style={{ maxWidth: 620 }}>
+    <h2 className="register-section-title">{labels[mode]}</h2>
+    {message && <p role="status" className="register-notice">{message}</p>}
+    {(error || verificationError) && <p role="alert" className="register-notice">{error || verificationError}</p>}
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <div><label className="register-label" htmlFor="account-email">Email</label><input id="account-email" className="register-field field-focus" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+      {(mode === 'login' || mode === 'signup') && <div><label className="register-label" htmlFor="account-password">Password</label><input id="account-password" className="register-field field-focus" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>}
+      <button type="submit" className="register-submit" disabled={busy}>{busy ? 'Please wait…' : labels[mode]}</button>
+    </form>
+    <div className="flex flex-wrap gap-4" style={{ marginTop: 22 }}>
+      {mode !== 'login' && <button type="button" className="register-linkish" onClick={() => { setMode('login'); setError(''); setMessage(''); }}>Sign in</button>}
+      {mode !== 'signup' && <button type="button" className="register-linkish" onClick={() => { setMode('signup'); setError(''); setMessage(''); }}>Register</button>}
+      {mode !== 'reset' && <button type="button" className="register-linkish" onClick={() => { setMode('reset'); setError(''); setMessage(''); }}>Forgot password?</button>}
+      {mode !== 'resend' && <button type="button" className="register-linkish" onClick={() => { setMode('resend'); setError(''); setMessage(''); }}>Resend verification</button>}
+    </div>
+  </section>;
+}
