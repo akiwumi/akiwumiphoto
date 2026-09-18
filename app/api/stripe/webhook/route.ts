@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { linkPaidOrderToAccount, provisionCustomerAccount } from '@/lib/account-provisioning';
 import { sendOrderNotification } from '@/lib/order-email';
 import { serviceClient, stripe } from '@/lib/stripe';
 import { shippingUsdForSession } from '@/lib/shipping';
@@ -67,6 +68,15 @@ async function settle(session: Stripe.Checkout.Session) {
   // Null when an earlier delivery of this event already settled the order.
   const order = data as PrintOrder | null;
   if (!order) return;
+
+  // Provisioning is deliberately best-effort after settlement. A mail or
+  // Auth outage must not make Stripe retry a payment that is already paid.
+  try {
+    const userId = await provisionCustomerAccount(order.email);
+    await linkPaidOrderToAccount(order.id, userId);
+  } catch (error) {
+    console.error('[stripe-webhook] account provisioning/linking failed for', order.reference, error);
+  }
 
   await sendOrderNotification({
     ...order,
