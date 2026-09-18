@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { AccountData, AccountOrderLine } from '@/lib/account-data';
 import SerialNumberRequestButton from './SerialNumberRequestButton';
+import FavoritesPanel from '@/components/FavoritesPanel';
 
 function money(value: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD' }).format(value);
@@ -50,6 +51,7 @@ export default function AccountDashboard({ email, data }: { email: string; data:
       </section>
 
       <aside className="flex flex-col gap-6">
+        <FavoritesPanel />
         <section className="register-panel" aria-labelledby="account-registrations-title">
           <h2 id="account-registrations-title" className="register-section-title">Print registrations</h2>
           <p style={{ color: 'var(--site-text)', lineHeight: 1.6 }}>Register a purchased print to keep its provenance and certificate with your account.</p>

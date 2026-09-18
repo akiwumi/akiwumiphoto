@@ -1850,10 +1850,29 @@ select.register-field {
 
 .basket-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 250px) minmax(320px, 420px);
   align-items: start;
   gap: 48px;
 }
+
+.basket-favorites { min-width: 0; padding: 20px; border: 1px solid var(--site-control-border); background: var(--site-background); }
+.favorites-panel { margin-top: 0; }
+.favorites-list { display: flex; flex-direction: column; gap: 16px; }
+.favorite-card { display: flex; gap: 10px; align-items: flex-start; }
+.favorite-thumb { position: relative; display: block; flex: 0 0 82px; aspect-ratio: 1; overflow: hidden; background: var(--site-control); }
+.favorite-thumb img { object-fit: cover; }
+.favorite-card-body { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.favorite-card-title { color: var(--site-text); font-size: 13px; line-height: 1.35; text-decoration: none; }
+.favorite-card-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.favorite-action, .favorite-remove { border: 0; background: none; padding: 0; color: var(--site-text); cursor: pointer; font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.favorite-action { font-weight: 700; }
+.favorite-unavailable { margin: 0; color: var(--site-muted); font-size: 11px; line-height: 1.3; }
+.favorite-button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid currentColor; padding: 7px 10px; background: rgba(0,0,0,.4); color: var(--color-white); cursor: pointer; font: inherit; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.favorite-button[aria-pressed="true"] { background: var(--color-white); color: var(--color-primary); }
+.tile-favorite { position: absolute; top: 54px; right: 12px; z-index: 4; opacity: 0; transition: opacity .2s ease; }
+.gallery-tile:hover .tile-favorite, .tile-favorite:focus-visible { opacity: 1; }
+.lightbox-favorite { background: transparent; }
+@media (hover: none) { .tile-favorite { opacity: 1; } }
 
 .basket-line {
   display: grid;
@@ -1885,6 +1904,7 @@ select.register-field {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+.basket-line-favorite { margin-bottom: 10px; color: var(--site-text); background: transparent; }
 
 .basket-line-controls {
   display: flex;

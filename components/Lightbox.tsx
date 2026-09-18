@@ -7,6 +7,7 @@ import Link from 'next/link';
 import RoomPreview from '@/components/RoomPreview';
 import BuyPrintPanel from '@/components/BuyPrintPanel';
 import NotForSaleStamp from '@/components/NotForSaleStamp';
+import FavoriteButton from '@/components/FavoriteButton';
 import type { GalleryImage, PrintSize, SoldBySize } from '@/types';
 import {
   DEFAULT_ROOM_PREVIEW_FRAME,
@@ -200,6 +201,7 @@ export default function Lightbox({ images, initialIndex, galleryTitle, sizes, so
                 Enquire about this print
               </Link>
             )}
+            <FavoriteButton imageId={image.id} className="lightbox-favorite" />
             <button type="button" onClick={onClose} className="lightbox-close" aria-label="Close lightbox">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -263,6 +265,7 @@ export default function Lightbox({ images, initialIndex, galleryTitle, sizes, so
                   Enquire about this print
                 </Link>
               )}
+              <FavoriteButton imageId={image.id} className="lightbox-favorite" />
             </div>
           </div>
 

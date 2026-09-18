@@ -8,6 +8,8 @@ import {
   changeLineSize, releaseAbandonedCheckout, rememberCheckout, removeLine, setLineQuantity, useBasket, useMoney,
   type BasketLine,
 } from '@/lib/basket-store';
+import FavoritesPanel from '@/components/FavoritesPanel';
+import FavoriteButton from '@/components/FavoriteButton';
 import { countryOptions, isCountryCode } from '@/lib/countries';
 import { formatMoney, formatMinorUnits, toMinorUnits } from '@/lib/currency';
 import { shippingQuote, canPayByCard, SHIPPING_POLICY, DISPATCH_NOTICE } from '@/lib/shipping';
@@ -190,6 +192,7 @@ export default function BasketClient() {
                     <p className="basket-line-title">
                       {image ? <Link href={`/gallery/${image.gallerySlug}`}>{label}</Link> : label}
                     </p>
+                    {image && <FavoriteButton imageId={image.id} className="basket-line-favorite" />}
 
                     {image?.forSale && (
                       <div className="basket-line-controls">
@@ -254,6 +257,8 @@ export default function BasketClient() {
               );
             })}
           </ul>
+
+          <FavoritesPanel compact />
 
           <aside className="basket-summary" aria-label="Order summary">
             <div className="basket-total">
