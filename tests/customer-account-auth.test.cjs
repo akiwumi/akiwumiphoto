@@ -93,4 +93,16 @@ test('account confirmation redirects to account while preserving registration an
   assert.equal(new URL(register.headers.get('location')).pathname, '/register/verified');
   const admin = await route.GET(confirmRequest('https://example.com/auth/confirm?token_hash=t&type=recovery', '1'));
   assert.equal(new URL(admin.headers.get('location')).pathname, '/admin/reset-password');
+  const accountRecovery = await route.GET(confirmRequest('https://example.com/auth/confirm?token_hash=t&type=recovery&next=%2Faccount'));
+  assert.equal(new URL(accountRecovery.headers.get('location')).pathname, '/account');
+  assert.equal(new URL(accountRecovery.headers.get('location')).searchParams.get('recovery'), '1');
+  const unscopedRecovery = await route.GET(confirmRequest('https://example.com/auth/confirm?token_hash=t&type=recovery'));
+  assert.equal(new URL(unscopedRecovery.headers.get('location')).pathname, '/admin/reset-password');
+});
+
+test('account UI includes authenticated password update validation and Supabase update call', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '../app/account/AccountClient.tsx'), 'utf8');
+  assert.match(source, /updateUser\(\{ password \}\)/);
+  assert.match(source, /passwords do not match/);
+  assert.match(source, /Update password/);
 });

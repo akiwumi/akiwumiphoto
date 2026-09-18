@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
-type Mode = 'login' | 'signup' | 'reset' | 'resend';
+type Mode = 'login' | 'signup' | 'reset' | 'resend' | 'update';
 type User = { email?: string | null } | null;
 
 async function send(path: string, payload: Record<string, string>) {
@@ -20,6 +20,7 @@ export default function AccountClient() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [user, setUser] = useState<User>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -36,10 +37,20 @@ export default function AccountClient() {
   const verificationError = verify === 'expired'
     ? 'That verification link has expired. Request a fresh one below.'
     : verify ? 'We could not confirm that link. Request a fresh one below.' : '';
+  const recoveryMode = params.get('recovery') === '1';
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setBusy(true); setError(''); setMessage('');
     try {
+      if (mode === 'update') {
+        if (password.length < 8) throw new Error('Choose a password of at least 8 characters.');
+        if (password !== confirmPassword) throw new Error('The passwords do not match.');
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) throw updateError;
+        setMessage('Your password has been updated.');
+        setPassword(''); setConfirmPassword('');
+        return;
+      }
       const payload = { email: email.trim().toLowerCase(), ...(mode === 'login' || mode === 'signup' ? { password } : {}) };
       const path = mode === 'login' ? '/api/account/login' : mode === 'signup' ? '/api/account/signup' : mode === 'reset' ? '/api/account/password-reset' : '/api/account/resend-verification';
       const data = await send(path, payload);
@@ -50,10 +61,32 @@ export default function AccountClient() {
     finally { setBusy(false); }
   };
 
+  const updatePassword = async (event: React.FormEvent) => {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('');
+    try {
+      if (password.length < 8) throw new Error('Choose a password of at least 8 characters.');
+      if (password !== confirmPassword) throw new Error('The passwords do not match.');
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+      setMessage('Your password has been updated.'); setPassword(''); setConfirmPassword('');
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Password update failed. Please try again.'); }
+    finally { setBusy(false); }
+  };
+
   const signOut = async () => { setBusy(true); await supabase.auth.signOut(); setUser(null); setBusy(false); router.refresh(); };
+  if (user && recoveryMode) return <section className="register-panel" style={{ maxWidth: 620 }}>
+    <h2 className="register-section-title">Choose a new password</h2>
+    {message && <p role="status" className="register-notice">{message}</p>}
+    {error && <p role="alert" className="register-notice">{error}</p>}
+    <form onSubmit={updatePassword} className="flex flex-col gap-4">
+      <div><label className="register-label" htmlFor="account-new-password">New password</label><input id="account-new-password" className="register-field field-focus" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+      <div><label className="register-label" htmlFor="account-confirm-password">Confirm new password</label><input id="account-confirm-password" className="register-field field-focus" type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required /></div>
+      <button type="submit" className="register-submit" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button>
+    </form>
+  </section>;
   if (user) return <section className="register-panel" style={{ maxWidth: 620 }}><h2 className="register-section-title">Welcome back</h2><p style={{ color: 'rgba(255,255,255,.72)', marginBottom: 24 }}>{user.email}</p><p>Your purchases and certificates will appear here once your paid print order is linked to this account.</p><button type="button" className="register-linkish" onClick={signOut} disabled={busy}>{busy ? 'Signing out…' : 'Sign out'}</button></section>;
 
-  const labels: Record<Mode, string> = { login: 'Sign in', signup: 'Create account', reset: 'Reset password', resend: 'Resend verification' };
+  const labels: Record<Mode, string> = { login: 'Sign in', signup: 'Create account', reset: 'Reset password', resend: 'Resend verification', update: 'Update password' };
   return <section className="register-panel" style={{ maxWidth: 620 }}>
     <h2 className="register-section-title">{labels[mode]}</h2>
     {message && <p role="status" className="register-notice">{message}</p>}

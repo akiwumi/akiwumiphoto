@@ -29,8 +29,12 @@ export async function GET(request: NextRequest) {
   const type = params.get('type') as EmailOtpType | null;
   const code = params.get('code');
 
-  const resettingPassword =
-    type === 'recovery' || request.cookies.get(PASSWORD_RESET_COOKIE)?.value === '1';
+  const adminResetCookie = request.cookies.get(PASSWORD_RESET_COOKIE)?.value === '1';
+  // Customer recovery links carry the explicitly allowlisted account target.
+  // Admin recovery remains cookie-gated so a recovery token cannot grant the
+  // admin reset screen without having started the admin flow in this browser.
+  const accountRecovery = type === 'recovery' && params.get('next') === '/account' && !adminResetCookie;
+  const resettingPassword = !accountRecovery && (type === 'recovery' || adminResetCookie);
 
   const go = (path: string) => {
     const response = NextResponse.redirect(`${origin}${path}`);
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest) {
   // Only this internal destination is accepted from email links. Keep the
   // existing registration and admin recovery destinations unchanged.
   const accountConfirmation = !resettingPassword && params.get('next') === '/account';
-  const success = () => go(resettingPassword ? '/admin/reset-password' : accountConfirmation ? '/account' : '/register/verified');
+  const success = () => go(resettingPassword ? '/admin/reset-password' : accountRecovery ? '/account?recovery=1' : accountConfirmation ? '/account' : '/register/verified');
   const failure = (reason: string) =>
     go(resettingPassword ? `/admin/reset-password?error=${reason}` : accountConfirmation ? `/account?verify=${reason}` : `/register?verify=${reason}`);
 
