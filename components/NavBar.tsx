@@ -89,7 +89,6 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
         <nav aria-label="Main navigation" className={styles.navigation}>
           {items.map((item) => (
             <Link key={item.key} href={item.href} aria-current={item.current ? 'page' : undefined}
-              className={item.key === 'login' || item.key === 'register-account' ? styles.accountAction : undefined}
               aria-label={item.key === 'basket' ? basketLabel : undefined}>
               {item.key === 'basket' ? <><ShoppingBag size={18} strokeWidth={1.8} aria-hidden /><span className={styles.srOnly}>Basket</span><span className={styles.basketCount} aria-hidden="true">{basketCount}</span></> : item.label}
             </Link>
@@ -104,7 +103,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
         {menuOpen && (
           <nav id={menuId} aria-label="More pages" className={styles.menuSheet} onClick={() => setMenuOpen(false)}>
             {menuItems.map(({ key, href, label, Icon, current }) => (
-              <Link key={key} href={href} className={key === 'login' || key === 'register-account' ? styles.accountAction : undefined} aria-current={current ? 'page' : undefined}>
+              <Link key={key} href={href} aria-current={current ? 'page' : undefined}>
                 <Icon size={20} strokeWidth={1.5} aria-hidden />
                 <span>{label}</span>
               </Link>
