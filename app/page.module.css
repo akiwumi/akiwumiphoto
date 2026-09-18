@@ -1,19 +1,19 @@
-.page { background: var(--site-background); color: #fff; padding: 0 var(--site-gutter); }
+.page { background: var(--site-background); color: var(--site-text); padding: 0 var(--site-gutter); }
 .page a { color: inherit; text-decoration: none; }
-.page a:focus-visible { outline: 2px solid #e8001c; outline-offset: 6px; }
+.page a:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 6px; }
 .introduction { padding: 32px 0 38px; max-width: 980px; }
 .eyebrow { color: var(--site-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .16em; margin-bottom: 16px; }
 .introduction h1 { font-size: var(--site-title-size); font-weight: 500; letter-spacing: -.045em; line-height: 1.12; }
 .projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .project { min-width: 0; }
-.photograph { position: relative; height: clamp(280px, 39vw, 600px); background: #1a1a1a; overflow: hidden; }
+.photograph { position: relative; height: clamp(280px, 39vw, 600px); background: var(--color-primary); overflow: hidden; }
 .photograph img { object-fit: cover; transition: transform .35s ease; }
 .project:hover img { transform: scale(1.025); }
 /* Project titles sit over the bottom of the photograph in the page-heading style. */
-.caption { position: absolute; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding: clamp(20px, 2.6vw, 40px); color: #fff; font-size: var(--site-title-size); font-weight: 500; letter-spacing: -.045em; line-height: 1.12; text-shadow: 0 2px 4px rgba(0, 0, 0, .55), 0 6px 28px rgba(0, 0, 0, .65); pointer-events: none; }
+.caption { position: absolute; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding: clamp(20px, 2.6vw, 40px); color: var(--color-white); font-size: var(--site-title-size); font-weight: 500; letter-spacing: -.045em; line-height: 1.12; text-shadow: 0 2px 4px rgba(34, 34, 34, .55), 0 6px 28px rgba(34, 34, 34, .65); pointer-events: none; }
 .fallback { grid-column: 1 / -1; }
 .archiveLink { display: flex; justify-content: flex-end; padding: 20px 0 56px; font-size: 14px; }
-.archiveLink a, .contactLink { border-bottom: 1px solid #777; padding-bottom: 8px; }
+.archiveLink a, .contactLink { border-bottom: 1px solid var(--color-secondary); padding-bottom: 8px; }
 .services { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; border-top: 1px solid var(--site-border); padding: 64px 0 72px; scroll-margin-top: 24px; }
 .services h2 { font-family: var(--font-bebas), sans-serif; font-size: clamp(40px, 5vw, 72px); font-weight: 400; line-height: 1; letter-spacing: .015em; margin-bottom: 32px; }
 .contactLink { display: inline-block; font-size: 14px; }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import VideoModal from '@/components/VideoModal';
 import type { Video } from '@/types';
@@ -43,7 +42,6 @@ export default function VideographyClient({ videos }: Props) {
                 key={video.id}
                 video={video}
                 priority={i < 3}
-                index={i}
                 onClick={() => setActiveVideo(video)}
               />
             ))}
@@ -62,19 +60,18 @@ export default function VideographyClient({ videos }: Props) {
   );
 }
 
-function VideoCard({ video, priority, index, onClick }: { video: Video; priority?: boolean; index: number; onClick: () => void }) {
+function VideoCard({ video, priority, onClick }: { video: Video; priority?: boolean; onClick: () => void }) {
   return (
-    <motion.div
+    <div
       className="group cursor-pointer motion-card"
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.985 }}
-      transition={{
-        duration: 0.4,
-        ease: [0.22, 1, 0.36, 1],
-        delay: (index % 3) * 0.04,
+      role="button"
+      tabIndex={0}
+      aria-label={`Play ${video.title}`}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
       }}
       onClick={onClick}
     >
@@ -95,23 +92,23 @@ function VideoCard({ video, priority, index, onClick }: { video: Video; priority
         )}
         <div className="img-shield" onContextMenu={(e) => e.preventDefault()} />
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.92 }} transition={{ duration: 0.2 }}>
+          <div className="video-play-control">
             <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <circle cx="12" cy="12" r="10" />
               <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="currentColor" />
             </svg>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       <div style={{ paddingTop: 10 }}>
-        <h3 className="text-white font-bold text-sm uppercase" style={{ letterSpacing: '0.08em' }}>
+        <h3 className="text-[var(--site-text)] font-bold text-sm uppercase" style={{ letterSpacing: '0.08em' }}>
           {video.title}
         </h3>
         {video.description && (
           <p className="text-grey-mid text-base mt-1 line-clamp-2">{video.description}</p>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

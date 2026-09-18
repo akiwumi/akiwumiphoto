@@ -154,12 +154,12 @@ export default function RegisterClient({
           </p>
 
           {resent && (
-            <p style={{ color: '#FFFFFF', fontSize: 'var(--body-size)' }} role="status">
+            <p style={{ color: 'var(--site-text)', fontSize: 'var(--body-size)' }} role="status">
               A new link is on its way.
             </p>
           )}
           {formError && (
-            <p style={{ color: '#FF6A7B', fontSize: 'var(--body-size)' }} role="alert">
+            <p style={{ color: 'var(--site-text)', fontSize: 'var(--body-size)' }} role="alert">
               {formError}
             </p>
           )}

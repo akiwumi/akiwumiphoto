@@ -44,9 +44,9 @@ export default function VideoModal({ video, onClose }: Props) {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[300] flex flex-col items-center justify-center px-4"
+        className="video-modal fixed inset-0 z-[300] flex flex-col items-center justify-center px-4"
         style={{
-          background: 'rgba(0,0,0,0.92)',
+          background: 'rgba(34, 34, 34,0.92)',
           backdropFilter: 'blur(16px)',
           height: '100dvh',
           paddingTop: 'env(safe-area-inset-top)',

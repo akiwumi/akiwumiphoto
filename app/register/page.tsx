@@ -40,12 +40,12 @@ export default async function RegisterPage({
         <Reveal>
           <h1
             className="font-bold uppercase"
-            style={{ color: '#FFFFFF', fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
+            style={{ color: 'var(--site-text)', fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
           >
             Register your print
           </h1>
           <div className="red-rule" style={{ margin: '12px 0 20px' }} />
-          <p style={{ maxWidth: '62ch', marginBottom: 32, color: 'rgba(255, 255, 255, 0.72)', fontSize: 'var(--body-size)', lineHeight: 1.65 }}>
+          <p style={{ maxWidth: '62ch', marginBottom: 32, color: 'var(--site-text)', fontSize: 'var(--body-size)', lineHeight: 1.65 }}>
             Every photograph leaves the studio as part of a numbered edition. Registering records you
             as its owner, so we can reach you about provenance, care and future editions.
           </p>

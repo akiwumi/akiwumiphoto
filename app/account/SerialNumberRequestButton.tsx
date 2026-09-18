@@ -12,7 +12,7 @@ export default function SerialNumberRequestButton({ certificateId, status }: { c
     if (!response.ok) { setMessage(data.error || 'Request failed.'); return; }
     setState('pending'); setMessage(data.message || 'Request sent.');
   };
-  if (state === 'approved') return <p style={{ color: 'rgba(255,255,255,.8)', fontSize: 14 }}>Registered number approved. Refresh to view it.</p>;
-  if (state === 'pending') return <p style={{ color: 'rgba(255,255,255,.68)', fontSize: 14 }}>Registered number request pending review.</p>;
-  return <div><button type="button" className="register-submit btn-lift" onClick={request}>Request registered number</button>{message && <p role="status" style={{ color: 'rgba(255,255,255,.68)', fontSize: 14 }}>{message}</p>}</div>;
+  if (state === 'approved') return <p style={{ color: 'var(--site-text)', fontSize: 14 }}>Registered number approved. Refresh to view it.</p>;
+  if (state === 'pending') return <p style={{ color: 'var(--site-text)', fontSize: 14 }}>Registered number request pending review.</p>;
+  return <div><button type="button" className="register-submit btn-lift" onClick={request}>Request registered number</button>{message && <p role="status" style={{ color: 'var(--site-text)', fontSize: 14 }}>{message}</p>}</div>;
 }

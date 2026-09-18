@@ -60,12 +60,12 @@ export default async function VerifiedPage() {
             <Reveal>
               <h1
                 className="font-bold uppercase"
-                style={{ color: '#FFFFFF', fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
+                style={{ color: 'var(--site-text)', fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
               >
                 ACCOUNT VERIFIED
               </h1>
               <div className="red-rule" style={{ margin: '12px 0 20px' }} />
-              <p style={{ maxWidth: '62ch', marginBottom: 32, color: 'rgba(255, 255, 255, 0.72)', fontSize: 'var(--body-size)', lineHeight: 1.65 }}>
+              <p style={{ maxWidth: '62ch', marginBottom: 32, color: 'var(--site-text)', fontSize: 'var(--body-size)', lineHeight: 1.65 }}>
                 Thank you, {collector.first_name} — your email address is confirmed and your details
                 are on record. Now tell us about the photograph you bought.
               </p>
@@ -81,9 +81,9 @@ export default async function VerifiedPage() {
                     <dt>Email</dt>
                     <dd>{collector.email}</dd>
                     <dt>Status</dt>
-                    <dd style={{ color: '#E8001C' }}>Verified</dd>
+                    <dd style={{ color: 'var(--site-text)' }}>Verified</dd>
                   </dl>
-                  <p style={{ marginTop: 20, color: 'rgba(255, 255, 255, 0.6)', fontSize: 'var(--body-size)', lineHeight: 1.6 }}>
+                  <p style={{ marginTop: 20, color: 'var(--site-text)', fontSize: 'var(--body-size)', lineHeight: 1.6 }}>
                     Every message you send is logged against this account with a reference number, so
                     there is always a record of what you told us and when.
                   </p>
@@ -95,7 +95,7 @@ export default async function VerifiedPage() {
           <Reveal>
             <h1
               className="font-bold uppercase"
-              style={{ color: '#FFFFFF', fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
+              style={{ color: 'var(--site-text)', fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
             >
               NOT VERIFIED YET
             </h1>

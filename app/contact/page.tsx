@@ -139,7 +139,7 @@ function ContactForm() {
             required
             placeholder="First Name"
             className="contact-field w-full h-12 px-4 bg-white text-black font-sans text-base field-focus"
-            style={{ border: '1px solid #D6D6D6', outline: 'none' }}
+            style={{ border: '1px solid var(--color-tertiary)', outline: 'none' }}
           />
           <input
             type="text"
@@ -149,7 +149,7 @@ function ContactForm() {
             required
             placeholder="Last Name"
             className="contact-field w-full h-12 px-4 bg-white text-black font-sans text-base field-focus"
-            style={{ border: '1px solid #D6D6D6', outline: 'none' }}
+            style={{ border: '1px solid var(--color-tertiary)', outline: 'none' }}
           />
         </div>
       </div>
@@ -167,7 +167,7 @@ function ContactForm() {
           required
           placeholder="Enter your email"
           className="contact-field w-full h-12 px-4 bg-white text-black font-sans text-base field-focus"
-          style={{ border: '1px solid #D6D6D6', outline: 'none' }}
+          style={{ border: '1px solid var(--color-tertiary)', outline: 'none' }}
         />
       </div>
 
@@ -181,7 +181,7 @@ function ContactForm() {
           value={form.subject}
           onChange={handleChange}
           className="contact-field w-full h-12 px-4 bg-white text-black font-sans text-base appearance-none cursor-pointer field-focus"
-          style={{ border: '1px solid #D6D6D6', outline: 'none' }}
+          style={{ border: '1px solid var(--color-tertiary)', outline: 'none' }}
         >
           {SUBJECTS.map((s) => (
             <option key={s} value={s}>{s}</option>
@@ -205,7 +205,7 @@ function ContactForm() {
           maxLength={1000}
           placeholder="Enter your message"
           className="contact-message w-full px-4 py-3 bg-white text-black font-sans text-base resize-vertical field-focus"
-          style={{ border: '1px solid #D6D6D6', outline: 'none', minHeight: 120 }}
+          style={{ border: '1px solid var(--color-tertiary)', outline: 'none', minHeight: 120 }}
         />
       </div>
 
@@ -226,16 +226,16 @@ function ContactForm() {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="contact-submit w-full h-14 text-white font-medium uppercase text-sm transition-colors btn-lift"
+        className="contact-submit w-full h-14 text-[var(--site-text)] font-medium uppercase text-sm transition-colors btn-lift"
         style={{
-          background: status === 'sending' ? 'rgba(153, 153, 153, 0.72)' : 'rgba(232, 0, 28, 0.68)',
-          border: '1px solid rgba(255, 255, 255, 0.62)',
+          background: status === 'sending' ? 'rgba(123, 123, 123, 0.72)' : 'rgba(123, 123, 123, 0.68)',
+          border: '1px solid var(--site-control-border)',
           backdropFilter: 'blur(10px)',
           letterSpacing: '0.12em',
           cursor: status === 'sending' ? 'not-allowed' : 'pointer',
         }}
-        onMouseEnter={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(192, 0, 24, 0.82)'; }}
-        onMouseLeave={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(232, 0, 28, 0.68)'; }}
+        onMouseEnter={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(123, 123, 123, 0.82)'; }}
+        onMouseLeave={(e) => { if (status !== 'sending') e.currentTarget.style.background = 'rgba(123, 123, 123, 0.68)'; }}
       >
         {status === 'sending' ? 'Sending…' : 'Submit'}
       </button>
@@ -262,7 +262,7 @@ export default function ContactPage() {
       <div className="contact-content flex-1 page-enter" style={{ padding: '14px 60px 60px' }}>
         <Reveal>
           <h1
-            className="contact-heading text-white font-bold uppercase mb-4"
+            className="contact-heading text-[var(--site-text)] font-bold uppercase mb-4"
             style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)', letterSpacing: '0.08em' }}
           >
             Contact
@@ -282,7 +282,7 @@ export default function ContactPage() {
             {/* Social icons */}
             <Reveal delay={0.22} className="contact-social-row flex items-center gap-6 mt-8">
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
-                className="contact-social text-white hover:text-red transition-colors">
+                className="contact-social text-[var(--site-text)] hover:text-red transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="5" />
                   <circle cx="12" cy="12" r="4" />

@@ -10,7 +10,10 @@ export default function LayoutTransition({ children }: { children: ReactNode }) 
   const pathname = usePathname();
   // The landing page should be visible in the initial server-rendered HTML.
   if (!pathname.startsWith('/admin')) {
-    return <div className="public-site">{children}{pathname !== '/' && <SiteFooter />}<SiteModalHost /></div>;
+    // Preserve the existing home/gallery composition while other pages use
+    // the editorial design system's spacing and type scale.
+    const protectedLayout = pathname === '/' || pathname === '/home' || pathname.startsWith('/gallery/');
+    return <div className="public-site" data-layout={protectedLayout ? 'portfolio' : 'editorial'}>{children}{pathname !== '/' && <SiteFooter />}<SiteModalHost /></div>;
   }
 
   return (

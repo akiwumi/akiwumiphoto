@@ -36,7 +36,7 @@ export default async function PrintsPage() {
             <h1
               className="prints-title inline-block font-bold uppercase mb-8"
               style={{
-                color: '#FFFFFF',
+                color: 'var(--site-text)',
                 padding: '20px',
                 fontSize: 'clamp(1.5rem, 4vw, 3rem)',
                 letterSpacing: '0.08em',
@@ -62,28 +62,28 @@ export default async function PrintsPage() {
                   height: '100%',
                 }}
               >
-                <h2 className="text-white font-bold text-2xl uppercase mb-1" style={{ letterSpacing: '0.08em' }}>
+                <h2 className="text-[var(--site-text)] font-bold text-2xl uppercase mb-1" style={{ letterSpacing: '0.08em' }}>
                   {size.name}
                 </h2>
                 {size.dimensions && (
-                  <p className="text-white text-base mb-3" style={{ opacity: 0.76 }}>{size.dimensions}</p>
+                  <p className="text-[var(--site-text)] text-base mb-3" style={{ opacity: 0.76 }}>{size.dimensions}</p>
                 )}
                 <p
-                  className="text-white font-medium uppercase text-base mb-4"
+                  className="text-[var(--site-text)] font-medium uppercase text-base mb-4"
                   style={{
                     letterSpacing: '0.08em',
                   }}
                 >
                   {size.edition_size === 1 ? 'Unique — 1 print only' : `Edition of ${size.edition_size}`}
                 </p>
-                <p className="text-white font-bold text-xl"><PriceTag usd={size.price_usd} /></p>
+                <p className="text-[var(--site-text)] font-bold text-xl"><PriceTag usd={size.price_usd} /></p>
               </div>
             </Reveal>
           ))}
         </div>
 
         {/* Info sections */}
-        <section className="prints-panel p-6 mb-8 text-white" aria-labelledby="shipping-heading">
+        <section className="prints-panel p-6 mb-8 text-[var(--site-text)]" aria-labelledby="shipping-heading">
           <h2 id="shipping-heading" className="font-bold uppercase mb-3">Post &amp; packaging</h2>
           <p>{SHIPPING_POLICY}</p>
           <p className="mt-2">{DISPATCH_NOTICE}</p>
@@ -93,10 +93,10 @@ export default async function PrintsPage() {
             {sections.map((section, index) => (
               <Reveal key={section.heading} delay={0.14 + index * 0.08}>
                 <div className="prints-panel p-6 motion-card">
-                  <h3 className="text-white font-bold uppercase mb-3" style={{ letterSpacing: '0.08em' }}>
+                  <h3 className="text-[var(--site-text)] font-bold uppercase mb-3" style={{ letterSpacing: '0.08em' }}>
                     {section.heading}
                   </h3>
-                  <ul className="text-white text-base space-y-1">
+                  <ul className="text-[var(--site-text)] text-base space-y-1">
                     {section.items.map((item) => <li key={item}>{item}</li>)}
                   </ul>
                 </div>
@@ -109,10 +109,10 @@ export default async function PrintsPage() {
           <div className="prints-enquire flex flex-wrap items-center gap-4">
             <Link
               href="/home"
-              className="inline-flex items-center justify-center font-medium uppercase text-white btn-lift"
+              className="inline-flex items-center justify-center font-medium uppercase text-[var(--site-text)] btn-lift"
               style={{
-                background: 'rgba(232, 0, 28, 0.78)',
-                border: '1px solid rgba(255, 255, 255, 0.62)',
+                background: 'rgba(123, 123, 123, 0.78)',
+                border: '1px solid var(--site-control-border)',
                 padding: '14px 24px',
                 letterSpacing: '0.12em',
                 fontSize: '0.875rem',
@@ -123,10 +123,10 @@ export default async function PrintsPage() {
 
             <Link
               href="/contact?subject=Print+Enquiry"
-              className="inline-flex items-center justify-center font-medium uppercase text-white btn-lift"
+              className="inline-flex items-center justify-center font-medium uppercase text-[var(--site-text)] btn-lift"
               style={{
-                background: 'rgba(232, 0, 28, 0.78)',
-                border: '1px solid rgba(255, 255, 255, 0.62)',
+                background: 'rgba(123, 123, 123, 0.78)',
+                border: '1px solid var(--site-control-border)',
                 padding: '14px 24px',
                 letterSpacing: '0.12em',
                 fontSize: '0.875rem',
@@ -138,10 +138,10 @@ export default async function PrintsPage() {
             {/* Where buyers land after a purchase to record ownership. */}
             <Link
               href="/register"
-              className="inline-flex items-center justify-center font-medium uppercase text-white btn-lift"
+              className="inline-flex items-center justify-center font-medium uppercase text-[var(--site-text)] btn-lift"
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.62)',
+                border: '1px solid var(--site-control-border)',
                 padding: '14px 24px',
                 letterSpacing: '0.12em',
                 fontSize: '0.875rem',
