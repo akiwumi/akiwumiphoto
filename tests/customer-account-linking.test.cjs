@@ -42,9 +42,16 @@ function setup(provisioning = { userId: 'a40d7f72-1021-4f41-83d0-989afc731111' }
   const service = {
     rpc: async (name, args) => {
       calls.push([name, args]);
-      if (name === 'mark_print_order_paid') return { data: order, error: null };
+      if (name === 'mark_print_order_paid') return { data: provisioning.duplicate ? null : order, error: null };
       return { data: { linked: true }, error: null };
     },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ maybeSingle: async () => ({ data: order, error: null }) }),
+        }),
+      }),
+    }),
   };
   const route = load('app/api/stripe/webhook/route.ts', {
     '@/lib/stripe': {
@@ -84,15 +91,26 @@ test('paid checkout provisions and links the buyer account after settlement', as
   assert.deepEqual(calls[2][1], { orderId: 'order-1', userId });
 });
 
-test('Auth provisioning failure does not fail an already settled webhook', async () => {
+test('Auth provisioning failure returns a retryable webhook response', async () => {
   const { route, calls } = setup({ error: true });
   const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
   process.env.STRIPE_WEBHOOK_SECRET = 'test-secret';
   const response = await route.POST(request());
   if (previousSecret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
   else process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 500);
   assert.deepEqual(calls.map(([name]) => name), ['mark_print_order_paid', 'provisionCustomerAccount']);
+});
+
+test('duplicate webhook delivery reloads the paid order and retries account linking', async () => {
+  const { route, calls } = setup({ duplicate: true, userId: 'a40d7f72-1021-4f41-83d0-989afc731111' });
+  const previousSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  process.env.STRIPE_WEBHOOK_SECRET = 'test-secret';
+  const response = await route.POST(request());
+  if (previousSecret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
+  else process.env.STRIPE_WEBHOOK_SECRET = previousSecret;
+  assert.equal(response.status, 200);
+  assert.deepEqual(calls.map(([name]) => name), ['mark_print_order_paid', 'provisionCustomerAccount', 'linkPaidOrderToAccount']);
 });
 
 test('account provisioning reuses an unverified user and resends confirmation', async () => {
@@ -124,4 +142,21 @@ test('account provisioning invites a first-time buyer', async () => {
   assert.equal(await route.provisionCustomerAccount(' New@Example.COM '), 'u2');
   assert.equal(calls[0][0], 'new@example.com');
   assert.equal(calls[0][1].redirectTo, 'https://example.com/auth/confirm?next=%2Faccount');
+});
+
+test('account provisioning searches beyond the first Auth user page', async () => {
+  const pages = [
+    Array.from({ length: 1000 }, (_, index) => ({ id: `u${index}`, email: `user${index}@example.com`, email_confirmed_at: null })),
+    [{ id: 'target', email: 'target@example.com', email_confirmed_at: null }],
+  ];
+  let resendCalled = false;
+  const route = load('lib/account-provisioning.ts', {
+    '@/lib/stripe': { serviceClient: () => ({ auth: {
+      admin: { listUsers: async ({ page }) => ({ data: { users: pages[page - 1] ?? [] }, error: null }) },
+      resend: async () => { resendCalled = true; return { error: null }; },
+    } }) },
+    '@/lib/site-origin': { SITE_URL: 'https://example.com' },
+  });
+  assert.equal(await route.provisionCustomerAccount('target@example.com'), 'target');
+  assert.equal(resendCalled, true);
 });

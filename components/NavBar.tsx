@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type ComponentType } from 'react';
 import { Briefcase, Clapperboard, FileText, Frame, Images, Mail, Menu, Newspaper, ShoppingBag, User, X } from 'lucide-react';
 import styles from './SiteChrome.module.css';
 import { useBasketCount } from '@/lib/basket-store';
+import { supabase } from '@/lib/supabase';
 import { useIsPageShown, useNavPages } from './SiteVisibility';
 
 type NavItem = {
@@ -24,11 +25,23 @@ const BAR_PRIORITY = ['gallery', 'videography', 'prints', 'basket'];
 export default function NavBar({ contained = false }: { contained?: boolean }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const menuId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const basketCount = useBasketCount();
   const shown = useIsPageShown();
   const navPages = useNavPages();
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) setSignedIn(Boolean(data.user?.email_confirmed_at));
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSignedIn(Boolean(session?.user?.email_confirmed_at));
+    });
+    return () => { active = false; listener.subscription.unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -52,6 +65,9 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
     { key: 'about', href: '/about', label: 'About', Icon: User, current: pathname === '/about' },
     { key: 'contact', href: '/contact', label: 'Contact', Icon: Mail, current: pathname === '/contact' },
     { key: 'basket', href: '/basket', label: 'Basket', Icon: ShoppingBag, current: pathname === '/basket' },
+    ...(signedIn
+      ? [{ key: 'account', href: '/account', label: 'Account', Icon: User, current: pathname === '/account' }]
+      : [{ key: 'login', href: '/account?mode=login', label: 'Login', Icon: User, current: false }, { key: 'register-account', href: '/account?mode=signup', label: 'Register', Icon: User, current: false }]),
   ].filter((item) => item.key.startsWith('page:') || shown(item.key));
 
   // Fill the bar in priority order, topping up from the remaining pages when some are hidden.
@@ -62,6 +78,11 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
 
   const basketLabel = basketCount > 0 ? `Basket, ${basketCount} ${basketCount === 1 ? 'print' : 'prints'}` : 'Basket';
   const menuCurrent = menuItems.some((item) => item.current);
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setSignedIn(false);
+    setMenuOpen(false);
+  };
 
   return (
     <>
@@ -75,6 +96,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
               {item.key === 'basket' && basketCount > 0 && <span className={styles.basketCount} aria-hidden="true">{basketCount}</span>}
             </Link>
           ))}
+          {signedIn && <button type="button" onClick={signOut} style={{ background: 'none', border: 0, color: 'inherit', cursor: 'pointer', font: 'inherit', padding: 0 }}>Sign out</button>}
         </nav>
       </header>
 
@@ -89,6 +111,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
                 <span>{label}</span>
               </Link>
             ))}
+            {signedIn && <button type="button" onClick={signOut} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 0, color: 'inherit', cursor: 'pointer', font: 'inherit', padding: '12px 16px', width: '100%', textAlign: 'left' }}><User size={20} strokeWidth={1.5} aria-hidden /><span>Sign out</span></button>}
           </nav>
         )}
         <nav aria-label="Mobile navigation" className={styles.tabBar}>

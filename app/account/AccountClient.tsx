@@ -14,10 +14,11 @@ async function send(path: string, payload: Record<string, string>) {
   return data;
 }
 
-export default function AccountClient() {
+export default function AccountClient({ accountError = false }: { accountError?: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [mode, setMode] = useState<Mode>('login');
+  const requestedMode = params.get('mode');
+  const [mode, setMode] = useState<Mode>(requestedMode === 'signup' ? 'signup' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -84,7 +85,7 @@ export default function AccountClient() {
       <button type="submit" className="register-submit" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button>
     </form>
   </section>;
-  if (user) return <section className="register-panel" style={{ maxWidth: 620 }}><h2 className="register-section-title">Welcome back</h2><p style={{ color: 'rgba(255,255,255,.72)', marginBottom: 24 }}>{user.email}</p><p>Your purchases and certificates will appear here once your paid print order is linked to this account.</p><button type="button" className="register-linkish" onClick={signOut} disabled={busy}>{busy ? 'Signing out…' : 'Sign out'}</button></section>;
+  if (user) return <section className="register-panel" style={{ maxWidth: 620 }}><h2 className="register-section-title">{accountError ? 'Account temporarily unavailable' : 'Welcome back'}</h2><p style={{ color: 'rgba(255,255,255,.72)', marginBottom: 24 }}>{user.email}</p><p>{accountError ? 'We could not load your purchases right now. Try again to refresh your account.' : 'Your purchases and certificates will appear here once your paid print order is linked to this account.'}</p>{accountError && <button type="button" className="register-submit" onClick={() => router.refresh()} style={{ marginTop: 18 }}>Try again</button>}<button type="button" className="register-linkish" onClick={signOut} disabled={busy}>{busy ? 'Signing out…' : 'Sign out'}</button></section>;
 
   const labels: Record<Mode, string> = { login: 'Sign in', signup: 'Create account', reset: 'Reset password', resend: 'Resend verification', update: 'Update password' };
   return <section className="register-panel" style={{ maxWidth: 620 }}>

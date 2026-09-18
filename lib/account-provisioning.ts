@@ -17,12 +17,7 @@ export async function provisionCustomerAccount(email: string): Promise<string> {
   if (!EMAIL_RE.test(normalized)) throw new Error('invalid_customer_email');
 
   const client = serviceClient();
-  // The installed Supabase client exposes admin listUsers rather than a
-  // getUserByEmail helper. Keep the page bounded while matching exactly after
-  // normalisation; inviteUserByEmail remains the race-safe fallback.
-  const existing = await client.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (existing.error) throw existing.error;
-  const existingUser = existing.data.users.find((user) => normalizeEmail(user.email ?? '') === normalized);
+  const existingUser = await findUserByEmail(client, normalized);
   if (existingUser) {
     if (!existingUser.email_confirmed_at) {
       const { error } = await client.auth.resend({
@@ -38,8 +33,27 @@ export async function provisionCustomerAccount(email: string): Promise<string> {
   const invited = await client.auth.admin.inviteUserByEmail(normalized, {
     redirectTo: `${SITE_URL}/auth/confirm?next=%2Faccount`,
   });
-  if (invited.error || !invited.data.user) throw invited.error ?? new Error('account_provisioning_failed');
+  // A concurrent webhook may have created the account between our lookup and
+  // invite. Re-read before treating an invite error as a provisioning error.
+  if (invited.error) {
+    const racedUser = await findUserByEmail(client, normalized);
+    if (racedUser) return racedUser.id;
+    throw invited.error;
+  }
+  if (!invited.data.user) throw new Error('account_provisioning_failed');
   return invited.data.user.id;
+}
+
+async function findUserByEmail(client: ReturnType<typeof serviceClient>, email: string) {
+  // listUsers is paginated and the SDK has no getUserByEmail helper. Continue
+  // until the exact normalized email is found or all pages are exhausted.
+  for (let page = 1; ; page += 1) {
+    const result = await client.auth.admin.listUsers({ page, perPage: 1000 });
+    if (result.error) throw result.error;
+    const user = result.data.users.find((candidate) => normalizeEmail(candidate.email ?? '') === email);
+    if (user) return user;
+    if (result.data.users.length < 1000) return null;
+  }
 }
 
 export async function linkPaidOrderToAccount(orderId: string, userId: string): Promise<void> {

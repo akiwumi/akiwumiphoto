@@ -66,16 +66,30 @@ async function settle(session: Stripe.Checkout.Session) {
   if (error) throw error;
 
   // Null when an earlier delivery of this event already settled the order.
-  const order = data as PrintOrder | null;
+  // Reload it so an earlier transient Auth failure can be repaired by a
+  // duplicate Stripe delivery without touching sold counts again.
+  let order = data as PrintOrder | null;
+  if (!order) {
+    const existing = await serviceClient()
+      .from('print_orders')
+      .select('*')
+      .eq('stripe_session_id', session.id)
+      .eq('status', 'paid')
+      .maybeSingle();
+    if (existing.error) throw existing.error;
+    order = existing.data as PrintOrder | null;
+  }
   if (!order) return;
 
-  // Provisioning is deliberately best-effort after settlement. A mail or
-  // Auth outage must not make Stripe retry a payment that is already paid.
+  // Account linking is part of the customer delivery contract. If Auth or the
+  // ownership RPC is temporarily unavailable, surface the failure so Stripe
+  // retries this event and the paid order is not left orphaned.
   try {
     const userId = await provisionCustomerAccount(order.email);
     await linkPaidOrderToAccount(order.id, userId);
   } catch (error) {
     console.error('[stripe-webhook] account provisioning/linking failed for', order.reference, error);
+    throw error;
   }
 
   await sendOrderNotification({

@@ -10,6 +10,9 @@ CREATE INDEX IF NOT EXISTS print_orders_auth_user_idx
   ON public.print_orders (auth_user_id, created_at DESC)
   WHERE auth_user_id IS NOT NULL;
 
+GRANT SELECT ON public.print_orders TO authenticated;
+GRANT SELECT ON public.collectors, public.purchase_messages TO authenticated;
+
 -- Link once, safely retryable from a webhook. The account email must match the
 -- checkout email, and only paid orders can become account-owned.
 CREATE OR REPLACE FUNCTION public.link_paid_order_to_user(
@@ -19,7 +22,7 @@ CREATE OR REPLACE FUNCTION public.link_paid_order_to_user(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = ''
 AS $$
 DECLARE
   v_order public.print_orders;
@@ -30,7 +33,7 @@ BEGIN
     RAISE EXCEPTION 'Order and user are required' USING ERRCODE = '22023';
   END IF;
 
-  SELECT lower(btrim(email)) INTO v_user_email
+  SELECT pg_catalog.lower(pg_catalog.btrim(email)) INTO v_user_email
     FROM auth.users WHERE id = p_auth_user_id;
   IF v_user_email IS NULL THEN
     RAISE EXCEPTION 'User not found' USING ERRCODE = '22023';
@@ -56,7 +59,7 @@ BEGIN
     RAISE EXCEPTION 'Order is already linked to another account' USING ERRCODE = '42501';
   END IF;
 
-  v_order_email := lower(btrim(v_order.email));
+  v_order_email := pg_catalog.lower(pg_catalog.btrim(v_order.email));
   IF v_order_email IS DISTINCT FROM v_user_email THEN
     RAISE EXCEPTION 'Account email does not match order email' USING ERRCODE = '42501';
   END IF;
@@ -76,6 +79,11 @@ GRANT EXECUTE ON FUNCTION public.link_paid_order_to_user(uuid, uuid) TO service_
 CREATE POLICY "Customers can read their paid orders"
   ON public.print_orders FOR SELECT TO authenticated
   USING (status = 'paid' AND auth_user_id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS "Collectors can read their own record" ON public.collectors;
+CREATE POLICY "Collectors can read their own record"
+  ON public.collectors FOR SELECT TO authenticated
+  USING (auth_user_id = (SELECT auth.uid()) AND email_verified);
 
 -- Keep the existing admin policy and tighten the collector read path so an
 -- unverified session cannot inspect a registration by merely being linked.
@@ -100,6 +108,7 @@ CREATE POLICY "Collectors can read their own certificates"
        AND c.email_verified
   ));
 
+GRANT SELECT ON public.print_certificates TO authenticated;
 GRANT SELECT ON public.registration_receipts TO authenticated;
 CREATE POLICY "Collectors can read their own registration receipts"
   ON public.registration_receipts FOR SELECT TO authenticated

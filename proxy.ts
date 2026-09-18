@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // A page the admin has hidden answers as if it didn't exist.
-  if (!pathname.startsWith('/admin') && !pathname.startsWith('/register')) {
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/register') && !pathname.startsWith('/account')) {
     if (hiddenPageFor(pathname, await hiddenPages())) {
       return NextResponse.rewrite(new URL('/__hidden-page', request.url), { status: 404 });
     }
@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/admin/:path*', '/register/:path*',
+    '/admin/:path*', '/register/:path*', '/account/:path*',
     '/home', '/gallery/:path*', '/videography', '/prints', '/news', '/about', '/contact', '/basket',
   ],
 };
