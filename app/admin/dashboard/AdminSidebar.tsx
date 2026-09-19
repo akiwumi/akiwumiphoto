@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent,
@@ -27,7 +28,7 @@ const PORTFOLIO: { id: Section; label: string; icon: typeof Images }[] = [
 ];
 
 interface Props {
-  section: Section;
+  section: Section | 'registrations' | 'customers';
   onSection: (section: Section) => void;
   galleries: Gallery[];
   selectedGalleryId: string | null;
@@ -39,6 +40,7 @@ interface Props {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   mobileOpen: boolean;
+  onNavigate: () => void;
 }
 
 export default function AdminSidebar(props: Props) {
@@ -103,12 +105,12 @@ export default function AdminSidebar(props: Props) {
             {id === 'galleries' && galleries.length > 0 && <span className={`${styles.badge} ${styles.badgeGreen}`}>{galleries.length}</span>}
           </button>
         ))}
-        <a href="/admin/dashboard/registrations" className={styles.navItem}>
+        <Link onClick={props.onNavigate} href="/admin/dashboard/registrations" className={`${styles.navItem} ${section === 'registrations' ? styles.active : ''}`} aria-current={section === 'registrations' ? 'page' : undefined} title={collapsed ? 'Print registrations' : undefined}>
           <FileText size={20} aria-hidden="true" /><span className={styles.navLabel}>Print registrations</span>
-        </a>
-        <a href="/admin/dashboard/customers" className={styles.navItem} title={collapsed ? 'Registered users' : undefined}>
+        </Link>
+        <Link onClick={props.onNavigate} href="/admin/dashboard/customers" className={`${styles.navItem} ${section === 'customers' ? styles.active : ''}`} aria-current={section === 'customers' ? 'page' : undefined} title={collapsed ? 'Registered users' : undefined}>
           <Users size={20} aria-hidden="true" /><span className={styles.navLabel}>Registered users</span>
-        </a>
+        </Link>
 
         {galleries.length > 0 && (
           <>

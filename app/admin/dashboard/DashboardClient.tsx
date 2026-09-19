@@ -1,63 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Eye, Menu, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Eye, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from './AdminShell.module.css';
-import AdminSidebar, { type Section } from './AdminSidebar';
+import { useAdminShell } from './AdminShell';
 import GalleriesOverview from './GalleriesOverview';
-import { useGalleries } from './useGalleries';
 import GalleryEditor from './tabs/GalleriesTab';
 import VideosTab from './tabs/VideosTab';
 import PrintsTab from './tabs/PrintsTab';
-import ModalsTab, { useModals } from './tabs/ModalsTab';
-import SitePagesTab, { BUILT_IN_PAGES, pagePath, useSitePages, type PageView } from './tabs/SitePagesTab';
-
-const COLLAPSE_KEY = 'akiwumi-admin-sidebar-collapsed';
+import ModalsTab from './tabs/ModalsTab';
+import SitePagesTab, { BUILT_IN_PAGES, pagePath, useSitePages } from './tabs/SitePagesTab';
 
 export default function DashboardClient() {
-  const router = useRouter();
-  const galleries = useGalleries();
-  const modals = useModals();
+  const { galleries, modals, section, galleryId, setGalleryId, openGallery, modalId, setModalId, pageView, setPageView } = useAdminShell();
   const sitePages = useSitePages();
-  const [section, setSection] = useState<Section>('galleries');
-  const [galleryId, setGalleryId] = useState<string | null>(null);
-  const [modalId, setModalId] = useState<string | null>(null);
-  const [pageView, setPageView] = useState<PageView>(null);
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-
-  useEffect(() => {
-    try { setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === '1'); } catch { /* ignore */ }
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? '')).catch(() => {});
-  }, []);
-
-  const toggleCollapsed = () => setCollapsed((c) => {
-    try { window.localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1'); } catch { /* ignore */ }
-    return !c;
-  });
-
-  const go = (next: Section) => {
-    setSection(next);
-    setGalleryId(null);
-    setModalId(null);
-    setPageView(null);
-    setMobileOpen(false);
-  };
-
-  const openGallery = (id: string) => {
-    setSection('galleries');
-    setGalleryId(id);
-    setMobileOpen(false);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/admin');
-  };
-
   const gallery = galleries.galleries.find((g) => g.id === galleryId) ?? null;
   const published = galleries.galleries.filter((g) => g.published).length;
   const photoTotal = Object.values(galleries.photoCounts).reduce((sum, n) => sum + n, 0);
@@ -103,30 +60,6 @@ export default function DashboardClient() {
   }
 
   return (
-    <div className={styles.shell}>
-      {mobileOpen && <div className={styles.scrim} onClick={() => setMobileOpen(false)} aria-hidden="true" />}
-      <AdminSidebar
-        section={section}
-        onSection={go}
-        galleries={galleries.galleries}
-        selectedGalleryId={galleryId}
-        onSelectGallery={openGallery}
-        onReorderGalleries={galleries.reorder}
-        activeModalCount={modals.liveCount}
-        userEmail={userEmail}
-        onLogout={handleLogout}
-        collapsed={collapsed}
-        onToggleCollapsed={toggleCollapsed}
-        mobileOpen={mobileOpen}
-      />
-
-      <main className={styles.main}>
-        <div className={styles.mobileBar}>
-          <button type="button" className={styles.iconButton} onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={18} /></button>
-          <strong>Akiwumi admin</strong>
-          <span style={{ width: 40 }} />
-        </div>
-
         <div className={styles.content}>
           <header className={styles.header}>
             <div style={{ minWidth: 0 }}>
@@ -169,8 +102,6 @@ export default function DashboardClient() {
           {section === 'modals' && <ModalsTab state={modals} editingId={modalId} onEdit={setModalId} />}
           {section === 'settings' && <SettingsSection />}
         </div>
-      </main>
-    </div>
   );
 }
 

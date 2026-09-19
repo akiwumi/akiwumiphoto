@@ -354,3 +354,10 @@
 .pagePreview :global(.pb-split) { gap: 12px; }
 .pagePreview :global(.pb-gallery) { gap: 6px; }
 @media (max-width: 700px) { .imageField { flex-direction: column; } .imageThumb { width: 100%; max-height: none; } }
+
+/* Print the document without dashboard navigation or scroll clipping. */
+@media print {
+  .shell { display: block; height: auto; overflow: visible; }
+  .sidebar, .mobileBar, .scrim { display: none; }
+  .main, .content { display: block; overflow: visible; }
+}
