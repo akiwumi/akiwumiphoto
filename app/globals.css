@@ -1771,6 +1771,20 @@ select.register-field {
     overflow: visible;
   }
 
+  /* Keep the account hierarchy intact when the browser viewport enters the
+     tablet breakpoint: settings and favourites remain full-width panels,
+     with favourites directly below settings. */
+  .account-purchases-card,
+  .account-settings-card,
+  .account-favorites-card {
+    grid-column: 1 / -1;
+  }
+
+  .account-registrations-card,
+  .account-certificates-card {
+    grid-column: span 1;
+  }
+
   .register-grid {
     grid-template-columns: minmax(0, 1fr);
   }
