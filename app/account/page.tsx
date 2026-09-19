@@ -19,6 +19,9 @@ export default async function AccountPage() {
     const db = await createServerClient();
     const result = await db.auth.getUser();
     user = result.data.user;
+    if (user) {
+      accountData = { collector: null, orders: [], registrations: [], certificates: [] };
+    }
     if (user?.email_confirmed_at) {
       try {
         accountData = await loadAccountData(db, user);
