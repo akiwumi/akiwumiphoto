@@ -68,9 +68,23 @@ export type AccountCertificate = {
 };
 
 export type AccountData = {
+  collector: AccountCollector | null;
   orders: AccountOrder[];
   registrations: AccountRegistration[];
   certificates: AccountCertificate[];
+};
+
+export type AccountCollector = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  region: string | null;
+  postcode: string;
+  country_code: string;
 };
 
 function linesFrom(value: unknown): AccountOrderLine[] {
@@ -90,7 +104,7 @@ export async function loadAccountData(db: SupabaseClient, user: User): Promise<A
       .eq('status', 'paid')
       .order('created_at', { ascending: false }),
     db.from('collectors')
-      .select('id')
+      .select('id,first_name,last_name,email,phone,address_line1,address_line2,city,region,postcode,country_code')
       .eq('auth_user_id', user.id)
       .eq('email_verified', true),
     db.from('print_certificates')
@@ -121,6 +135,7 @@ export async function loadAccountData(db: SupabaseClient, user: User): Promise<A
   }
 
   return {
+    collector: collectorRows?.[0] ? collectorRows[0] as AccountCollector : null,
     orders: (orderRows ?? []).map((row) => ({
       ...row,
       total_usd: Number(row.total_usd),

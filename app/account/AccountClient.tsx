@@ -52,11 +52,20 @@ export default function AccountClient({ accountError = false }: { accountError?:
         setPassword(''); setConfirmPassword('');
         return;
       }
-      const payload = { email: email.trim().toLowerCase(), ...(mode === 'login' || mode === 'signup' ? { password } : {}) };
-      const path = mode === 'login' ? '/api/account/login' : mode === 'signup' ? '/api/account/signup' : mode === 'reset' ? '/api/account/password-reset' : '/api/account/resend-verification';
+      if (mode === 'login') {
+        const { data: signedIn, error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+        if (loginError || !signedIn.user) throw new Error('The email or password is incorrect.');
+        if (!signedIn.user.email_confirmed_at) {
+          await supabase.auth.signOut();
+          throw new Error('Please verify your email before signing in.');
+        }
+        window.location.assign('/account');
+        return;
+      }
+      const payload = { email: email.trim().toLowerCase(), ...(mode === 'signup' ? { password } : {}) };
+      const path = mode === 'signup' ? '/api/account/signup' : mode === 'reset' ? '/api/account/password-reset' : '/api/account/resend-verification';
       const data = await send(path, payload);
-      setMessage(data.message || (mode === 'login' ? 'You are signed in.' : 'Check your inbox for the next step.'));
-      if (mode === 'login') window.location.assign('/account');
+      setMessage(data.message || 'Check your inbox for the next step.');
       if (mode === 'signup' || mode === 'reset' || mode === 'resend') setPassword('');
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Something went wrong. Please try again.'); }
     finally { setBusy(false); }

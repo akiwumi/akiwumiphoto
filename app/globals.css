@@ -1873,6 +1873,11 @@ select.register-field {
 .gallery-tile:hover .tile-favorite, .tile-favorite:focus-visible { opacity: 1; }
 .lightbox-favorite { background: transparent; }
 @media (hover: none) { .tile-favorite { opacity: 1; } }
+.account-settings-intro { margin: 0 0 20px; color: var(--site-text); line-height: 1.5; }
+.account-password-fields { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; padding-top: 18px; border-top: 1px solid var(--site-control-border); }
+.account-password-fields h3, .account-password-fields p { margin: 0; }
+.account-password-fields h3 { font-size: 1rem; }
+.account-password-fields p { color: var(--site-text); font-size: 14px; }
 
 .basket-line {
   display: grid;
