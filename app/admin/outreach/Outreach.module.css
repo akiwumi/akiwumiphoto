@@ -18,4 +18,8 @@
 .contactLink:hover, .contactLink:focus-visible { background:#f4dfc7; color:#744325; outline:none; }
 .formGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:22px; } .field { display:flex; flex-direction:column; gap:7px; } .fieldFull { grid-column:1 / -1; } .field label { color:#786e64; font:600 11px ui-monospace,monospace; letter-spacing:.05em; text-transform:uppercase; } .input, .textarea, .select { border:1px solid #d9cfc3; border-radius:10px; padding:11px 12px; background:#fffdf8; color:#2d2925; font:inherit; } .textarea { min-height:180px; resize:vertical; }
 .notice { margin:0 22px 20px; padding:12px 14px; background:#f7ead8; border-left:3px solid #b46e42; color:#715037; font-size:13px; line-height:1.45; }
+.panelMeta { margin:6px 0 0; color:#867b70; font-size:12px; font-weight:400; }
+.previewMeta { display:flex; flex-wrap:wrap; gap:8px 18px; padding:12px 14px; background:#f4f0e9; border:1px solid #e6ddd1; border-radius:10px 10px 0 0; color:#6e6257; font:12px ui-monospace,monospace; }
+.mailerPreview { display:block; width:100%; min-height:900px; border:1px solid #e6ddd1; border-top:0; border-radius:0 0 10px 10px; background:#e9e9e5; }
+.success { margin:10px 0 0; color:#416145; font-size:13px; }
 @media(max-width:900px){ .grid{grid-template-columns:repeat(2,1fr)} .header{align-items:flex-start; flex-direction:column} } @media(max-width:620px){ .page{padding:24px 16px 40px}.grid,.formGrid{grid-template-columns:1fr}.fieldFull{grid-column:auto}.table{min-width:780px}.panel{overflow:auto} }
