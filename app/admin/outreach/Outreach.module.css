@@ -1,4 +1,4 @@
-.page { min-height: 100%; background: #f4f0e9; color: #27231f; padding: 34px clamp(20px, 4vw, 58px) 60px; }
+.page { flex: 1; min-height: 0; overflow-y: auto; background: #f4f0e9; color: #27231f; padding: 34px clamp(20px, 4vw, 58px) 60px; }
 .header { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:28px; }
 .eyebrow { margin:0 0 8px; color:#9b5a35; font:600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing:.12em; text-transform:uppercase; }
 .title { margin:0; font:500 clamp(30px, 4vw, 52px)/.98 Georgia, 'Times New Roman', serif; letter-spacing:-.04em; }
@@ -14,7 +14,8 @@
 .table { width:100%; border-collapse:collapse; font-size:13px; } .table th { padding:12px 20px; color:#8b8176; font:600 10px ui-monospace,monospace; letter-spacing:.08em; text-align:left; text-transform:uppercase; } .table td { padding:15px 20px; border-top:1px solid #eee5da; vertical-align:top; } .table tr:hover { background:#fbf4ea; }
 .chip { display:inline-flex; border-radius:999px; padding:5px 8px; background:#eee5da; color:#65584c; font:600 10px ui-monospace,monospace; text-transform:uppercase; letter-spacing:.04em; } .chipGood { background:#dce9dc; color:#416145; } .chipWarn { background:#f4dfc7; color:#925b28; } .chipBad { background:#f1d7d0; color:#9a4936; }
 .links { display:flex; gap:10px; flex-wrap:wrap; } .link { color:#9b5a35; font-weight:600; text-decoration:none; }
+.contactLink { display:inline-block; color:inherit; text-decoration:none; border-radius:8px; padding:2px 5px; margin:-2px -5px; }
+.contactLink:hover, .contactLink:focus-visible { background:#f4dfc7; color:#744325; outline:none; }
 .formGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:22px; } .field { display:flex; flex-direction:column; gap:7px; } .fieldFull { grid-column:1 / -1; } .field label { color:#786e64; font:600 11px ui-monospace,monospace; letter-spacing:.05em; text-transform:uppercase; } .input, .textarea, .select { border:1px solid #d9cfc3; border-radius:10px; padding:11px 12px; background:#fffdf8; color:#2d2925; font:inherit; } .textarea { min-height:180px; resize:vertical; }
 .notice { margin:0 22px 20px; padding:12px 14px; background:#f7ead8; border-left:3px solid #b46e42; color:#715037; font-size:13px; line-height:1.45; }
 @media(max-width:900px){ .grid{grid-template-columns:repeat(2,1fr)} .header{align-items:flex-start; flex-direction:column} } @media(max-width:620px){ .page{padding:24px 16px 40px}.grid,.formGrid{grid-template-columns:1fr}.fieldFull{grid-column:auto}.table{min-width:780px}.panel{overflow:auto} }
-
