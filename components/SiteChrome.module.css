@@ -6,7 +6,10 @@
 /* The wordmark and links share the bold navigation size; the links wrap
    onto their own row if the wordmark leaves too little room. */
 .wordmark { font-size: var(--nav-size); font-weight: var(--nav-weight, 700); line-height: 1.1; text-transform: uppercase; letter-spacing: .12em; }
-.navigation { display: flex; flex-wrap: wrap; gap: 6px 32px; font-size: var(--nav-size); font-weight: 700; line-height: 1.2; }
+.navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 32px; font-size: var(--nav-size); font-weight: 700; line-height: 1.2; }
+.navAction { border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; line-height: inherit; }
+.navAction:hover { text-decoration: underline; text-underline-offset: 6px; }
+.basketLink { display: inline-flex; align-items: center; gap: 2px; }
 /* The bottom tab bar and its menu only exist on small screens. */
 .tabBarRoot { display: none; }
 /* Sized in em so the badge follows the navigation text size. */
@@ -35,6 +38,7 @@
   .menuSheet a { display: flex; align-items: center; gap: 14px; min-height: 52px; color: var(--site-text); text-decoration: none; border-bottom: 1px solid var(--site-border); }
   .menuSheet a:last-child { border-bottom: 0; }
   .menuSheet a[aria-current] span { text-decoration: underline; text-underline-offset: 6px; }
+  .menuAction { display: flex; align-items: center; gap: 14px; min-height: 52px; width: 100%; padding: 12px 0; border: 0; border-bottom: 1px solid var(--site-border); background: transparent; color: var(--site-text); cursor: pointer; font: inherit; text-align: left; }
 }
 @keyframes sheetIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .menuSheet { animation: none; } }

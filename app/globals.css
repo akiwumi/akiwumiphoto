@@ -1854,6 +1854,7 @@ select.register-field {
   align-items: start;
   gap: 48px;
 }
+.basket-lines, .basket-line-body { min-width: 0; }
 
 .basket-favorites { min-width: 0; padding: 20px; border: 1px solid var(--site-control-border); background: var(--site-background); }
 .favorites-panel { margin-top: 0; }
@@ -1929,6 +1930,9 @@ select.register-field {
 }
 
 .basket-line-controls select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   max-width: 100%;
   min-height: 40px;
   padding: 6px 10px;

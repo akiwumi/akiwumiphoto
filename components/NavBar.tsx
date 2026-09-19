@@ -91,12 +91,12 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
         <Link href="/" className={styles.wordmark}>Akiwumi Photo</Link>
         <nav aria-label="Main navigation" className={styles.navigation}>
           {items.map((item) => (
-            <Link key={item.key} href={item.href} aria-current={item.current ? 'page' : undefined}
+            <Link key={item.key} href={item.href} className={item.key === 'basket' ? styles.basketLink : undefined} aria-current={item.current ? 'page' : undefined}
               aria-label={item.key === 'basket' ? basketLabel : undefined}>
               {item.key === 'basket' ? <><ShoppingBag size={18} strokeWidth={1.8} aria-hidden /><span className={styles.srOnly}>Basket</span><span className={styles.basketCount} aria-hidden="true">{basketCount}</span></> : item.label}
             </Link>
           ))}
-          {signedIn && <button type="button" onClick={signOut} style={{ background: 'none', border: 0, color: 'inherit', cursor: 'pointer', font: 'inherit', padding: 0 }}>Logout</button>}
+          {signedIn && <button type="button" className={styles.navAction} onClick={signOut}>Logout</button>}
         </nav>
       </header>
 
@@ -111,7 +111,7 @@ export default function NavBar({ contained = false }: { contained?: boolean }) {
                 <span>{label}</span>
               </Link>
             ))}
-            {signedIn && <button type="button" onClick={signOut} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 0, color: 'inherit', cursor: 'pointer', font: 'inherit', padding: '12px 16px', width: '100%', textAlign: 'left' }}><User size={20} strokeWidth={1.5} aria-hidden /><span>Logout</span></button>}
+            {signedIn && <button type="button" className={styles.menuAction} onClick={signOut}><User size={20} strokeWidth={1.5} aria-hidden /><span>Logout</span></button>}
           </nav>
         )}
         <nav aria-label="Mobile navigation" className={styles.tabBar}>
