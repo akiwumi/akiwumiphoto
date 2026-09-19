@@ -2,9 +2,10 @@ import { redirect } from 'next/navigation';
 import AdminShell from '../dashboard/AdminShell';
 import { createServerClient } from '@/lib/supabase-server';
 import { isAdmin } from '@/lib/admin-auth';
+import OutreachNav from './OutreachNav';
 
 export default async function OutreachLayout({ children }: { children: React.ReactNode }) {
-  if (process.env.NODE_ENV !== 'production' && process.env.OUTREACH_LOCAL_DEMO === '1') return <AdminShell>{children}</AdminShell>;
+  if (process.env.NODE_ENV !== 'production' && process.env.OUTREACH_LOCAL_DEMO === '1') return <AdminShell><OutreachNav />{children}</AdminShell>;
   try {
     const client = await createServerClient();
     const { data: { user } } = await client.auth.getUser();
@@ -12,5 +13,5 @@ export default async function OutreachLayout({ children }: { children: React.Rea
   } catch {
     redirect('/admin');
   }
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell><OutreachNav />{children}</AdminShell>;
 }

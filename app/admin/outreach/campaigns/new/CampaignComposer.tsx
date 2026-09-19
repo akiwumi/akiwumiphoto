@@ -26,7 +26,7 @@ export default function CampaignComposer({ contacts }: { contacts: AddressBookCo
   const warnings = rendered ? imageWarnings(rendered.html) : [];
 
   async function sendTest() {
-    if (!contact) return;
+    if (!contact || !rendered) return;
     setSending(true); setSentMessage('');
     try {
       const response = await fetch('/api/admin/outreach/campaigns/local/send-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ to: contact.email, from: 'hello@akiwumiphoto.com', replyTo: 'hello@akiwumiphoto.com', subject: rendered.subject, html: rendered.html, text: rendered.text }) });
