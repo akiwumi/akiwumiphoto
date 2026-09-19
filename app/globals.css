@@ -1411,6 +1411,24 @@ p.contact-status-error {
   align-items: start;
 }
 
+.account-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.account-dashboard-card {
+  min-width: 0;
+  height: 100%;
+}
+
+.account-dashboard-card > .register-panel,
+.account-dashboard-card > .favorites-panel {
+  height: 100%;
+  box-sizing: border-box;
+}
+
 .register-panel {
   padding: 28px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -1724,9 +1742,18 @@ select.register-field {
     gap: 20px;
   }
 
+  .account-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
   .register-panel {
     padding: 20px;
     border-radius: 18px;
+  }
+
+  .account-dashboard-card {
+    grid-column: auto;
   }
 
   .register-grid {
@@ -1742,6 +1769,12 @@ select.register-field {
   .register-submit {
     width: 100%;
     min-width: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .account-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
