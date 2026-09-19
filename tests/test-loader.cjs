@@ -1,0 +1,4 @@
+const fs = require('node:fs'); const path = require('node:path'); const ts = require('typescript'); const Module = require('node:module');
+function load(relative, mocks = {}, cache = new Map()) { const file = path.resolve(__dirname, '..', relative); if (cache.has(file)) return cache.get(file).exports; const loaded = new Module(file, module); cache.set(file, loaded); loaded.require = (name) => { if (Object.hasOwn(mocks, name)) return mocks[name]; if (name.startsWith('@/')) return load(name.slice(2) + '.ts', mocks, cache); if (name.startsWith('.')) return load(path.relative(path.resolve(__dirname, '..'), path.resolve(path.dirname(file), name)) + '.ts', mocks, cache); return require(name); }; loaded._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText, file); return loaded.exports; }
+module.exports = { load };
+

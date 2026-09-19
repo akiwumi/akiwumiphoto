@@ -1,0 +1,4 @@
+import type { DeliveryStatus } from '@/types/outreach';
+export interface OutreachEmailProvider { send(input: { to: string; from: string; replyTo: string; subject: string; html: string; text: string; headers?: Record<string, string> }): Promise<{ providerMessageId: string }>; verifyWebhook(request: Request): Promise<unknown>; normaliseWebhookEvent(payload: unknown): NormalisedDeliveryEvent[]; }
+export interface NormalisedDeliveryEvent { providerEventId: string; providerMessageId: string; status: DeliveryStatus; occurredAt: string; payload: unknown; }
+

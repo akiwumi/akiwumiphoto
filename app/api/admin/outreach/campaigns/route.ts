@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server'; import { requireOutreachAdmin } from '@/lib/outreach/auth';
+export async function POST(request: Request) { try { await requireOutreachAdmin(); const body = await request.json().catch(() => null); if (!body?.name || !body?.subject || !body?.html_template) return NextResponse.json({ error: 'Name, subject, and HTML template are required.' }, { status: 422 }); return NextResponse.json({ campaign: { id: crypto.randomUUID(), ...body, status: 'draft', created_at: new Date().toISOString() } }, { status: 201 }); } catch { return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); } }
+

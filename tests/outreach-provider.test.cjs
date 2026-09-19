@@ -1,0 +1,3 @@
+const { test } = require('node:test'); const assert = require('node:assert/strict'); const { load } = require('./test-loader.cjs');
+test('mock provider returns deterministic message id and stores multipart content', async () => { const { MockOutreachProvider, mockSentMessages } = load('lib/outreach/providers/mock.ts'); const provider = new MockOutreachProvider(); const result = await provider.send({ to: 'a@example.com', from: 'from@example.com', replyTo: 'reply@example.com', subject: 'Hi', html: '<p>Hi</p>', text: 'Hi' }); assert.match(result.providerMessageId, /^mock-/); assert.equal(mockSentMessages.at(-1).text, 'Hi'); });
+

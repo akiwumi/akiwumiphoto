@@ -12,7 +12,7 @@ import { restrictToVerticalAxis } from './dnd-modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Camera, Ellipsis, ExternalLink, FileText, Film, Frame, GripVertical, Images, LogOut,
-  MessageSquareText, Newspaper, PanelLeftClose, PanelLeftOpen, Settings,
+  Mail, MessageSquareText, Newspaper, PanelLeftClose, PanelLeftOpen, Settings,
   Users,
 } from 'lucide-react';
 import styles from './AdminShell.module.css';
@@ -110,6 +110,9 @@ export default function AdminSidebar(props: Props) {
         </Link>
         <Link onClick={props.onNavigate} href="/admin/dashboard/customers" className={`${styles.navItem} ${section === 'customers' ? styles.active : ''}`} aria-current={section === 'customers' ? 'page' : undefined} title={collapsed ? 'Registered users' : undefined}>
           <Users size={20} aria-hidden="true" /><span className={styles.navLabel}>Registered users</span>
+        </Link>
+        <Link onClick={props.onNavigate} href="/admin/outreach" className={styles.navItem} title={collapsed ? 'Outreach' : undefined}>
+          <Mail size={20} aria-hidden="true" /><span className={styles.navLabel}>Outreach</span>
         </Link>
 
         {galleries.length > 0 && (
