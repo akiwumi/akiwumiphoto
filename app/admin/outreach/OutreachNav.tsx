@@ -7,6 +7,7 @@ import styles from './Outreach.module.css';
 const links = [
   ['Overview', '/admin/outreach'],
   ['Address book', '/admin/outreach/contacts'],
+  ['Sent', '/admin/outreach/sent'],
   ['Import', '/admin/outreach/import'],
   ['Campaigns', '/admin/outreach/campaigns'],
   ['New campaign', '/admin/outreach/campaigns/new'],

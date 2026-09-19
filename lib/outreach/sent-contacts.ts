@@ -6,6 +6,7 @@ export interface SentContactRecord {
   email: string;
   sentAt: string;
   providerMessageId?: string;
+  subject?: string;
 }
 
 export function sentContactMap(records: SentContactRecord[]): Record<string, SentContactRecord> {
