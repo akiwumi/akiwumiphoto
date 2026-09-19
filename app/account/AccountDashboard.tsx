@@ -51,15 +51,15 @@ export default function AccountDashboard({ email, data }: { email: string; data:
         )}
       </section>
 
-      <div className="account-dashboard-card"><SettingsPanel collector={data.collector} /></div>
-      <div className="account-dashboard-card"><FavoritesPanel /></div>
-      <section className="register-panel account-dashboard-card" aria-labelledby="account-registrations-title">
+      <div className="account-dashboard-card account-settings-card"><SettingsPanel collector={data.collector} /></div>
+      <div className="account-dashboard-card account-favorites-card"><FavoritesPanel /></div>
+      <section className="register-panel account-dashboard-card account-registrations-card" aria-labelledby="account-registrations-title">
           <h2 id="account-registrations-title" className="register-section-title">Print registrations</h2>
           <p style={{ color: 'var(--site-text)', lineHeight: 1.6 }}>Register a purchased print to keep its provenance and certificate with your account.</p>
           <Link href="/register" className="register-submit btn-lift" style={{ display: 'inline-flex', justifyContent: 'center', textDecoration: 'none', marginTop: 18 }}>Register a print</Link>
           {data.registrations.length > 0 && <div style={{ marginTop: 24 }} className="flex flex-col gap-4">{data.registrations.map((registration) => <div key={registration.id} style={{ borderTop: '1px solid var(--site-control-border)', paddingTop: 14 }}><strong>{registration.artwork_title}</strong><div style={{ color: 'var(--site-text)', fontSize: 14 }}>{new Date(registration.created_at).toLocaleDateString()} · <span style={{ textTransform: 'capitalize' }}>{registration.status}</span></div></div>)}</div>}
       </section>
-      <section className="register-panel account-dashboard-card" aria-labelledby="account-certificates-title">
+      <section className="register-panel account-dashboard-card account-certificates-card" aria-labelledby="account-certificates-title">
           <h2 id="account-certificates-title" className="register-section-title">Certificates</h2>
           {data.certificates.length === 0 ? <p>No certificates have been created for your registered prints yet.</p> : <div className="flex flex-col gap-4">{data.certificates.map((certificate) => <article key={certificate.id} style={{ borderTop: '1px solid var(--site-control-border)', paddingTop: 14 }}><strong>{certificate.image_snapshot?.title ?? 'Registered print'}</strong><p style={{ margin: '6px 0', color: 'var(--site-text)' }}>Certificate {certificate.print_number}/{certificate.edition_total} · {certificate.status}</p><p style={{ margin: 0, color: 'var(--site-text)', fontSize: 14 }}>Order {certificate.order_number} · {certificate.location}</p>{certificate.serial_number ? <p style={{ margin: '8px 0', color: 'var(--site-text)' }}>Registered number: <strong>{certificate.serial_number}</strong></p> : <SerialNumberRequestButton certificateId={certificate.id} status={certificate.serial_request_status} />}<Link href={`/account/certificates/${certificate.id}`} className="register-submit btn-lift" style={{ display: 'inline-flex', justifyContent: 'center', textDecoration: 'none', marginTop: 12 }}>View certificate</Link></article>)}</div>}
       </section>

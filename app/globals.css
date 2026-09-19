@@ -1414,7 +1414,7 @@ p.contact-status-error {
 .account-dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 24px;
   align-items: stretch;
   height: min(720px, calc(100dvh - 230px));
@@ -1435,7 +1435,9 @@ p.contact-status-error {
   box-sizing: border-box;
 }
 
-.account-purchases-card { grid-column: span 2; }
+.account-purchases-card { grid-column: span 2; grid-row: span 2; }
+.account-settings-card, .account-favorites-card { grid-column: span 2; }
+.account-registrations-card, .account-certificates-card { grid-column: span 2; }
 
 .register-panel {
   padding: 28px;
@@ -1765,6 +1767,7 @@ select.register-field {
 
   .account-dashboard-card {
     grid-column: auto;
+    grid-row: auto;
     overflow: visible;
   }
 
