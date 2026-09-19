@@ -19,7 +19,16 @@ export default async function AccountPage() {
     const db = await createServerClient();
     const result = await db.auth.getUser();
     user = result.data.user;
-    if (user?.email_confirmed_at) accountData = await loadAccountData(db, user);
+    if (user?.email_confirmed_at) {
+      try {
+        accountData = await loadAccountData(db, user);
+      } catch (error) {
+        // A missing purchase or registration record must not hide the account.
+        // The dashboard can still show settings and empty sections.
+        console.error('[account] Could not load optional account data:', error);
+        accountData = { collector: null, orders: [], registrations: [], certificates: [] };
+      }
+    }
   } catch (error) {
     console.error('[account] Could not load account:', error);
   }

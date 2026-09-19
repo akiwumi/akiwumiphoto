@@ -112,16 +112,16 @@ export async function loadAccountData(db: SupabaseClient, user: User): Promise<A
       .order('created_at', { ascending: false }),
   ]);
 
-  if (orderError) throw orderError;
-  if (collectorError) throw collectorError;
-  if (certificateError) throw certificateError;
+  if (orderError) console.error('[account] could not load purchases:', orderError);
+  if (collectorError) console.error('[account] could not load registered details:', collectorError);
+  if (certificateError) console.error('[account] could not load certificates:', certificateError);
 
   const collectorIds = (collectorRows ?? []).map((row) => row.id);
   const certificateIds = (certificateRows ?? []).map((row) => row.id);
   const { data: requestRows, error: requestError } = certificateIds.length > 0
     ? await db.from('serial_number_requests').select('certificate_id,status,serial_number').in('certificate_id', certificateIds)
     : { data: [], error: null };
-  if (requestError) throw requestError;
+  if (requestError) console.error('[account] could not load serial requests:', requestError);
   const requestByCertificate = new Map((requestRows ?? []).map((row) => [row.certificate_id, row]));
   let registrations: AccountRegistration[] = [];
   if (collectorIds.length > 0) {
@@ -130,8 +130,8 @@ export async function loadAccountData(db: SupabaseClient, user: User): Promise<A
       .select('id,artwork_title,purchase_reference,purchased_on,status,created_at')
       .in('collector_id', collectorIds)
       .order('created_at', { ascending: false });
-    if (error) throw error;
-    registrations = (data ?? []) as AccountRegistration[];
+    if (error) console.error('[account] could not load registrations:', error);
+    else registrations = (data ?? []) as AccountRegistration[];
   }
 
   return {
