@@ -18,6 +18,10 @@ async function hiddenPages(): Promise<string[]> {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (process.env.NODE_ENV !== 'production' && process.env.OUTREACH_LOCAL_DEMO === '1' && pathname.startsWith('/admin/outreach')) {
+    return NextResponse.next({ request });
+  }
+
   // A page the admin has hidden answers as if it didn't exist.
   if (!pathname.startsWith('/admin') && !pathname.startsWith('/register') && !pathname.startsWith('/account')) {
     if (hiddenPageFor(pathname, await hiddenPages())) {
