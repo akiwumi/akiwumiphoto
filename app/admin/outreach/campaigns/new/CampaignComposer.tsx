@@ -65,7 +65,7 @@ export default function CampaignComposer({ contacts: initialContacts, mailerHtml
     const response = await fetch('/api/admin/outreach/campaigns/local/send-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ to: contactToSend.email, from: 'hello@akiwumiphoto.com', replyTo: 'hello@akiwumiphoto.com', subject: message.subject, html: message.html, text: message.text }) });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error ?? 'Unable to send message');
-    persistRecord({ contactId: contactToSend.id, email: contactToSend.email, sentAt: new Date().toISOString(), providerMessageId: result.providerMessageId, subject: message.subject });
+    persistRecord({ contactId: contactToSend.id, email: contactToSend.email, sentAt: new Date().toISOString(), providerMessageId: result.providerMessageId, subject: message.subject, html: message.html, text: message.text });
     return result.providerMessageId as string;
   }
 

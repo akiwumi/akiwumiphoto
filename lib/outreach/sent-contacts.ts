@@ -7,6 +7,8 @@ export interface SentContactRecord {
   sentAt: string;
   providerMessageId?: string;
   subject?: string;
+  html?: string;
+  text?: string;
 }
 
 export function sentContactMap(records: SentContactRecord[]): Record<string, SentContactRecord> {
