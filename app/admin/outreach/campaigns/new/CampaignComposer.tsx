@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { renderMessage, imageWarnings } from '@/lib/outreach/render';
 import { INTERIOR_DESIGNER_MAILER_SUBJECT, INTERIOR_DESIGNER_MAILER_TEXT } from '@/lib/outreach/mailer-template';
 import type { AddressBookContact } from '@/lib/outreach/address-book';
-import { SENT_CONTACTS_STORAGE_KEY, sentContactMap, type SentContactRecord } from '@/lib/outreach/sent-contacts';
+import { ERASED_CONTACTS_STORAGE_KEY, SENT_CONTACTS_STORAGE_KEY, sentContactMap, type SentContactRecord } from '@/lib/outreach/sent-contacts';
 import styles from '../../Outreach.module.css';
 
 function firstName(name: string): string {
@@ -17,8 +17,9 @@ function mergeData(contact: AddressBookContact) {
   return { first_name: firstName(contact.name), company_name: contact.studio, website: contact.website, city: contact.country === 'Sweden' ? 'Stockholm' : null };
 }
 
-export default function CampaignComposer({ contacts, mailerHtml }: { contacts: AddressBookContact[]; mailerHtml: string }) {
-  const [contactId, setContactId] = useState(contacts[0]?.id ?? '');
+export default function CampaignComposer({ contacts: initialContacts, mailerHtml }: { contacts: AddressBookContact[]; mailerHtml: string }) {
+  const [contacts, setContacts] = useState(initialContacts);
+  const [contactId, setContactId] = useState(initialContacts[0]?.id ?? '');
   const [subject, setSubject] = useState(INTERIOR_DESIGNER_MAILER_SUBJECT);
   const [htmlCopy, setHtmlCopy] = useState(mailerHtml);
   const [textCopy, setTextCopy] = useState(INTERIOR_DESIGNER_MAILER_TEXT);
@@ -37,10 +38,12 @@ export default function CampaignComposer({ contacts, mailerHtml }: { contacts: A
       try {
         const parsed = JSON.parse(window.localStorage.getItem(SENT_CONTACTS_STORAGE_KEY) ?? '[]');
         if (Array.isArray(parsed)) setSent(sentContactMap(parsed));
+        const erased = JSON.parse(window.localStorage.getItem(ERASED_CONTACTS_STORAGE_KEY) ?? '[]');
+        if (Array.isArray(erased)) setContacts(initialContacts.filter((entry) => !erased.includes(entry.id)));
       } catch { setSent({}); }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [initialContacts]);
 
   function persistRecord(record: SentContactRecord) {
     setSent((current) => {
@@ -48,6 +51,13 @@ export default function CampaignComposer({ contacts, mailerHtml }: { contacts: A
       window.localStorage.setItem(SENT_CONTACTS_STORAGE_KEY, JSON.stringify(Object.values(next)));
       return next;
     });
+  }
+
+  function resetSent() {
+    if (!window.confirm('Reset sent history for every contact? This will allow those addresses to be selected again.')) return;
+    window.localStorage.removeItem(SENT_CONTACTS_STORAGE_KEY);
+    setSent({});
+    setStatusMessage('Sent history reset. All visible contacts are available again.');
   }
 
   async function sendTo(contactToSend: AddressBookContact) {
@@ -87,7 +97,7 @@ export default function CampaignComposer({ contacts, mailerHtml }: { contacts: A
     <section className={styles.panel}>
       <div className={styles.panelHead}><div><h2 className={styles.panelTitle}>Bulk personalized send</h2><p className={styles.panelMeta}>Review the edited copy, select recipients, then record one personalized message per address.</p></div><span className={`${styles.chip} ${styles.chipWarn}`}>local mock provider</span></div>
       <div className={styles.bulkList}>{contacts.map((entry) => { const isSent = Boolean(sent[entry.id]); return <label key={entry.id} className={`${styles.bulkRow} ${isSent ? styles.bulkRowSent : ''}`}><input className={styles.checkbox} type="checkbox" checked={selectedIds.includes(entry.id)} disabled={isSent || sending} onChange={() => toggleSelected(entry.id)} /><span className={styles.bulkRowLabel}><span className={styles.bulkRowName}>{entry.name} · {entry.studio}</span><span className={styles.bulkRowEmail}>{entry.email}</span></span>{isSent ? <span className={`${styles.chip} ${styles.chipGood}`}>sent</span> : <span className={styles.chip}>available</span>}</label>; })}</div>
-      <div className={styles.bulkToolbar}><span className={styles.bulkCount}>{Object.keys(sent).length} sent · {unsentContacts.length} available · {selectedContacts.length} selected</span><div className={styles.actions}><button type="button" className={styles.buttonSecondary} disabled={sending || unsentContacts.length === 0} onClick={() => setSelectedIds(unsentContacts.map((entry) => entry.id))}>Select all available</button><button type="button" className={styles.buttonSecondary} disabled={sending} onClick={() => setSelectedIds([])}>Clear</button><button type="button" className={styles.button} disabled={sending || selectedContacts.length === 0} onClick={sendSelected}>{sending ? 'Recording…' : `Send ${selectedContacts.length || ''} personalized email${selectedContacts.length === 1 ? '' : 's'} →`}</button></div></div>
+      <div className={styles.bulkToolbar}><span className={styles.bulkCount}>{Object.keys(sent).length} sent · {unsentContacts.length} available · {selectedContacts.length} selected</span><div className={styles.actions}><button type="button" className={styles.buttonSecondary} disabled={sending || unsentContacts.length === 0} onClick={() => setSelectedIds(unsentContacts.map((entry) => entry.id))}>Select all available</button><button type="button" className={styles.buttonSecondary} disabled={sending} onClick={() => setSelectedIds([])}>Clear</button><button type="button" className={styles.buttonSecondary} disabled={sending} onClick={resetSent}>Reset sent history</button><button type="button" className={styles.button} disabled={sending || selectedContacts.length === 0} onClick={sendSelected}>{sending ? 'Recording…' : `Send ${selectedContacts.length || ''} personalized email${selectedContacts.length === 1 ? '' : 's'} →`}</button></div></div>
     </section>
 
     <section className={styles.panel}>

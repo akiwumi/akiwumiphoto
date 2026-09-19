@@ -1,4 +1,5 @@
 export const SENT_CONTACTS_STORAGE_KEY = 'akiwumi-outreach-sent-contacts';
+export const ERASED_CONTACTS_STORAGE_KEY = 'akiwumi-outreach-erased-contact-ids';
 
 export interface SentContactRecord {
   contactId: string;
