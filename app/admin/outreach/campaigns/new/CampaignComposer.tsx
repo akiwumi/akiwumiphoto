@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { renderMessage, imageWarnings } from '@/lib/outreach/render';
-import { INTERIOR_DESIGNER_MAILER_HTML, INTERIOR_DESIGNER_MAILER_SUBJECT, INTERIOR_DESIGNER_MAILER_TEXT } from '@/lib/outreach/mailer-template';
+import { INTERIOR_DESIGNER_MAILER_SUBJECT, INTERIOR_DESIGNER_MAILER_TEXT } from '@/lib/outreach/mailer-template';
 import type { AddressBookContact } from '@/lib/outreach/address-book';
 import styles from '../../Outreach.module.css';
 
@@ -12,17 +12,17 @@ function firstName(name: string): string {
   return name.split(/\s+/)[0] ?? name;
 }
 
-export default function CampaignComposer({ contacts }: { contacts: AddressBookContact[] }) {
+export default function CampaignComposer({ contacts, mailerHtml }: { contacts: AddressBookContact[]; mailerHtml: string }) {
   const [contactId, setContactId] = useState(contacts[0]?.id ?? '');
   const [sentMessage, setSentMessage] = useState('');
   const [sending, setSending] = useState(false);
   const contact = contacts.find((entry) => entry.id === contactId) ?? contacts[0];
   const rendered = useMemo(() => contact ? renderMessage({
-    html: INTERIOR_DESIGNER_MAILER_HTML,
+    html: mailerHtml,
     text: INTERIOR_DESIGNER_MAILER_TEXT,
     subject: INTERIOR_DESIGNER_MAILER_SUBJECT,
     data: { first_name: firstName(contact.name), company_name: contact.studio, website: contact.website, city: contact.country === 'Sweden' ? 'Stockholm' : null },
-  }) : null, [contact]);
+  }) : null, [contact, mailerHtml]);
   const warnings = rendered ? imageWarnings(rendered.html) : [];
 
   async function sendTest() {
@@ -45,7 +45,7 @@ export default function CampaignComposer({ contacts }: { contacts: AddressBookCo
         <div className={styles.field}><label htmlFor="preview-contact">Preview recipient</label><select id="preview-contact" className={styles.select} value={contact.id} onChange={(event) => { setContactId(event.target.value); setSentMessage(''); }}>{contacts.map((entry) => <option key={entry.id} value={entry.id}>{entry.name} · {entry.studio} · {entry.email}</option>)}</select></div>
         <div className={styles.field}><label>Personalized subject</label><input className={styles.input} readOnly value={rendered.subject} /></div>
         <div className={`${styles.field} ${styles.fieldFull}`}><div className={styles.previewMeta}><span>To: {contact.email}</span><span>Greeting: Hello {firstName(contact.name)},</span><span>Studio: {contact.studio}</span></div><iframe className={styles.mailerPreview} title={`Personalized mailer for ${contact.name}`} srcDoc={rendered.html} /></div>
-        {warnings.length > 0 && <div className={`${styles.field} ${styles.fieldFull}`}><div className={styles.notice}>The local preview uses public image URLs. Before a large production send, confirm the image URLs remain permanent and deliverable.</div></div>}
+        {warnings.length > 0 && <div className={`${styles.field} ${styles.fieldFull}`}><div className={styles.notice}>The preview is using fresh gallery image URLs. Before a large production send, replace expiring image links with permanent public URLs or inline attachments.</div></div>}
         <div className={`${styles.field} ${styles.fieldFull}`}><div className={styles.actions}><button type="button" className={styles.button} onClick={sendTest} disabled={sending}>{sending ? 'Recording…' : `Send personalized test to ${contact.name} →`}</button></div>{sentMessage && <p className={styles.success}>{sentMessage}</p>}</div>
       </div>
     </section>
