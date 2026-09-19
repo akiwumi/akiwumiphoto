@@ -1,3 +1,2 @@
 import Link from 'next/link'; import styles from '../Outreach.module.css'; import ImportClient from './ImportClient';
 export default function ImportPage(){return <div className={styles.page}><header className={styles.header}><div><p className={styles.eyebrow}>Step 01 · intake</p><h1 className={styles.title}>Import contacts</h1><p className={styles.subtitle}>Upload the workbook, map its columns, and inspect the first rows before anything enters the audience.</p></div><Link className={styles.buttonSecondary} href="/admin/outreach/contacts">Back to contacts</Link></header><ImportClient /></div>}
-
