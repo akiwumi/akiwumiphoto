@@ -12,6 +12,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Camera, Ellipsis, ExternalLink, FileText, Film, Frame, GripVertical, Images, LogOut,
   MessageSquareText, Newspaper, PanelLeftClose, PanelLeftOpen, Settings,
+  Users,
 } from 'lucide-react';
 import styles from './AdminShell.module.css';
 import type { Gallery } from '@/types';
@@ -104,6 +105,9 @@ export default function AdminSidebar(props: Props) {
         ))}
         <a href="/admin/dashboard/registrations" className={styles.navItem}>
           <FileText size={20} aria-hidden="true" /><span className={styles.navLabel}>Print registrations</span>
+        </a>
+        <a href="/admin/dashboard/customers" className={styles.navItem} title={collapsed ? 'Registered users' : undefined}>
+          <Users size={20} aria-hidden="true" /><span className={styles.navLabel}>Registered users</span>
         </a>
 
         {galleries.length > 0 && (
