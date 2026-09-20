@@ -10,5 +10,10 @@ export function isEligibleContact(contact: Pick<OutreachContact, 'approved_for_o
 }
 const ORDER: Record<DeliveryStatus, number> = { queued: 0, submitted: 1, delivered: 2, opened: 3, clicked: 4, bounced: 5, failed: 5, unsubscribed: 5 };
 export function canAdvanceDelivery(from: DeliveryStatus, to: DeliveryStatus): boolean { return from === to || ORDER[to] >= ORDER[from] || (from === 'queued' && to === 'failed'); }
+export function shouldApplyDeliveryEvent(current: DeliveryStatus, incoming: DeliveryStatus): boolean {
+  return canAdvanceDelivery(current, incoming);
+}
+export function effectiveDeliveryStatus(current: DeliveryStatus, events: DeliveryStatus[]): DeliveryStatus {
+  return events.reduce((status, event) => shouldApplyDeliveryEvent(status, event) ? event : status, current);
+}
 export function statusForReply(status: ContactStatus): ContactStatus { return status === 'converted' || status === 'not_interested' ? status : 'replied'; }
-

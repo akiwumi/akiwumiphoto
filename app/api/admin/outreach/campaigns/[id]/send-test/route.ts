@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'; import { getOutreachProvider } from '@/lib/outreach/providers'; import { requireOutreachAdmin } from '@/lib/outreach/auth'; import { serviceClient } from '@/lib/stripe';
+import { NextResponse } from 'next/server'; import { getOutreachProvider } from '@/lib/outreach/providers'; import { requireOutreachAdmin } from '@/lib/outreach/auth'; import { serviceClient } from '@/lib/stripe'; import { shouldApplyDeliveryEvent } from '@/lib/outreach/domain'; import type { DeliveryStatus } from '@/types/outreach';
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +21,12 @@ export async function POST(request: Request) {
       }
       const campaign = await database.from('outreach_campaigns').upsert({ id: body.campaignId, name: 'Akiwumi Photo outreach', subject: body.subject, html_template: body.html, text_template: body.text, from_name: 'Eugene Akiwumi', from_email: 'info@akiwumiphoto.com', reply_to_email: 'info@akiwumiphoto.com', status: 'sending', created_by: user?.id ?? null }, { onConflict: 'id' }).select('id').single();
       if (campaign.error) throw campaign.error;
-      const delivery = await database.from('outreach_deliveries').upsert({ campaign_id: campaign.data.id, contact_id: contactId, provider_message_id: result.providerMessageId, status: 'submitted', rendered_subject: body.subject, sent_at: new Date().toISOString() }, { onConflict: 'campaign_id,contact_id' }).select('id').single();
+      const existingDelivery = await database.from('outreach_deliveries').select('id,status').eq('campaign_id', campaign.data.id).eq('contact_id', contactId).maybeSingle();
+      if (existingDelivery.error) throw existingDelivery.error;
+      const sentAt = new Date().toISOString();
+      const delivery = existingDelivery.data
+        ? await database.from('outreach_deliveries').update({ provider_message_id: result.providerMessageId, rendered_subject: body.subject, sent_at: sentAt, updated_at: sentAt, ...(shouldApplyDeliveryEvent(existingDelivery.data.status as DeliveryStatus, 'submitted') ? { status: 'submitted' } : {}) }).eq('id', existingDelivery.data.id).select('id').single()
+        : await database.from('outreach_deliveries').insert({ campaign_id: campaign.data.id, contact_id: contactId, provider_message_id: result.providerMessageId, status: 'submitted', rendered_subject: body.subject, sent_at: sentAt }).select('id').single();
       if (delivery.error) throw delivery.error;
       deliveryId = delivery.data.id;
     }
