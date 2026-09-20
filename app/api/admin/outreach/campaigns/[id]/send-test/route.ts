@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'; import { getOutreachProvider } from '@/lib/outreach/providers'; import { requireOutreachAdmin } from '@/lib/outreach/auth';
+import { NextResponse } from 'next/server'; import { getOutreachProvider } from '@/lib/outreach/providers'; import { requireOutreachAdmin } from '@/lib/outreach/auth'; import { serviceClient } from '@/lib/stripe';
 
 export async function POST(request: Request) {
   try {
@@ -9,9 +9,10 @@ export async function POST(request: Request) {
 
     let deliveryId: string | null = null;
     if (client && body.campaignId && body.contactId) {
-      const campaign = await client.from('outreach_campaigns').upsert({ id: body.campaignId, name: 'Akiwumi Photo outreach', subject: body.subject, html_template: body.html, text_template: body.text, from_name: 'Eugene Akiwumi', from_email: 'info@akiwumiphoto.com', reply_to_email: 'info@akiwumiphoto.com', status: 'sending', created_by: user?.id ?? null }, { onConflict: 'id' }).select('id').single();
+      const database = serviceClient();
+      const campaign = await database.from('outreach_campaigns').upsert({ id: body.campaignId, name: 'Akiwumi Photo outreach', subject: body.subject, html_template: body.html, text_template: body.text, from_name: 'Eugene Akiwumi', from_email: 'info@akiwumiphoto.com', reply_to_email: 'info@akiwumiphoto.com', status: 'sending', created_by: user?.id ?? null }, { onConflict: 'id' }).select('id').single();
       if (campaign.error) throw campaign.error;
-      const delivery = await client.from('outreach_deliveries').upsert({ campaign_id: campaign.data.id, contact_id: body.contactId, provider_message_id: result.providerMessageId, status: 'submitted', rendered_subject: body.subject, sent_at: new Date().toISOString() }, { onConflict: 'campaign_id,contact_id' }).select('id').single();
+      const delivery = await database.from('outreach_deliveries').upsert({ campaign_id: campaign.data.id, contact_id: body.contactId, provider_message_id: result.providerMessageId, status: 'submitted', rendered_subject: body.subject, sent_at: new Date().toISOString() }, { onConflict: 'campaign_id,contact_id' }).select('id').single();
       if (delivery.error) throw delivery.error;
       deliveryId = delivery.data.id;
     }
