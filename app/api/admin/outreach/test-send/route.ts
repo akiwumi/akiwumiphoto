@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       subject: body.subject,
       html: body.html,
       text: body.text,
-      headers: { 'X-Akiwumi-Outreach-Test': 'true' },
+      headers: { 'X-Akiwumi-Outreach-Test': 'true', 'Reply-To': 'info@akiwumiphoto.com' },
     });
     return NextResponse.json({ ok: true, providerMessageId: result.providerMessageId, provider: process.env.OUTREACH_EMAIL_PROVIDER || process.env.OUTREACH_PROVIDER || 'mock', recipientStatusChanged: false });
   } catch (error) {
