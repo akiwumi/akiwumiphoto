@@ -51,7 +51,7 @@ export default function FinalPreview({ initialContacts, resendActive }: { initia
     try {
       for (const contact of selected) {
         const rendered = renderMessage({ html: draft.html, text: draft.text, subject: draft.subject, data: mergeData(contact) });
-        const response = await fetch('/api/admin/outreach/campaigns/local/send-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ campaignId, contactId: contact.id, to: contact.email, from: 'info@akiwumiphoto.com', replyTo: 'info@akiwumiphoto.com', subject: rendered.subject, html: rendered.html, text: rendered.text }) });
+        const response = await fetch('/api/admin/outreach/campaigns/local/send-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ campaignId, contactId: contact.id, name: contact.name, studio: contact.studio, country: contact.country, website: contact.website, to: contact.email, from: 'info@akiwumiphoto.com', replyTo: 'info@akiwumiphoto.com', subject: rendered.subject, html: rendered.html, text: rendered.text }) });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? 'Unable to record send');
         const record = { contactId: contact.id, email: contact.email, sentAt: new Date().toISOString(), providerMessageId: result.providerMessageId, subject: rendered.subject, html: rendered.html, text: rendered.text };
