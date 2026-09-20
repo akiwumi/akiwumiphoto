@@ -1,4 +1,7 @@
 import type { OutreachEmailProvider } from './types';
 import { MockOutreachProvider } from './mock';
-export function getOutreachProvider(): OutreachEmailProvider { return new MockOutreachProvider(); }
-
+import { createResendProvider } from './resend';
+export function getOutreachProvider(): OutreachEmailProvider {
+  const provider = process.env.OUTREACH_EMAIL_PROVIDER || process.env.OUTREACH_PROVIDER;
+  return provider === 'resend' ? createResendProvider() : new MockOutreachProvider();
+}
