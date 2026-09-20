@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { OutreachEmailProvider, NormalisedDeliveryEvent } from './types';
 import type { DeliveryStatus } from '@/types/outreach';
 
@@ -24,9 +25,25 @@ export function createResendProvider(apiKey = process.env.OUTREACH_PROVIDER_API_
     },
     async verifyWebhook(request) {
       const secret = process.env.OUTREACH_WEBHOOK_SECRET;
+      const id = request.headers.get('svix-id');
+      const timestamp = request.headers.get('svix-timestamp');
       const signature = request.headers.get('svix-signature');
-      if (!secret || !signature || !signature.includes(secret)) throw new Error('Invalid Resend webhook signature.');
-      return request.json();
+      if (!secret || !id || !timestamp || !signature) throw new Error('Invalid Resend webhook signature.');
+      const timestampSeconds = Number(timestamp);
+      if (!Number.isFinite(timestampSeconds) || Math.abs(Date.now() / 1000 - timestampSeconds) > 300) throw new Error('Expired Resend webhook signature.');
+      const body = await request.text();
+      const encodedSecret = secret.replace(/^whsec_/, '');
+      const secretBytes = Buffer.from(encodedSecret, 'base64');
+      const signedContent = `${id}.${timestamp}.${body}`;
+      const expected = crypto.createHmac('sha256', secretBytes).update(signedContent).digest('base64');
+      const valid = signature.split(' ').some((value) => {
+        const received = value.replace(/^v1,/, '');
+        const expectedBytes = Buffer.from(expected);
+        const receivedBytes = Buffer.from(received);
+        return expectedBytes.length === receivedBytes.length && crypto.timingSafeEqual(expectedBytes, receivedBytes);
+      });
+      if (!valid) throw new Error('Invalid Resend webhook signature.');
+      return JSON.parse(body);
     },
     normaliseWebhookEvent(payload) {
       const value = payload as { type?: string; id?: string; data?: { email_id?: string; created_at?: string } };
