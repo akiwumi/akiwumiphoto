@@ -9,8 +9,8 @@ export async function POST(request: Request) {
     if (!body.to || !body.subject || !body.html || !body.text) return NextResponse.json({ error: 'Recipient and rendered message are required.' }, { status: 422 });
     const result = await getOutreachProvider().send({
       to: body.to,
-      from: body.from || process.env.OUTREACH_FROM_EMAIL || 'hello@akiwumiphoto.com',
-      replyTo: body.replyTo || process.env.OUTREACH_REPLY_TO_EMAIL || 'hello@akiwumiphoto.com',
+      from: body.from || process.env.OUTREACH_FROM_EMAIL || 'info@akiwumiphoto.com',
+      replyTo: body.replyTo || process.env.OUTREACH_REPLY_TO_EMAIL || 'info@akiwumiphoto.com',
       subject: body.subject,
       html: body.html,
       text: body.text,
