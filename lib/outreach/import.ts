@@ -1,8 +1,34 @@
 import * as XLSX from 'xlsx';
 import { cleanCell, isValidEmail, normalizeEmail } from './domain';
-export const CANONICAL_FIELDS = ['email','first_name','last_name','company_name','city','country','website','source','source_url','notes'] as const;
+export const CANONICAL_FIELDS = ['email','display_name','role','first_name','last_name','company_name','city','country','website','source','source_url','notes'] as const;
 export type CanonicalField = typeof CANONICAL_FIELDS[number];
 export type ImportRow = Record<CanonicalField, string | null> & { rowNumber: number; valid: boolean; issues: string[]; duplicate: boolean };
+const COLUMN_ALIASES: Record<CanonicalField, string[]> = {
+  email: ['email', 'public professional email', 'primary email', 'designer email', 'studio email'],
+  display_name: ['name', 'contact name', 'contact name / routing', 'designer name', 'full name'],
+  role: ['role', 'title', 'job title'],
+  first_name: ['first name', 'first_name'],
+  last_name: ['last name', 'last_name'],
+  company_name: ['studio', 'company', 'company name', 'studio / company'],
+  city: ['city', 'location'],
+  country: ['country'],
+  website: ['website', 'web site', 'url'],
+  source: ['source', 'source file'],
+  source_url: ['contact/source page', 'contact page', 'source url', 'source_url'],
+  notes: ['notes', 'verification note', 'fit / capability', 'outreach angle'],
+};
+
+function normalizedColumn(value: string): string { return value.toLowerCase().replace(/[\s_/-]+/g, ' ').trim(); }
+
+export function autoMapColumns(columns: string[]): Partial<Record<string, CanonicalField>> {
+  const mapping: Partial<Record<string, CanonicalField>> = {};
+  for (const column of columns) {
+    const normalized = normalizedColumn(column);
+    const match = (Object.entries(COLUMN_ALIASES) as [CanonicalField, string[]][]).find(([, aliases]) => aliases.some((alias) => normalizedColumn(alias) === normalized));
+    if (match) mapping[column] = match[0];
+  }
+  return mapping;
+}
 export function parseWorkbook(buffer: ArrayBuffer, mapping: Partial<Record<string, CanonicalField>>): { columns: string[]; rows: ImportRow[]; summary: { rowCount: number; validCount: number; invalidCount: number; duplicateCount: number } } {
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: false, sheetRows: 1001 }); const sheet = workbook.Sheets[workbook.SheetNames[0]];
   if (!sheet) throw new Error('Workbook has no worksheet'); const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null, raw: false, blankrows: false });
