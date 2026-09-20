@@ -42,7 +42,8 @@ export default function CampaignComposer({ contacts: initialContacts, mailerHtml
   }, [initialContacts]);
 
   function saveDraft() {
-    const draft: OutreachDraft = { selectedIds, subject, html: htmlCopy, text: textCopy };
+    const current = JSON.parse(window.localStorage.getItem(OUTREACH_DRAFT_STORAGE_KEY) ?? 'null') as Partial<OutreachDraft> | null;
+    const draft: OutreachDraft = { campaignId: current?.campaignId ?? crypto.randomUUID(), selectedIds, subject, html: htmlCopy, text: textCopy };
     window.localStorage.setItem(OUTREACH_DRAFT_STORAGE_KEY, JSON.stringify(draft));
     setSaved('Draft saved locally. Continue to the final preview when ready.');
   }

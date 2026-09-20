@@ -42,7 +42,7 @@ export default function CampaignAudience({ contacts: initialContacts, mailerHtml
 
   function saveAndReview() {
     const current = JSON.parse(window.localStorage.getItem(OUTREACH_DRAFT_STORAGE_KEY) ?? 'null') as Partial<OutreachDraft> | null;
-    const draft: OutreachDraft = { selectedIds: selected.map((entry) => entry.id), subject: current?.subject ?? INTERIOR_DESIGNER_MAILER_SUBJECT, html: current?.html ?? mailerHtml, text: current?.text ?? INTERIOR_DESIGNER_MAILER_TEXT };
+    const draft: OutreachDraft = { campaignId: current?.campaignId ?? crypto.randomUUID(), selectedIds: selected.map((entry) => entry.id), subject: current?.subject ?? INTERIOR_DESIGNER_MAILER_SUBJECT, html: current?.html ?? mailerHtml, text: current?.text ?? INTERIOR_DESIGNER_MAILER_TEXT };
     window.localStorage.setItem(OUTREACH_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   }
 

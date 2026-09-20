@@ -8,6 +8,7 @@ const links = [
   ['Overview', '/admin/outreach'],
   ['Address book', '/admin/outreach/contacts'],
   ['Sent', '/admin/outreach/sent'],
+  ['Delivery report', '/admin/outreach/report'],
   ['Review email', '/admin/outreach/campaigns/new/review'],
   ['Import', '/admin/outreach/import'],
   ['Campaigns', '/admin/outreach/campaigns'],
