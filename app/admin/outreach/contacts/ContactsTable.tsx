@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import type { AddressBookContact } from '@/lib/outreach/address-book';
+import { applyContactOverride, CONTACT_OVERRIDES_STORAGE_KEY, contactOverrideMap } from '@/lib/outreach/contact-details';
 import { ERASED_CONTACTS_STORAGE_KEY, MANUAL_CONTACTS_STORAGE_KEY, SENT_CONTACTS_STORAGE_KEY, sentContactMap, type SentContactRecord } from '@/lib/outreach/sent-contacts';
 import styles from '../Outreach.module.css';
 
@@ -18,10 +19,12 @@ export default function ContactsTable({ contacts }: { contacts: AddressBookConta
       try {
         const manual = JSON.parse(window.localStorage.getItem(MANUAL_CONTACTS_STORAGE_KEY) ?? '[]');
         const allContacts = Array.isArray(manual) ? [...contacts, ...manual] : contacts;
+        const overrides = contactOverrideMap(JSON.parse(window.localStorage.getItem(CONTACT_OVERRIDES_STORAGE_KEY) ?? '[]'));
+        const editedContacts = allContacts.map((contact) => applyContactOverride(contact, overrides[contact.id]));
         const parsed = JSON.parse(window.localStorage.getItem(SENT_CONTACTS_STORAGE_KEY) ?? '[]');
         if (Array.isArray(parsed)) setSent(sentContactMap(parsed));
         const erased = JSON.parse(window.localStorage.getItem(ERASED_CONTACTS_STORAGE_KEY) ?? '[]');
-        if (Array.isArray(erased)) setVisibleContacts(allContacts.filter((contact) => !erased.includes(contact.id)));
+        if (Array.isArray(erased)) setVisibleContacts(editedContacts.filter((contact) => !erased.includes(contact.id)));
       } catch {
         setSent({});
       }
