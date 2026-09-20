@@ -1,3 +1,12 @@
 const { test } = require('node:test'); const assert = require('node:assert/strict'); const { load } = require('./test-loader.cjs');
 test('mock provider returns deterministic message id and stores multipart content', async () => { const { MockOutreachProvider, mockSentMessages } = load('lib/outreach/providers/mock.ts'); const provider = new MockOutreachProvider(); const result = await provider.send({ to: 'a@example.com', from: 'from@example.com', replyTo: 'reply@example.com', subject: 'Hi', html: '<p>Hi</p>', text: 'Hi' }); assert.match(result.providerMessageId, /^mock-/); assert.equal(mockSentMessages.at(-1).text, 'Hi'); });
-
+test('Resend provider reads the authoritative delivery event', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({ id: 'msg-1', last_event: 'delivered' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  try {
+    const { createResendProvider } = load('lib/outreach/providers/resend.ts');
+    assert.equal(await createResendProvider('re_test').getStatus?.('msg-1'), 'delivered');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

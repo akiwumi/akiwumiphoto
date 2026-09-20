@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { OutreachEmailProvider, NormalisedDeliveryEvent } from './types';
+import type { OutreachEmailProvider } from './types';
 import type { DeliveryStatus } from '@/types/outreach';
 
 export function createResendProvider(apiKey = process.env.OUTREACH_PROVIDER_API_KEY || process.env.RESEND_API_KEY): OutreachEmailProvider {
@@ -22,6 +22,13 @@ export function createResendProvider(apiKey = process.env.OUTREACH_PROVIDER_API_
       const body = await response.json().catch(() => ({})) as { id?: string; message?: string };
       if (!response.ok || !body.id) throw new Error(body.message || `Resend returned HTTP ${response.status}.`);
       return { providerMessageId: body.id };
+    },
+    async getStatus(providerMessageId) {
+      const response = await fetch(`https://api.resend.com/emails/${encodeURIComponent(providerMessageId)}`, { headers: { Authorization: `Bearer ${apiKey}` } });
+      if (!response.ok) return null;
+      const body = await response.json().catch(() => ({})) as { last_event?: string };
+      const status = ({ sent: 'submitted', delivered: 'delivered', opened: 'opened', clicked: 'clicked', bounced: 'bounced', failed: 'failed' } as Record<string, DeliveryStatus>)[body.last_event || ''];
+      return status || null;
     },
     async verifyWebhook(request) {
       const secret = process.env.OUTREACH_WEBHOOK_SECRET;
