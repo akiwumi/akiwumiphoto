@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { renderMessage, imageWarnings } from '@/lib/outreach/render';
 import { INTERIOR_DESIGNER_MAILER_SUBJECT, INTERIOR_DESIGNER_MAILER_TEXT } from '@/lib/outreach/mailer-template';
 import type { AddressBookContact } from '@/lib/outreach/address-book';
-import { ERASED_CONTACTS_STORAGE_KEY, SENT_CONTACTS_STORAGE_KEY, sentContactMap, type SentContactRecord } from '@/lib/outreach/sent-contacts';
+import { ERASED_CONTACTS_STORAGE_KEY, MANUAL_CONTACTS_STORAGE_KEY, SENT_CONTACTS_STORAGE_KEY, sentContactMap, type SentContactRecord } from '@/lib/outreach/sent-contacts';
 import styles from '../../Outreach.module.css';
 
 function firstName(name: string): string {
@@ -36,10 +36,12 @@ export default function CampaignComposer({ contacts: initialContacts, mailerHtml
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
+        const manual = JSON.parse(window.localStorage.getItem(MANUAL_CONTACTS_STORAGE_KEY) ?? '[]');
+        const allContacts = Array.isArray(manual) ? [...initialContacts, ...manual] : initialContacts;
         const parsed = JSON.parse(window.localStorage.getItem(SENT_CONTACTS_STORAGE_KEY) ?? '[]');
         if (Array.isArray(parsed)) setSent(sentContactMap(parsed));
         const erased = JSON.parse(window.localStorage.getItem(ERASED_CONTACTS_STORAGE_KEY) ?? '[]');
-        if (Array.isArray(erased)) setContacts(initialContacts.filter((entry) => !erased.includes(entry.id)));
+        if (Array.isArray(erased)) setContacts(allContacts.filter((entry) => !erased.includes(entry.id)));
       } catch { setSent({}); }
     }, 0);
     return () => window.clearTimeout(timer);
