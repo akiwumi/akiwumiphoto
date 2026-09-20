@@ -270,3 +270,191 @@ Before sending a real batch:
 ## Important current limitation
 
 Do not switch the UI from “local mock provider” to a real provider until the provider adapter, DNS authentication, permanent image URLs, unsubscribe handling, webhook verification, and durable contact storage are complete. Otherwise the app may report a successful send while images fail, duplicates occur, or bounces and unsubscribes are not respected.
+
+## Step-by-step implementation checklist
+
+This is the exact sequence for reusing the existing Resend setup.
+
+### Step 1 — Confirm the existing Resend secret
+
+Open the production environment settings for the site and confirm that this already exists:
+
+```env
+RESEND_API_KEY=re_xxxxxxxxx
+```
+
+Do not create a second key unless the existing key does not have permission to send email.
+
+Keep the key server-only. It must not be exposed through a `NEXT_PUBLIC_` variable or sent to the browser.
+
+### Step 2 — Confirm the verified sender
+
+Confirm that Resend has already verified `akiwumiphoto.com` and that the existing site can send from:
+
+```text
+info@akiwumiphoto.com
+```
+
+The outreach sender should use the same verified domain:
+
+```env
+OUTREACH_FROM_EMAIL=Akiwumi Photo <info@akiwumiphoto.com>
+OUTREACH_REPLY_TO_EMAIL=info@akiwumiphoto.com
+```
+
+If the existing site already has the domain verified and authenticated, no new SPF, DKIM, or DMARC setup is required. Reuse the existing DNS authentication.
+
+### Step 3 — Add outreach-specific environment values
+
+Add only the outreach-specific settings below to the same production environment:
+
+```env
+OUTREACH_PROVIDER=resend
+OUTREACH_FROM_EMAIL=Akiwumi Photo <info@akiwumiphoto.com>
+OUTREACH_REPLY_TO_EMAIL=info@akiwumiphoto.com
+SITE_URL=https://www.akiwumiphoto.com
+OUTREACH_WEBHOOK_SECRET=whsec_xxxxxxxxx
+```
+
+`RESEND_API_KEY` remains the existing shared Resend secret.
+
+### Step 4 — Add a Resend provider adapter
+
+Create a server-side provider implementation for the outreach interface in:
+
+```text
+lib/outreach/providers/resend.ts
+```
+
+It should POST to:
+
+```text
+https://api.resend.com/emails
+```
+
+with:
+
+```json
+{
+  "from": "Akiwumi Photo <info@akiwumiphoto.com>",
+  "to": ["recipient@example.com"],
+  "reply_to": "info@akiwumiphoto.com",
+  "subject": "Personalized subject",
+  "html": "<html>...</html>",
+  "text": "Plain-text fallback"
+}
+```
+
+Return Resend's message ID as the outreach provider message ID.
+
+Then update:
+
+```text
+lib/outreach/providers/index.ts
+```
+
+so production uses Resend and local demo mode continues using the mock provider.
+
+### Step 5 — Keep the existing site email flows unchanged
+
+Do not modify these existing integrations while adding outreach:
+
+- `lib/order-email.ts`
+- `lib/registration-email.ts`
+- Existing account verification email logic
+- Existing Resend API calls
+
+The outreach adapter should be a separate provider implementation. It should reuse the existing `RESEND_API_KEY`, but it should not replace or refactor the existing order or registration email code.
+
+### Step 6 — Replace expiring gallery image URLs
+
+The current outreach preview signs Supabase gallery URLs for local viewing. Those URLs expire.
+
+Before production sending, either:
+
+1. Upload the two mailer images to permanent public paths, or
+2. Send them as inline Content-ID attachments.
+
+Preferred public URL form:
+
+```html
+<img src="https://www.akiwumiphoto.com/images/running-for-president.jpg" alt="Running For President — photograph by Eugene Akiwumi">
+<img src="https://www.akiwumiphoto.com/images/the-political-clown.jpg" alt="The Political Clown — documentary photograph by Eugene Akiwumi">
+```
+
+Do not send the current expiring signed Supabase URLs in a large production batch.
+
+### Step 7 — Add unsubscribe support before real outreach
+
+Add an unsubscribe URL to every rendered message and add these headers:
+
+```text
+List-Unsubscribe: <https://www.akiwumiphoto.com/outreach/unsubscribe?token=RECIPIENT_TOKEN>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+```
+
+Store the unsubscribe state and prevent future sends to that address.
+
+### Step 8 — Add delivery webhooks
+
+In Resend, create a webhook pointing to:
+
+```text
+https://www.akiwumiphoto.com/api/admin/outreach/webhooks/resend
+```
+
+Set the webhook secret in the production environment:
+
+```env
+OUTREACH_WEBHOOK_SECRET=whsec_xxxxxxxxx
+```
+
+Verify webhook signatures and store sent, delivered, bounced, complained, failed, and unsubscribed events.
+
+### Step 9 — Move outreach state out of browser storage
+
+The current local build stores contacts, notes, drafts, and sent history in browser local storage. That is suitable for the local demo only.
+
+Before production use, move these records to the application database:
+
+- Contacts
+- Contact edits and notes
+- Campaign drafts
+- Sent recipients
+- Provider message IDs
+- Delivery events
+- Suppression and unsubscribe status
+
+This prevents duplicate sends when using another browser or device.
+
+### Step 10 — Test safely
+
+Test in this order:
+
+1. Keep the mock provider enabled while testing the workflow.
+2. Configure Resend in a staging environment.
+3. Send one email to your own Gmail account.
+4. Confirm the HTML layout, plain-text fallback, footer, links, and both images.
+5. Test Outlook and Apple Mail.
+6. Test unsubscribe behavior.
+7. Test a bounced address.
+8. Confirm delivery webhooks update the Sent page.
+9. Send a small real batch.
+10. Only then enable larger batches.
+
+## Will this affect the existing email setup?
+
+No, if implemented as a separate outreach provider adapter.
+
+The existing site emails can continue using the same `RESEND_API_KEY` and existing Resend calls. The outreach code should add a separate provider selection path:
+
+```text
+Local demo       → MockOutreachProvider
+Production       → ResendOutreachProvider
+Order emails     → Existing order-email.ts flow
+Registration     → Existing registration-email.ts flow
+```
+
+The shared risk is the Resend account and verified domain: outreach will use the same sender reputation and sending limits. A bad outreach list, high bounce rate, spam complaints, or missing unsubscribe handling can affect the domain's overall deliverability, including existing transactional email.
+
+For that reason, test with a small approved audience first and keep transactional and outreach sending logically separated wherever the provider supports separate streams, tags, or sending domains.
