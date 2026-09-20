@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!body.to || !body.subject || !body.html || !body.text) return NextResponse.json({ error: 'Recipient and rendered message are required.' }, { status: 422 });
     const result = await getOutreachProvider().send({
       to: body.to,
-      from: 'Akiwumi Photo <info@akiwumiphoto.com>',
+      from: 'Eugene Akiwumi <info@akiwumiphoto.com>',
       replyTo: 'info@akiwumiphoto.com',
       subject: body.subject,
       html: body.html,
