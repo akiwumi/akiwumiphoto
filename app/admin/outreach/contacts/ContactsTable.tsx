@@ -11,6 +11,7 @@ export default function ContactsTable({ contacts }: { contacts: AddressBookConta
   const [visibleContacts, setVisibleContacts] = useState(contacts);
   const [form, setForm] = useState({ name: '', studio: '', email: '', country: 'Sweden' as AddressBookContact['country'], website: '', role: '' });
   const [formMessage, setFormMessage] = useState('');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -56,18 +57,21 @@ export default function ContactsTable({ contacts }: { contacts: AddressBookConta
     setVisibleContacts((current) => current.filter((entry) => entry.id !== contact.id));
   }
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredContacts = visibleContacts.filter((contact) => !normalizedQuery || [contact.name, contact.studio, contact.email, contact.country].some((value) => value.toLowerCase().includes(normalizedQuery)));
+
   return <>
     <div className={styles.manualEntry}><div><h3 className={styles.panelTitle}>Add contact manually</h3><p className={styles.panelMeta}>Add one recipient without importing another spreadsheet.</p></div><form className={styles.manualForm} onSubmit={addContact}><input className={styles.input} placeholder="Name" aria-label="Contact name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /><input className={styles.input} placeholder="Studio / company" aria-label="Studio or company" value={form.studio} onChange={(event) => setForm({ ...form, studio: event.target.value })} /><input className={styles.input} type="email" placeholder="Email address" aria-label="Email address" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /><select className={styles.select} aria-label="Country" value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value as AddressBookContact['country'] })}><option>Sweden</option><option>Denmark</option><option>Norway</option></select><input className={styles.input} placeholder="Role (optional)" aria-label="Role" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} /><input className={styles.input} type="url" placeholder="Website (optional)" aria-label="Website" value={form.website} onChange={(event) => setForm({ ...form, website: event.target.value })} /><button className={styles.button} type="submit">Add contact →</button></form>{formMessage && <p className={styles.success}>{formMessage}</p>}</div>
-    <div className={styles.bulkToolbar}><span className={styles.bulkCount}>{visibleContacts.length} visible · sent history protects against duplicates</span><button type="button" className={styles.smallButtonDanger} onClick={resetSent}>Reset sent history</button></div>
+    <div className={styles.bulkToolbar}><input className={styles.input} placeholder="Search name, studio, email, or country" aria-label="Search address book" value={query} onChange={(event) => setQuery(event.target.value)} /><span className={styles.bulkCount}>{filteredContacts.length} of {visibleContacts.length} visible · sent history protects against duplicates</span><button type="button" className={styles.smallButtonDanger} onClick={resetSent}>Reset sent history</button></div>
     <div className={styles.tableScroll}>
     <table className={styles.table}><thead><tr><th>Name / studio</th><th>Primary email</th><th>Country</th><th>Source</th><th>Status</th></tr></thead><tbody>
-      {visibleContacts.map((contact) => {
+      {filteredContacts.map((contact) => {
         const record = sent[contact.id];
         return <tr key={contact.id} className={record ? styles.sentRow : undefined}>
           <td><Link className={styles.contactLink} href={`/admin/outreach/contacts/${contact.id}`}><strong>{contact.name}</strong><br/><span>{contact.studio} · {contact.role}</span></Link></td>
           <td><a className={`${styles.link} ${record ? styles.sentEmail : ''}`} href={`mailto:${contact.email}`}>{contact.email}</a></td>
           <td>{contact.country}</td>
-          <td><a className={styles.link} href={contact.website} target="_blank" rel="noreferrer">Website ↗</a></td>
+          <td>{contact.source === 'manual entry' ? <span className={`${styles.chip} ${styles.chipGood}`}>manual entry</span> : <a className={styles.link} href={contact.website} target="_blank" rel="noreferrer">Website ↗</a>}</td>
           <td><div className={styles.rowActions}>{record ? <><span className={`${styles.chip} ${styles.chipGood}`}>sent</span><small className={styles.sentAt}> {new Date(record.sentAt).toLocaleDateString()}</small></> : <span className={`${styles.chip} ${styles.chipWarn}`}>available</span>}<button type="button" className={styles.smallButtonDanger} onClick={() => eraseContact(contact)}>Erase</button></div></td>
         </tr>;
       })}
