@@ -9,3 +9,15 @@ test('preserves imported country labels and names missing countries Unknown', ()
   assert.equal(addressBookCountry(null), 'Unknown');
   assert.equal(addressBookCountry('   '), 'Unknown');
 });
+
+test('filters address-book contacts by country together with text search', () => {
+  const { filterAddressBookContacts } = load('lib/outreach/address-book.ts');
+  const contacts = [
+    { id: '1', name: 'Ava', studio: 'North Studio', email: 'ava@example.com', country: 'Sweden' },
+    { id: '2', name: 'Bea', studio: 'Berlin Rooms', email: 'bea@example.com', country: 'Germany' },
+    { id: '3', name: 'Cam', studio: 'North Studio', email: 'cam@example.com', country: 'Germany' },
+  ];
+  assert.deepEqual(filterAddressBookContacts(contacts, '', 'Germany').map((contact) => contact.id), ['2', '3']);
+  assert.deepEqual(filterAddressBookContacts(contacts, 'north', 'Germany').map((contact) => contact.id), ['3']);
+  assert.deepEqual(filterAddressBookContacts(contacts, 'ava', '').map((contact) => contact.id), ['1']);
+});

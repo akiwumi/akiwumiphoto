@@ -21,6 +21,19 @@ export function addressBookCountry(value: string | null | undefined): string {
   return value?.trim() || 'Unknown';
 }
 
+export function filterAddressBookContacts<T extends Pick<AddressBookContact, 'name' | 'studio' | 'email' | 'country'>>(
+  contacts: T[],
+  query: string,
+  country: string,
+): T[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  return contacts.filter((contact) => {
+    const matchesSearch = !normalizedQuery || [contact.name, contact.studio, contact.email, contact.country]
+      .some((value) => value.toLowerCase().includes(normalizedQuery));
+    return matchesSearch && (!country || contact.country === country);
+  });
+}
+
 const SOURCE = 'scandinavian_interior_designers_contacts.xlsx';
 const rows = [
   ['se-01', 'Sweden', 'Note Design Studio', 'Johannes Karlström', 'Founding Partner / Interior Architect', 'johannes@notedesignstudio.se', 'project@notedesignstudio.se', 'https://note-editions.notedesignstudio.se/studio'],
