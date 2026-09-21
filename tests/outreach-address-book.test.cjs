@@ -1,2 +1,11 @@
 const { test } = require('node:test'); const assert = require('node:assert/strict'); const { load } = require('./test-loader.cjs');
 test('address book contains the 16 workbook contacts with unique primary emails', () => { const { ADDRESS_BOOK, ADDRESS_BOOK_SOURCE } = load('lib/outreach/address-book.ts'); assert.equal(ADDRESS_BOOK.length, 16); assert.equal(new Set(ADDRESS_BOOK.map((contact) => contact.email)).size, 16); assert.equal(new Set(ADDRESS_BOOK.map((contact) => contact.country)).size, 3); assert.equal(ADDRESS_BOOK.every((contact) => contact.approvedForOutreach === false && contact.suppressed === false), true); assert.equal(ADDRESS_BOOK_SOURCE, 'scandinavian_interior_designers_contacts.xlsx'); });
+
+test('preserves imported country labels and names missing countries Unknown', () => {
+  const { addressBookCountry } = load('lib/outreach/address-book.ts');
+  assert.equal(addressBookCountry('Germany'), 'Germany');
+  assert.equal(addressBookCountry('United Kingdom'), 'United Kingdom');
+  assert.equal(addressBookCountry('  France  '), 'France');
+  assert.equal(addressBookCountry(null), 'Unknown');
+  assert.equal(addressBookCountry('   '), 'Unknown');
+});

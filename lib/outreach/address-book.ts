@@ -2,7 +2,7 @@ import { normalizeEmail } from './domain';
 
 export interface AddressBookContact {
   id: string;
-  country: 'Sweden' | 'Denmark' | 'Norway';
+  country: string;
   studio: string;
   name: string;
   role: string;
@@ -15,6 +15,10 @@ export interface AddressBookContact {
   outreachStatus: 'not contacted';
   replied: boolean;
   suppressed: boolean;
+}
+
+export function addressBookCountry(value: string | null | undefined): string {
+  return value?.trim() || 'Unknown';
 }
 
 const SOURCE = 'scandinavian_interior_designers_contacts.xlsx';

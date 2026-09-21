@@ -1,9 +1,5 @@
 import { createServerClient } from '@/lib/supabase-server';
-import { ADDRESS_BOOK, type AddressBookContact } from './address-book';
-
-function countryFor(value: string | null): AddressBookContact['country'] {
-  return value === 'Denmark' || value === 'Norway' ? value : 'Sweden';
-}
+import { ADDRESS_BOOK, addressBookCountry, type AddressBookContact } from './address-book';
 
 export async function getAddressBook(): Promise<AddressBookContact[]> {
   try {
@@ -12,7 +8,7 @@ export async function getAddressBook(): Promise<AddressBookContact[]> {
     if (result.error || !result.data?.length) return ADDRESS_BOOK;
     return result.data.map((row) => ({
       id: row.id,
-      country: countryFor(row.country),
+      country: addressBookCountry(row.country),
       studio: row.company_name || 'Unassigned studio',
       name: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.email,
       role: row.notes?.match(/Role:\s*([^·]+)/i)?.[1]?.trim() || 'Imported contact',
