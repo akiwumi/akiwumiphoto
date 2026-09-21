@@ -21,6 +21,13 @@ export function addressBookCountry(value: string | null | undefined): string {
   return value?.trim() || 'Unknown';
 }
 
+export function campaignAudienceForCountry<T extends Pick<AddressBookContact, 'country'>>(
+  recipients: T[],
+  country: string,
+): T[] {
+  return country ? recipients.filter((recipient) => recipient.country === country) : recipients;
+}
+
 export function filterAddressBookContacts<T extends Pick<AddressBookContact, 'name' | 'studio' | 'email' | 'country'>>(
   contacts: T[],
   query: string,

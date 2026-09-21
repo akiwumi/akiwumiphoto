@@ -21,3 +21,15 @@ test('filters address-book contacts by country together with text search', () =>
   assert.deepEqual(filterAddressBookContacts(contacts, 'north', 'Germany').map((contact) => contact.id), ['3']);
   assert.deepEqual(filterAddressBookContacts(contacts, 'ava', '').map((contact) => contact.id), ['1']);
 });
+
+test('filters campaign audience by country and keeps all recipients with no country filter', () => {
+  const { campaignAudienceForCountry } = load('lib/outreach/address-book.ts');
+  const recipients = [
+    { id: '1', country: 'Sweden' },
+    { id: '2', country: 'Germany' },
+    { id: '3', country: 'Germany' },
+  ];
+
+  assert.deepEqual(campaignAudienceForCountry(recipients, 'Germany').map((recipient) => recipient.id), ['2', '3']);
+  assert.deepEqual(campaignAudienceForCountry(recipients, '').map((recipient) => recipient.id), ['1', '2', '3']);
+});
