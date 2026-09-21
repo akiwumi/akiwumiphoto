@@ -174,6 +174,8 @@ Store and process at least these events:
 
 - `email.sent`
 - `email.delivered`
+- `email.opened`
+- `email.clicked`
 - `email.delivery_delayed`
 - `email.bounced`
 - `email.complained`
@@ -188,6 +190,11 @@ OUTREACH_WEBHOOK_SECRET=whsec_xxxxxxxxx
 ```
 
 Verify webhook signatures before accepting events. Never trust an unsigned webhook request.
+
+In the Resend webhook form, explicitly select every event above. `email.opened` and
+`email.clicked` are not inferred from delivery events: Resend only posts them when
+they are selected for this endpoint. Enable open and click tracking for the sending
+domain as well; otherwise no open or click event can be generated.
 
 The existing webhook route needs provider-specific signature verification and durable database persistence before it can be used in production.
 
@@ -409,7 +416,10 @@ Set the webhook secret in the production environment:
 OUTREACH_WEBHOOK_SECRET=whsec_xxxxxxxxx
 ```
 
-Verify webhook signatures and store sent, delivered, bounced, complained, failed, and unsubscribed events.
+Select and store `email.sent`, `email.delivered`, `email.opened`, `email.clicked`,
+`email.bounced`, and `email.failed` events. Also select complaint, suppression, and
+unsubscribe events where applicable. Enable Resend domain open and click tracking
+before testing; delivery alone cannot produce engagement events.
 
 ### Step 9 — Move outreach state out of browser storage
 
@@ -438,9 +448,11 @@ Test in this order:
 5. Test Outlook and Apple Mail.
 6. Test unsubscribe behavior.
 7. Test a bounced address.
-8. Confirm delivery webhooks update the Sent page.
-9. Send a small real batch.
-10. Only then enable larger batches.
+8. Open the test message and click a link, then confirm the delivery report shows
+   `opened` and `clicked`.
+9. Confirm delivery webhooks update the Sent page.
+10. Send a small real batch.
+11. Only then enable larger batches.
 
 ## Will this affect the existing email setup?
 

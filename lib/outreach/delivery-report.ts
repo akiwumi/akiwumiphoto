@@ -35,7 +35,10 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
       const campaign = Array.isArray(row.outreach_campaigns) ? row.outreach_campaigns[0] : row.outreach_campaigns;
       const events = Array.isArray(row.outreach_events) ? row.outreach_events : [];
       let status = effectiveDeliveryStatus(row.status as DeliveryStatus, events.map((event) => event.event_type as DeliveryStatus));
-      if ((status === 'queued' || status === 'submitted') && row.provider_message_id && provider?.getStatus) {
+      // Delivery is not the final observable state: Resend can report a later
+      // open or click. Keep reconciling non-terminal records so engagement is
+      // visible even if a corresponding webhook arrived late or was missed.
+      if (!['bounced', 'failed', 'unsubscribed'].includes(status) && row.provider_message_id && provider?.getStatus) {
         const providerStatus = await provider.getStatus(row.provider_message_id).catch(() => null);
         if (providerStatus) status = effectiveDeliveryStatus(status, [providerStatus]);
         if (status !== row.status) await client.from('outreach_deliveries').update({ status, updated_at: new Date().toISOString() }).eq('id', row.id);
