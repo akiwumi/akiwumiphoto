@@ -31,7 +31,7 @@ function request(body) {
 test('signup trims and lowercases email and uses the account confirmation redirect', async () => {
   let args;
   const route = load('app/api/account/signup/route.ts', {
-    '@/lib/supabase-server': { createServerClient: async () => ({ auth: { signUp: async (input) => { args = input; return { data: { user: { id: 'u1' } }, error: null }; } } }) },
+    '@/lib/supabase-server': { applySupabaseAuthCookies: () => {}, createServerClient: async () => ({ auth: { signUp: async (input) => { args = input; return { data: { user: { id: 'u1' } }, error: null }; } } }) },
     '@/lib/site-origin': { siteOrigin: () => 'https://example.com' },
   });
   const response = await route.POST(request({ email: '  Ada@Example.COM ', password: 'long-password' }));
@@ -42,7 +42,7 @@ test('signup trims and lowercases email and uses the account confirmation redire
 
 test('signup returns a generic response for an existing account', async () => {
   const route = load('app/api/account/signup/route.ts', {
-    '@/lib/supabase-server': { createServerClient: async () => ({ auth: { signUp: async () => ({ data: {}, error: { message: 'User already registered', status: 422 } }) } }) },
+    '@/lib/supabase-server': { applySupabaseAuthCookies: () => {}, createServerClient: async () => ({ auth: { signUp: async () => ({ data: {}, error: { message: 'User already registered', status: 422 } }) } }) },
     '@/lib/site-origin': { siteOrigin: () => 'https://example.com' },
   });
   const response = await route.POST(request({ email: 'ada@example.com', password: 'long-password' }));
@@ -68,7 +68,7 @@ test('password reset and verification resend use account confirmation links', as
     resend: async (...args) => { calls.push(['resend', ...args]); return { error: null }; },
   };
   const mocks = {
-    '@/lib/supabase-server': { createServerClient: async () => ({ auth }) },
+    '@/lib/supabase-server': { applySupabaseAuthCookies: () => {}, createServerClient: async () => ({ auth }) },
     '@/lib/site-origin': { siteOrigin: () => 'https://example.com' },
   };
   const reset = load('app/api/account/password-reset/route.ts', mocks);
@@ -83,7 +83,7 @@ test('password reset and verification resend use account confirmation links', as
 
 test('account confirmation redirects to account while preserving registration and admin destinations', async () => {
   const route = load('app/auth/confirm/route.ts', {
-    '@/lib/supabase-server': { createServerClient: async () => ({ auth: { verifyOtp: async () => ({ error: null }), exchangeCodeForSession: async () => ({ error: null }) } }) },
+    '@/lib/supabase-server': { applySupabaseAuthCookies: () => {}, createServerClient: async () => ({ auth: { verifyOtp: async () => ({ error: null }), exchangeCodeForSession: async () => ({ error: null }) } }) },
     '@/lib/admin-auth': { PASSWORD_RESET_COOKIE: 'reset-cookie' },
   });
   const confirmRequest = (url, cookieValue) => { const parsed = new URL(url); return { url, nextUrl: { origin: parsed.origin, searchParams: parsed.searchParams }, cookies: { get: (name) => cookieValue && name === 'reset-cookie' ? { value: cookieValue } : undefined } }; };
