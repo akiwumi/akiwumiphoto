@@ -12,7 +12,7 @@ import { restrictToVerticalAxis } from './dnd-modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Camera, Ellipsis, ExternalLink, FileText, Film, Frame, GripVertical, Images, LogOut,
-  BarChart3, Mail, MessageSquareText, Newspaper, PanelLeftClose, PanelLeftOpen, Settings,
+  Mail, MessageSquareText, Newspaper, PanelLeftClose, PanelLeftOpen, Settings,
   Users,
 } from 'lucide-react';
 import styles from './AdminShell.module.css';
@@ -28,7 +28,7 @@ const PORTFOLIO: { id: Section; label: string; icon: typeof Images }[] = [
 ];
 
 interface Props {
-  section: Section | 'registrations' | 'customers' | 'analytics';
+  section: Section | 'registrations' | 'customers';
   onSection: (section: Section) => void;
   galleries: Gallery[];
   selectedGalleryId: string | null;
@@ -110,9 +110,6 @@ export default function AdminSidebar(props: Props) {
         </Link>
         <Link onClick={props.onNavigate} href="/admin/dashboard/customers" className={`${styles.navItem} ${section === 'customers' ? styles.active : ''}`} aria-current={section === 'customers' ? 'page' : undefined} title={collapsed ? 'Registered users' : undefined}>
           <Users size={20} aria-hidden="true" /><span className={styles.navLabel}>Registered users</span>
-        </Link>
-        <Link onClick={props.onNavigate} href="/admin/dashboard/analytics" className={`${styles.navItem} ${section === 'analytics' ? styles.active : ''}`} aria-current={section === 'analytics' ? 'page' : undefined} title={collapsed ? 'Analytics' : undefined}>
-          <BarChart3 size={20} aria-hidden="true" /><span className={styles.navLabel}>Analytics</span>
         </Link>
         <Link onClick={props.onNavigate} href="/admin/outreach" className={styles.navItem} title={collapsed ? 'Outreach' : undefined}>
           <Mail size={20} aria-hidden="true" /><span className={styles.navLabel}>Outreach</span>

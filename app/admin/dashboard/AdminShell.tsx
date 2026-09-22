@@ -89,7 +89,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const activeSection = pathname.startsWith('/admin/dashboard/registrations')
     ? 'registrations'
     : pathname.startsWith('/admin/dashboard/customers') ? 'customers'
-      : pathname.startsWith('/admin/dashboard/analytics') ? 'analytics' : section;
+      : section;
   return (
     <AdminContext.Provider value={{ galleries, modals, section, galleryId, setGalleryId, go, openGallery, modalId, setModalId, pageView, setPageView }}>
     <div className={styles.shell}>

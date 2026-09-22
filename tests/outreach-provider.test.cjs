@@ -10,6 +10,37 @@ test('production webhook setup subscribes to engagement and failure events', () 
 });
 
 test('mock provider returns deterministic message id and stores multipart content', async () => { const { MockOutreachProvider, mockSentMessages } = load('lib/outreach/providers/mock.ts'); const provider = new MockOutreachProvider(); const result = await provider.send({ to: 'a@example.com', from: 'from@example.com', replyTo: 'reply@example.com', subject: 'Hi', html: '<p>Hi</p>', text: 'Hi' }); assert.match(result.providerMessageId, /^mock-/); assert.equal(mockSentMessages.at(-1).text, 'Hi'); });
+test('uses Resend when an API key is configured without an explicit provider name', async () => {
+  const previousProvider = process.env.OUTREACH_PROVIDER;
+  const previousEmailProvider = process.env.OUTREACH_EMAIL_PROVIDER;
+  const previousKey = process.env.RESEND_API_KEY;
+  const originalFetch = global.fetch;
+  delete process.env.OUTREACH_PROVIDER;
+  delete process.env.OUTREACH_EMAIL_PROVIDER;
+  process.env.RESEND_API_KEY = 're_test';
+  global.fetch = async (url) => {
+    assert.equal(String(url), 'https://api.resend.com/emails');
+    return new Response(JSON.stringify({ id: 'resend-message-1' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const { getOutreachProvider } = load('lib/outreach/providers/index.ts');
+    const result = await getOutreachProvider().send({ to: 'a@example.com', from: 'from@example.com', replyTo: 'reply@example.com', subject: 'Hi', html: '<p>Hi</p>', text: 'Hi' });
+    assert.equal(result.providerMessageId, 'resend-message-1');
+  } finally {
+    if (previousProvider === undefined) delete process.env.OUTREACH_PROVIDER; else process.env.OUTREACH_PROVIDER = previousProvider;
+    if (previousEmailProvider === undefined) delete process.env.OUTREACH_EMAIL_PROVIDER; else process.env.OUTREACH_EMAIL_PROVIDER = previousEmailProvider;
+    if (previousKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = previousKey;
+    global.fetch = originalFetch;
+  }
+});
+
+test('does not expose the admin analytics page or navigation link', () => {
+  const root = path.resolve(__dirname, '..');
+  assert.equal(fs.existsSync(path.join(root, 'app/admin/dashboard/analytics/page.tsx')), false);
+  const sidebar = fs.readFileSync(path.join(root, 'app/admin/dashboard/AdminSidebar.tsx'), 'utf8');
+  assert.equal(sidebar.includes('/admin/dashboard/analytics'), false);
+});
+
 test('Resend provider reads the authoritative delivery event', async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => new Response(JSON.stringify({ id: 'msg-1', last_event: 'delivered' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
