@@ -44,29 +44,36 @@ test('uses only trusted client address headers for rate buckets', () => {
   if (priorVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = priorVercel;
 });
 
-test('degraded unknown-client buckets remain independent per visitor', () => {
+test('unknown client addresses are rejected before insertion', async () => {
   const request = new Request('http://localhost');
-  const first = rateLimitKey(request, 'page_view', hashVisitorToken('visitor-one-123456'));
-  const second = rateLimitKey(request, 'page_view', hashVisitorToken('visitor-two-123456'));
-  assert.notEqual(first, second);
   assert.equal(clientAddress(request), 'unknown');
+  const response = await POST(new Request('http://localhost/api/analytics/event', {
+    method: 'POST', headers: { 'x-analytics-consent': 'accepted' },
+    body: JSON.stringify({ consent: true, eventName: 'page_view', path: '/', visitorToken: 'opaque-token-123456' }),
+  }));
+  assert.deepEqual(await response.json(), { ok: true });
 });
 
 test('inserts a normalized event through the service client', async () => {
   let inserted: Record<string, unknown> | null = null;
   const mock = { from: () => ({ insert: async (payload: Record<string, unknown>) => { inserted = payload; return { error: null }; } }) } as unknown as import('@supabase/supabase-js').SupabaseClient;
+  const priorVercel = process.env.VERCEL;
+  process.env.VERCEL = '1';
   setAnalyticsServiceClientForTest(mock);
   try {
     const response = await POST(new Request('http://localhost/api/analytics/event', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted', 'user-agent': 'Mozilla/5.0' },
+      headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted', 'user-agent': 'Mozilla/5.0', 'x-vercel-forwarded-for': '203.0.113.7' },
       body: JSON.stringify({ eventName: 'gallery_view', path: '/gallery/forest', visitorToken: 'opaque-token-123456', metadata: { gallerySlug: 'forest' } }),
     }));
     assert.deepEqual(await response.json(), { ok: true });
     const saved = inserted as unknown as Record<string, unknown>;
     assert.equal(saved.event_name, 'gallery_view');
     assert.equal(saved.path, '/gallery/forest');
-  } finally { setAnalyticsServiceClientForTest(null); }
+  } finally {
+    setAnalyticsServiceClientForTest(null);
+    if (priorVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = priorVercel;
+  }
 });
 
 test('hashing fails closed outside explicit development/test mode', () => {

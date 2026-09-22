@@ -22,11 +22,8 @@ export function clientAddress(request: Request): string {
   return 'unknown';
 }
 
-export function rateLimitKey(request: Request, eventName: string, visitorHash?: string): string {
-  const address = clientAddress(request);
-  return address === 'unknown'
-    ? `visitor:${(visitorHash || 'unknown').slice(0, 16)}:${eventName}`
-    : `${address}:${eventName}`;
+export function rateLimitKey(request: Request, eventName: string): string {
+  return `${clientAddress(request)}:${eventName}`;
 }
 
 function ignored() { return Response.json({ ok: true }); }
@@ -72,11 +69,11 @@ export async function POST(request: Request) {
     referrer: raw.referrer,
   });
   if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || event.path.startsWith('/register/verified')) return ignored();
+  const address = clientAddress(request);
+  if (address === 'unknown') return ignored();
 
   const visitorHash = hashVisitorToken(event.visitorToken);
-  // Local/non-proxy mode has no trustworthy IP. Fall back to the server hash
-  // so one anonymous client cannot starve every other visitor.
-  const rateKey = rateLimitKey(request, event.eventName, visitorHash);
+  const rateKey = rateLimitKey(request, event.eventName);
   const now = Date.now();
   for (const [key, entry] of requests) if (entry.resetAt <= now) requests.delete(key);
   if (requests.size >= MAX_RATE_ENTRIES && !requests.has(rateKey)) return ignored();
