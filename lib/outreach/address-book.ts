@@ -30,6 +30,13 @@ export function campaignAudienceForCountries<T extends { country: unknown }>(
   return recipients.filter((recipient) => selectedCountries.has(addressBookCountry(recipient.country)));
 }
 
+export function campaignAudienceForCountry<T extends { country: unknown }>(
+  recipients: T[],
+  country: string,
+): T[] {
+  return campaignAudienceForCountries(recipients, country ? [country] : []);
+}
+
 export function campaignAudienceSelectionForVisible<T extends { id: string }>(
   currentIds: string[],
   visibleAvailable: T[],
