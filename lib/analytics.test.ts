@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { getAnalyticsDemoSummary } from './analytics-demo.ts';
 import { createDedupeKey, hashVisitorToken, isConsentedAnalyticsVisitor, isValidAnalyticsToken, normalizeAnalyticsEvent, normalizeDeviceClass, normalizePath, normalizeReferrer, sanitizeMetadata } from './analytics.ts';
 
 test('normalizes the privacy-sensitive event fields', () => {
@@ -31,4 +32,18 @@ test('accepts only opaque analytics visitor tokens for attribution', () => {
   assert.equal(isConsentedAnalyticsVisitor('accepted', 'opaque-token-123456'), true);
   assert.equal(isConsentedAnalyticsVisitor('declined', 'opaque-token-123456'), false);
   assert.equal(isConsentedAnalyticsVisitor('accepted', null), false);
+});
+
+test('maps deterministic demo values across default and custom preview ranges', () => {
+  const defaultRange = getAnalyticsDemoSummary({ start: '2026-12-02T00:00:00.000Z', end: '2027-01-01T00:00:00.000Z' });
+  assert.equal(defaultRange.daily.length, 30);
+  assert.equal(defaultRange.daily[0].day, '2026-12-02');
+  assert.equal(defaultRange.daily[0].page_views, 28);
+  assert.equal(defaultRange.daily[29].page_views, 32);
+
+  const customRange = getAnalyticsDemoSummary({ start: '2030-04-10T00:00:00.000Z', end: '2030-04-17T00:00:00.000Z' });
+  assert.equal(customRange.daily.length, 7);
+  assert.equal(customRange.daily[0].day, '2030-04-10');
+  assert.equal(customRange.daily[6].day, '2030-04-16');
+  assert.equal(customRange.daily[6].page_views, 40);
 });
