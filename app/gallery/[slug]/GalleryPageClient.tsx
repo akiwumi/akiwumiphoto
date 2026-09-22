@@ -8,24 +8,9 @@ import Lightbox from '@/components/Lightbox';
 import TileBasketButton from '@/components/TileBasketButton';
 import FavoriteButton from '@/components/FavoriteButton';
 import NotForSaleStamp from '@/components/NotForSaleStamp';
-import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
-import { useCookieConsent } from '@/components/CookieConsentProvider';
 import { defaultSize } from '@/lib/print-availability';
 import { sectionCover, sectionImages } from '@/lib/sub-galleries';
 import type { Gallery, GalleryImage, GallerySection, GallerySectionImage, PrintSize, SoldBySize } from '@/types';
-
-const SESSION_EVENT_PREFIX = 'akiwumi-analytics-gallery-v1:';
-
-function trackGalleryEventOnce(key: string, name: 'gallery_view' | 'image_open', metadata: Record<string, string>) {
-  try {
-    const storageKey = `${SESSION_EVENT_PREFIX}${key}`;
-    if (window.sessionStorage.getItem(storageKey)) return;
-    void trackAnalyticsEvent(name, metadata).then((delivered) => {
-      if (delivered) window.sessionStorage.setItem(storageKey, '1');
-    });
-    return;
-  } catch { /* analytics must never block gallery interaction */ }
-}
 
 interface Props {
   gallery: Gallery;
@@ -45,7 +30,6 @@ interface Props {
  * so a sub-gallery can be shared, and switching doesn't reload the page.
  */
 export default function GalleryPageClient({ gallery, images, sizes, sold, sections, memberships, initialSub }: Props) {
-  const { status: consentStatus } = useCookieConsent();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(initialSub);
 
@@ -57,17 +41,6 @@ export default function GalleryPageClient({ gallery, images, sizes, sold, sectio
   const active = groups.find((group) => group.section.slug === activeSlug) ?? null;
   const grouped = useMemo(() => new Set(groups.flatMap((group) => group.members.map((m) => m.id))), [groups]);
   const tiles = active ? active.members : images.filter((image) => !grouped.has(image.id));
-
-  useEffect(() => {
-    if (consentStatus !== 'accepted') return;
-    trackGalleryEventOnce(`gallery:${gallery.slug}`, 'gallery_view', { galleryId: gallery.id, gallerySlug: gallery.slug });
-  }, [consentStatus, gallery.id, gallery.slug]);
-
-  useEffect(() => {
-    if (consentStatus !== 'accepted' || lightboxIndex === null) return;
-    const image = tiles[lightboxIndex];
-    if (image) trackGalleryEventOnce(`image:${image.id}`, 'image_open', { imageId: image.id });
-  }, [consentStatus, lightboxIndex, tiles]);
 
   // Back and forward move between sub-galleries.
   useEffect(() => {

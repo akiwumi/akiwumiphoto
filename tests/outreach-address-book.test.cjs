@@ -23,8 +23,8 @@ test('filters address-book contacts by country together with text search', () =>
   assert.deepEqual(filterAddressBookContacts(contacts, 'ava', '').map((contact) => contact.id), ['1']);
 });
 
-test('filters campaign audience by multiple countries and keeps all recipients with no country filters', () => {
-  const { campaignAudienceForCountries } = load('lib/outreach/address-book.ts');
+test('filters campaign audience by country and keeps all recipients with no country filter', () => {
+  const { campaignAudienceForCountry } = load('lib/outreach/address-book.ts');
   const recipients = [
     { id: '1', country: 'Sweden' },
     { id: '2', country: 'Germany' },
@@ -32,9 +32,9 @@ test('filters campaign audience by multiple countries and keeps all recipients w
     { id: '4', country: null },
   ];
 
-  assert.deepEqual(campaignAudienceForCountries(recipients, ['Germany', 'Sweden']).map((recipient) => recipient.id), ['1', '2', '3']);
-  assert.deepEqual(campaignAudienceForCountries(recipients, ['Unknown']).map((recipient) => recipient.id), ['4']);
-  assert.deepEqual(campaignAudienceForCountries(recipients, []).map((recipient) => recipient.id), ['1', '2', '3', '4']);
+  assert.deepEqual(campaignAudienceForCountry(recipients, 'Germany').map((recipient) => recipient.id), ['2', '3']);
+  assert.deepEqual(campaignAudienceForCountry(recipients, 'Unknown').map((recipient) => recipient.id), ['4']);
+  assert.deepEqual(campaignAudienceForCountry(recipients, '').map((recipient) => recipient.id), ['1', '2', '3', '4']);
 });
 
 test('campaign audience visible bulk selection only changes the current country view', () => {

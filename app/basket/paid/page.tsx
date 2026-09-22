@@ -13,15 +13,14 @@ export const metadata: Metadata = {
  * Where Stripe sends the buyer after paying. The order is settled by the
  * webhook, not by arriving here, so this page only thanks them.
  */
-export default async function PaidPage({ searchParams }: { searchParams: Promise<{ ref?: string; session_id?: string }> }) {
-  const { ref, session_id: sessionId } = await searchParams;
+export default async function PaidPage({ searchParams }: { searchParams: Promise<{ ref?: string }> }) {
+  const { ref } = await searchParams;
   const reference = typeof ref === 'string' && /^AP-\d{6}-[0-9A-F]{5}$/.test(ref) ? ref : null;
-  const verifiedSessionId = typeof sessionId === 'string' && /^cs_[A-Za-z0-9_]+$/.test(sessionId) ? sessionId : null;
 
   return (
     <main className="full-screen flex flex-col overflow-y-auto">
       <NavBar />
-      <ClearBasket sessionId={verifiedSessionId} />
+      <ClearBasket />
       <div className="basket-content page-enter">
         <div className="basket-thanks" role="status">
           <h1>Thank you</h1>

@@ -95,7 +95,7 @@
 .menuDanger { color: var(--a-danger); }
 
 /* Main -------------------------------------------------------------------- */
-.main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; overflow-x: hidden; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .mobileBar { display: none; }
 .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px 24px; padding: 48px 64px 0; flex-shrink: 0; }
 .title { font-size: clamp(34px, 4vw, 54px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; }
@@ -116,7 +116,7 @@
 .dataTable td { padding: 16px 14px; border-top: 1px solid var(--a-border); vertical-align: top; color: #dedee2; }
 .dataTable th:first-child, .dataTable td:first-child { padding-left: 0; }
 .dataTable th:last-child, .dataTable td:last-child { padding-right: 0; }
-.content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.content { flex: 1; min-height: 0; overflow-y: auto; }
 .contentPad { padding: 32px 64px 64px; }
 
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; margin-bottom: 36px; }
@@ -165,14 +165,14 @@
   .cardTools { top: 16px; right: 16px; }
 }
 @media (max-width: 860px) {
-  .shell { flex-direction: column; height: auto; min-height: 100dvh; overflow: visible; overflow-x: hidden; }
+  .shell { flex-direction: column; height: auto; min-height: 100dvh; overflow: visible; }
   .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 50; width: min(300px, 86vw); transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 0 60px rgba(0, 0, 0, 0.6); }
   .sidebar.mobileOpen { transform: none; }
   .sidebar.collapsed { width: min(300px, 86vw); padding-inline: 20px; }
   .collapseToggle { display: none; }
   .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.5); }
-  .main { overflow: visible; overflow-x: hidden; }
-  .content { overflow: visible; overflow-x: hidden; }
+  .main { overflow: visible; }
+  .content { overflow: visible; }
   .mobileBar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--a-border); position: sticky; top: 0; z-index: 20; background: var(--a-bg); }
   .header { padding: 24px 16px 0; }
   .subtitle { margin-top: 10px; font-size: 16px; }

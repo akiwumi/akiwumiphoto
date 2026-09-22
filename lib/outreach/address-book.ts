@@ -21,13 +21,11 @@ export function addressBookCountry(value: unknown): string {
   return typeof value === 'string' && value.trim() ? value.trim() : 'Unknown';
 }
 
-export function campaignAudienceForCountries<T extends { country: unknown }>(
+export function campaignAudienceForCountry<T extends { country: unknown }>(
   recipients: T[],
-  countries: readonly string[],
+  country: string,
 ): T[] {
-  if (countries.length === 0) return recipients;
-  const selectedCountries = new Set(countries);
-  return recipients.filter((recipient) => selectedCountries.has(addressBookCountry(recipient.country)));
+  return country ? recipients.filter((recipient) => addressBookCountry(recipient.country) === country) : recipients;
 }
 
 export function campaignAudienceSelectionForVisible<T extends { id: string }>(

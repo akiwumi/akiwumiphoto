@@ -10,7 +10,6 @@ import {
 } from '@/lib/basket-store';
 import FavoritesPanel from '@/components/FavoritesPanel';
 import FavoriteButton from '@/components/FavoriteButton';
-import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
 import { countryOptions, isCountryCode } from '@/lib/countries';
 import { formatMoney, formatMinorUnits, toMinorUnits } from '@/lib/currency';
 import { shippingQuote, canPayByCard, SHIPPING_POLICY, DISPATCH_NOTICE } from '@/lib/shipping';
@@ -140,19 +139,16 @@ export default function BasketClient() {
       }
       if (!res.ok || !data?.url) {
         setError(data?.error || 'Payment could not be started. Please try again.');
-        void trackAnalyticsEvent('payment_failure', { failureCategory: 'checkout_start_failed' });
         setSending(false);
         return;
       }
 
       // The basket is kept until payment completes, in case the buyer comes back.
       if (data.sessionId) rememberCheckout(data.sessionId);
-      void trackAnalyticsEvent('checkout_start', { category: 'prints' });
       window.location.assign(data.url);
       return;
     } catch {
       setError('Could not reach the server. Please check your connection and try again.');
-      void trackAnalyticsEvent('payment_failure', { failureCategory: 'checkout_network' });
     }
     setSending(false);
   };
@@ -253,10 +249,7 @@ export default function BasketClient() {
                       {!problem && size?.price_usd != null
                         ? formatMinorUnits(toMinorUnits(size.price_usd * money.rate, money.currency) * line.quantity, money.currency) : '—'}
                     </p>
-                    <button type="button" className="basket-remove" onClick={() => {
-                      removeLine(line.imageId, line.sizeId);
-                      void trackAnalyticsEvent('basket_remove', { imageId: line.imageId, sizeId: line.sizeId });
-                    }}>
+                    <button type="button" className="basket-remove" onClick={() => removeLine(line.imageId, line.sizeId)}>
                       Remove
                     </button>
                   </div>
