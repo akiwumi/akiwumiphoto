@@ -15,6 +15,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     if (process.env.NODE_ENV === 'production') redirect('/admin');
   }
   const params = await searchParams;
-  const result = await getAnalyticsSummary({ start: params.start, end: params.end });
-  return <AnalyticsDashboard initial={result.data} demo={result.demo} />;
+  let result: Awaited<ReturnType<typeof getAnalyticsSummary>> | null = null;
+  try { result = await getAnalyticsSummary({ start: params.start, end: params.end }); } catch { /* rendered below */ }
+  return result
+    ? <AnalyticsDashboard initial={result.data} demo={result.demo} />
+    : <AnalyticsDashboard initial={null} demo={false} error="Analytics are temporarily unavailable. Try again later." />;
 }
