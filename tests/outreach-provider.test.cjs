@@ -21,6 +21,23 @@ test('Resend provider reads the authoritative delivery event', async () => {
   }
 });
 
+test('Resend provider reconciles a batch from one sent-email log request', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async (url) => {
+    assert.match(String(url), /\/emails\?limit=100/);
+    return new Response(JSON.stringify({ has_more: false, data: [
+      { id: 'message-1', last_event: 'delivered' },
+      { id: 'message-2', last_event: 'clicked' },
+    ] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const { createResendProvider } = load('lib/outreach/providers/resend.ts');
+    const statuses = await createResendProvider('re_test').getStatuses?.(['message-1', 'message-2']);
+    assert.equal(statuses?.get('message-1'), 'delivered');
+    assert.equal(statuses?.get('message-2'), 'clicked');
+  } finally { global.fetch = originalFetch; }
+});
+
 test('delivery report reconciles an open after delivery from the provider', async () => {
   const updates = [];
   const client = {
@@ -46,6 +63,26 @@ test('delivery report reconciles an open after delivery from the provider', asyn
     const [row] = await getDeliveryReport();
     assert.equal(row.status, 'opened');
     assert.equal(updates[0].status, 'opened');
+  } finally {
+    if (previousProvider === undefined) delete process.env.OUTREACH_PROVIDER; else process.env.OUTREACH_PROVIDER = previousProvider;
+    if (previousKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = previousKey;
+  }
+});
+
+test('delivery report uses a batch provider reconciliation when available', async () => {
+  let requestedIds = [];
+  const { getDeliveryReport } = load('lib/outreach/delivery-report.ts', {
+    '@/lib/stripe': { serviceClient: () => ({ from: () => ({ select: () => ({ order: async () => ({ data: [{ id: 'delivery-1', provider_message_id: 'message-1', status: 'submitted', rendered_subject: 'Hello', sent_at: null, delivered_at: null, opened_at: null, clicked_at: null, bounced_at: null, error_message: null, outreach_contacts: { email: 'a@example.com', first_name: 'Ada', last_name: 'Lovelace', company_name: 'Analytical Engines' }, outreach_campaigns: { name: 'September' }, outreach_events: [] }], error: null }) }), update: () => ({ eq: async () => ({ error: null }) }) }) }) },
+    '@/lib/outreach/providers': { getOutreachProvider: () => ({ getStatuses: async (ids) => { requestedIds = ids; return new Map([['message-1', 'clicked']]); } }) },
+    '@/lib/outreach/domain': { effectiveDeliveryStatus: (current, events) => events.at(-1) ?? current },
+  });
+  const previousProvider = process.env.OUTREACH_PROVIDER;
+  const previousKey = process.env.RESEND_API_KEY;
+  process.env.OUTREACH_PROVIDER = 'resend'; process.env.RESEND_API_KEY = 're_test';
+  try {
+    const [row] = await getDeliveryReport();
+    assert.deepEqual(requestedIds, ['message-1']);
+    assert.equal(row.status, 'clicked');
   } finally {
     if (previousProvider === undefined) delete process.env.OUTREACH_PROVIDER; else process.env.OUTREACH_PROVIDER = previousProvider;
     if (previousKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = previousKey;

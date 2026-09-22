@@ -30,6 +30,28 @@ export function createResendProvider(apiKey = process.env.OUTREACH_PROVIDER_API_
       const status = ({ sent: 'submitted', delivered: 'delivered', opened: 'opened', clicked: 'clicked', bounced: 'bounced', failed: 'failed' } as Record<string, DeliveryStatus>)[body.last_event || ''];
       return status || null;
     },
+    async getStatuses(providerMessageIds) {
+      const wanted = new Set(providerMessageIds);
+      const statuses = new Map<string, DeliveryStatus>();
+      let after: string | null = null;
+      while (wanted.size > 0) {
+        const url = new URL('https://api.resend.com/emails');
+        url.searchParams.set('limit', '100');
+        if (after) url.searchParams.set('after', after);
+        const response = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+        if (!response.ok) return statuses;
+        const body = await response.json().catch(() => ({})) as { data?: Array<{ id?: string; last_event?: string }>; has_more?: boolean };
+        const emails = Array.isArray(body.data) ? body.data : [];
+        for (const email of emails) {
+          const status = ({ sent: 'submitted', delivered: 'delivered', opened: 'opened', clicked: 'clicked', bounced: 'bounced', failed: 'failed' } as Record<string, DeliveryStatus>)[email.last_event || ''];
+          if (email.id && status && wanted.delete(email.id)) statuses.set(email.id, status);
+        }
+        const lastId = emails.at(-1)?.id;
+        if (!body.has_more || !lastId) break;
+        after = lastId;
+      }
+      return statuses;
+    },
     async verifyWebhook(request) {
       const secret = process.env.OUTREACH_WEBHOOK_SECRET;
       const id = request.headers.get('svix-id');

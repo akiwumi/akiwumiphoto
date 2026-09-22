@@ -50,6 +50,12 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
     if (error) throw error;
     const resendEnabled = process.env.OUTREACH_EMAIL_PROVIDER === 'resend' || process.env.OUTREACH_PROVIDER === 'resend';
     const provider = resendEnabled && (process.env.OUTREACH_PROVIDER_API_KEY || process.env.RESEND_API_KEY) ? getOutreachProvider() : null;
+    const reconcilableIds = (data ?? [])
+      .filter((row) => !['bounced', 'failed', 'unsubscribed'].includes(row.status as string) && Boolean(row.provider_message_id))
+      .map((row) => row.provider_message_id as string);
+    const providerStatuses = provider?.getStatuses
+      ? await provider.getStatuses(reconcilableIds).catch(() => new Map<string, DeliveryStatus>())
+      : null;
     return await Promise.all((data ?? []).map(async (row) => {
       const contact = Array.isArray(row.outreach_contacts) ? row.outreach_contacts[0] : row.outreach_contacts;
       const campaign = Array.isArray(row.outreach_campaigns) ? row.outreach_campaigns[0] : row.outreach_campaigns;
@@ -58,8 +64,8 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
       // Delivery is not the final observable state: Resend can report a later
       // open or click. Keep reconciling non-terminal records so engagement is
       // visible even if a corresponding webhook arrived late or was missed.
-      if (!['bounced', 'failed', 'unsubscribed'].includes(status) && row.provider_message_id && provider?.getStatus) {
-        const providerStatus = await provider.getStatus(row.provider_message_id).catch(() => null);
+      if (!['bounced', 'failed', 'unsubscribed'].includes(status) && row.provider_message_id && (providerStatuses || provider?.getStatus)) {
+        const providerStatus = providerStatuses ? providerStatuses.get(row.provider_message_id) ?? null : await provider?.getStatus?.(row.provider_message_id).catch(() => null);
         if (providerStatus) status = effectiveDeliveryStatus(status, [providerStatus]);
         if (status !== row.status) await client.from('outreach_deliveries').update({ status, updated_at: new Date().toISOString() }).eq('id', row.id);
       }
