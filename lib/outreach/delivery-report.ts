@@ -6,6 +6,7 @@ import type { DeliveryStatus } from '@/types/outreach';
 export type DeliveryReportRow = {
   id: string;
   email: string;
+  country: string;
   contactName: string;
   studio: string;
   campaign: string;
@@ -20,13 +21,32 @@ export type DeliveryReportRow = {
   errorMessage: string | null;
 };
 
+export function deliveryReportCountries(rows: Array<Pick<DeliveryReportRow, 'country'>>): string[] {
+  return [...new Set(rows.map((row) => row.country?.trim() || 'Unknown'))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
+export function filterDeliveryReportRows<T extends Pick<DeliveryReportRow, 'country' | 'status' | 'sentAt'>>(
+  rows: T[],
+  filters: { country: string; status: string; from?: string; to?: string },
+): T[] {
+  const after = filters.from ? new Date(`${filters.from}T00:00:00`).getTime() : -Infinity;
+  const before = filters.to ? new Date(`${filters.to}T23:59:59.999`).getTime() : Infinity;
+  return rows.filter((row) => {
+    const sent = row.sentAt ? new Date(row.sentAt).getTime() : 0;
+    return sent >= after && sent <= before
+      && (!filters.country || (row.country?.trim() || 'Unknown') === filters.country)
+      && (filters.status === 'all' || row.status === filters.status);
+  });
+}
+
 export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
   try {
     // This page is already protected by the outreach admin layout. Use the
     // service client so report reads are not affected by the browser session's
     // RLS claims, which can otherwise make a successful send look missing.
     const client = serviceClient();
-    const { data, error } = await client.from('outreach_deliveries').select('id, provider_message_id, status, rendered_subject, sent_at, delivered_at, opened_at, clicked_at, bounced_at, error_message, outreach_contacts(email, first_name, last_name, company_name), outreach_campaigns(name), outreach_events(event_type, occurred_at)').order('created_at', { ascending: false });
+    const { data, error } = await client.from('outreach_deliveries').select('id, provider_message_id, status, rendered_subject, sent_at, delivered_at, opened_at, clicked_at, bounced_at, error_message, outreach_contacts(email, first_name, last_name, company_name, country), outreach_campaigns(name), outreach_events(event_type, occurred_at)').order('created_at', { ascending: false });
     if (error) throw error;
     const resendEnabled = process.env.OUTREACH_EMAIL_PROVIDER === 'resend' || process.env.OUTREACH_PROVIDER === 'resend';
     const provider = resendEnabled && (process.env.OUTREACH_PROVIDER_API_KEY || process.env.RESEND_API_KEY) ? getOutreachProvider() : null;
@@ -47,6 +67,7 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
       return {
         id: row.id,
         email: contact?.email ?? 'Unknown email',
+        country: contact?.country?.trim() || 'Unknown',
         contactName: [contact?.first_name, contact?.last_name].filter(Boolean).join(' ') || 'Unknown contact',
         studio: contact?.company_name ?? '—',
         campaign: campaign?.name ?? 'Outreach campaign',

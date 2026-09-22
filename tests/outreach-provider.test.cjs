@@ -51,3 +51,19 @@ test('delivery report reconciles an open after delivery from the provider', asyn
     if (previousKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = previousKey;
   }
 });
+
+test('delivery report helpers derive countries and combine country/status filters', () => {
+  const { deliveryReportCountries, filterDeliveryReportRows } = load('lib/outreach/delivery-report.ts', {
+    '@/lib/stripe': { serviceClient: () => ({}) },
+    '@/lib/outreach/domain': { effectiveDeliveryStatus: (status) => status },
+    '@/lib/outreach/providers': {},
+  });
+  const rows = [
+    { id: '1', email: 'a@example.com', country: 'Sweden', status: 'delivered', sentAt: '2026-09-20T10:00:00Z' },
+    { id: '2', email: 'b@example.com', country: 'Germany', status: 'bounced', sentAt: '2026-09-21T10:00:00Z' },
+    { id: '3', email: 'c@example.com', country: 'Germany', status: 'delivered', sentAt: '2026-09-22T10:00:00Z' },
+  ];
+  assert.deepEqual(deliveryReportCountries(rows), ['Germany', 'Sweden']);
+  assert.deepEqual(filterDeliveryReportRows(rows, { country: 'Germany', status: 'delivered' }).map((row) => row.id), ['3']);
+  assert.deepEqual(filterDeliveryReportRows(rows, { country: '', status: 'all' }).map((row) => row.id), ['1', '2', '3']);
+});
