@@ -50,6 +50,12 @@ export default function CampaignAudience({ contacts: initialContacts, mailerHtml
     window.localStorage.setItem(OUTREACH_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   }
 
+  function clearRecipients() {
+    window.localStorage.removeItem(OUTREACH_DRAFT_STORAGE_KEY);
+    setSelectedIds([]);
+    setSelectedCountries([]);
+  }
+
   function resetSent() {
     if (!window.confirm('Reset sent history for every contact? This will allow those addresses to be selected again.')) return;
     window.localStorage.removeItem(SENT_CONTACTS_STORAGE_KEY);
@@ -59,6 +65,6 @@ export default function CampaignAudience({ contacts: initialContacts, mailerHtml
   return <section className={styles.panel}>
     <div className={styles.panelHead}><div><h2 className={styles.panelTitle}>Select recipients</h2><p className={styles.panelMeta}>Choose the available contacts for this campaign. Sent contacts remain disabled.</p></div><div className={styles.selectionControls}><fieldset className={styles.filterField} aria-label="Filter campaign recipients by country"><legend>Countries</legend>{countries.map((country) => <label key={country}><input className={styles.checkbox} type="checkbox" checked={selectedCountries.includes(country)} onChange={() => toggleCountry(country)} /> {country}</label>)}</fieldset><button type="button" className={styles.buttonSecondary} onClick={() => setSelectedCountries([])}>{selectedCountries.length === 0 ? 'All countries' : 'Show all countries'}</button><span className={styles.selectionCount}>{selectedCountries.length === 0 ? 'All countries' : `${selectedCountries.length} countries selected`}</span><button type="button" className={styles.buttonSecondary} disabled={!visibleAvailable.length} onClick={toggleAllVisibleAvailable}>{allVisibleAvailableSelected ? 'Deselect all' : 'Select all available'}</button><span className={styles.selectionCount}>{selected.length} selected · {visibleAvailable.length} available in view</span><span className={`${styles.chip} ${styles.chipWarn}`}>Step 1 · recipients</span></div></div>
     <div className={styles.bulkList}>{visibleContacts.map((entry) => { const isSent = Boolean(sent[entry.id]); return <label key={entry.id} className={`${styles.bulkRow} ${isSent ? styles.bulkRowSent : ''}`}><input className={styles.checkbox} type="checkbox" checked={selectedIds.includes(entry.id)} disabled={isSent} onChange={() => setSelectedIds((current) => current.includes(entry.id) ? current.filter((id) => id !== entry.id) : [...current, entry.id])} /><span className={styles.bulkRowLabel}><span className={styles.bulkRowName}>{entry.name} · {entry.studio}</span><span className={styles.bulkRowEmail}>{entry.email}</span></span>{isSent ? <span className={`${styles.chip} ${styles.chipGood}`}>sent</span> : <span className={styles.chip}>available</span>}</label>; })}</div>
-    <div className={styles.bulkToolbar}><span className={styles.bulkCount}>{Object.keys(sent).length} sent · {visibleAvailable.length} available in view · {selected.length} selected overall</span><div className={styles.actions}><button type="button" className={styles.buttonSecondary} onClick={() => setSelectedIds([])}>Clear</button><button type="button" className={styles.buttonSecondary} onClick={resetSent}>Reset sent history</button><Link className={styles.button} href="/admin/outreach/campaigns/new/review" onClick={saveAndReview}>Review email copy →</Link></div></div>
+    <div className={styles.bulkToolbar}><span className={styles.bulkCount}>{Object.keys(sent).length} sent · {visibleAvailable.length} available in view · {selected.length} selected overall</span><div className={styles.actions}><button type="button" className={styles.buttonSecondary} onClick={clearRecipients}>Clear</button><button type="button" className={styles.buttonSecondary} onClick={resetSent}>Reset sent history</button><Link className={styles.button} href="/admin/outreach/campaigns/new/review" onClick={saveAndReview}>Review email copy →</Link></div></div>
   </section>;
 }
