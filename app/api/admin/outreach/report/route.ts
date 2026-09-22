@@ -18,7 +18,7 @@ export async function DELETE(request: Request) {
   const body = await request.json().catch(() => null) as { ids?: unknown } | null;
   const ids = Array.isArray(body?.ids)
     ? [...new Set(body.ids
-      .filter((id): id is string => typeof id === 'string' && id.trim())
+      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
       .map((id) => id.trim()))]
     : [];
 
