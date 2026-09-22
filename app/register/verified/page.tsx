@@ -4,6 +4,7 @@ import NavBar from '@/components/NavBar';
 import Reveal from '@/components/Reveal';
 import { createServerClient } from '@/lib/supabase-server';
 import PurchaseMessageClient from './PurchaseMessageClient';
+import RegistrationAnalytics from './RegistrationAnalytics';
 
 export const metadata: Metadata = {
   title: 'Account Verified — AKIWUMI PHOTO',
@@ -57,6 +58,7 @@ export default async function VerifiedPage() {
       <div className="register-content flex-1 page-enter" style={{ padding: '14px 60px 72px' }}>
         {collector?.email_verified ? (
           <>
+            <RegistrationAnalytics />
             <Reveal>
               <h1
                 className="font-bold uppercase"

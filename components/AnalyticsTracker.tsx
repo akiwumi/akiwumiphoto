@@ -7,8 +7,10 @@ import { getConsentStatus } from '@/lib/cookie-consent';
 import type { AnalyticsEventName, AnalyticsMetadata } from '@/lib/analytics';
 
 const TOKEN_KEY = 'akiwumi-analytics-token-v1';
+const SESSION_KEY = 'akiwumi-analytics-session-v1';
 const sentPaths = new Set<string>();
 let token: string | null = null;
+let sessionId: string | null = null;
 
 function getToken() {
   if (token) return token;
@@ -31,13 +33,27 @@ export function getAnalyticsVisitorToken(): string | null {
   } catch { return null; }
 }
 
+export function getAnalyticsSessionId(): string | null {
+  if (sessionId) return sessionId;
+  try {
+    sessionId = window.sessionStorage.getItem(SESSION_KEY);
+    if (!sessionId) {
+      sessionId = `${crypto.randomUUID()}${crypto.randomUUID().replaceAll('-', '')}`;
+      window.sessionStorage.setItem(SESSION_KEY, sessionId);
+    }
+    return sessionId;
+  } catch { return null; }
+}
+
 export async function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}): Promise<boolean> {
   try {
     if (getConsentStatus(window.localStorage) !== 'accepted') return false;
   } catch { return false; }
   const visitorToken = getToken();
   if (!visitorToken) return false;
-  const body = JSON.stringify({ consent: true, eventName: name, path: window.location.pathname, visitorToken, sessionId: visitorToken, metadata, referrer: document.referrer });
+  const activeSessionId = getAnalyticsSessionId();
+  if (!activeSessionId) return false;
+  const body = JSON.stringify({ consent: true, eventName: name, path: window.location.pathname, visitorToken, sessionId: activeSessionId, metadata, referrer: document.referrer });
   try {
     if (navigator.sendBeacon) {
       const accepted = navigator.sendBeacon('/api/analytics/event', new Blob([body], { type: 'application/json' }));

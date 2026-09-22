@@ -8,6 +8,7 @@ export const runtime = 'nodejs';
 export async function GET(request: Request) {
   const sessionId = new URL(request.url).searchParams.get('session_id');
   const visitorToken = request.headers.get('x-analytics-visitor-token');
+  const analyticsSessionId = request.headers.get('x-analytics-session-id');
   const consent = request.headers.get('x-analytics-consent');
   if (!sessionId || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
     return NextResponse.json({ ok: false }, { status: 400 });
@@ -25,13 +26,15 @@ export async function GET(request: Request) {
     if (error) throw error;
     if (!data) return NextResponse.json({ ok: false });
 
-    if (!isConsentedAnalyticsVisitor(consent, visitorToken)) return NextResponse.json({ ok: true, tracked: false });
-    const attributionToken = visitorToken;
-    const hashedAttribution = hashVisitorToken(attributionToken);
+    if (!isConsentedAnalyticsVisitor(consent, visitorToken) || !isConsentedAnalyticsVisitor(consent, analyticsSessionId)) {
+      return NextResponse.json({ ok: true, tracked: false });
+    }
+    const hashedVisitor = hashVisitorToken(visitorToken);
+    const hashedSession = hashVisitorToken(analyticsSessionId);
     const { error: analyticsError } = await serviceClient().from('analytics_events').insert({
       event_name: 'payment_success',
-      visitor_hash: hashedAttribution,
-      session_id: hashedAttribution,
+      visitor_hash: hashedVisitor,
+      session_id: hashedSession,
       path: '/basket/paid',
       referrer_origin: null,
       device_class: 'unknown',
