@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { deliveryReportCountries, filterDeliveryReportRows } from '@/lib/outreach/delivery-report';
 import type { DeliveryReportRow } from '@/lib/outreach/delivery-report';
@@ -19,6 +19,11 @@ export default function DeliveryReportTable({ rows }: { rows: DeliveryReportRow[
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [deleting, setDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  useEffect(() => {
+    setReportRows(rows);
+    const rowIds = new Set(rows.map((row) => row.id));
+    setSelectedIds((previous) => new Set([...previous].filter((id) => rowIds.has(id))));
+  }, [rows]);
   const countries = useMemo(() => deliveryReportCountries(reportRows), [reportRows]);
   const filtered = useMemo(() => filterDeliveryReportRows(reportRows, { country, status, from, to }).sort((a, b) => {
     const left = a.sentAt ? new Date(a.sentAt).getTime() : 0;
