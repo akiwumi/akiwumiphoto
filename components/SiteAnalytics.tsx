@@ -1,6 +1,7 @@
 'use client';
 
 import { Analytics, type BeforeSendEvent } from '@vercel/analytics/next';
+import { useCookieConsent } from './CookieConsentProvider';
 
 /**
  * Vercel Web Analytics, counting public visits only. Admin sessions would
@@ -16,5 +17,7 @@ function beforeSend(event: BeforeSendEvent): BeforeSendEvent | null {
 }
 
 export default function SiteAnalytics() {
+  const { status } = useCookieConsent();
+  if (status !== 'accepted') return null;
   return <Analytics beforeSend={beforeSend} />;
 }

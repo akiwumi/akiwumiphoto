@@ -9,6 +9,7 @@ import { connection } from 'next/server';
 import { fetchHiddenPages } from '@/lib/site-visibility';
 import { fetchNavPages } from '@/lib/site-pages';
 import { SiteVisibilityProvider } from '@/components/SiteVisibility';
+import CookieConsentProvider from '@/components/CookieConsentProvider';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -57,12 +58,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${bebasNeue.variable}`}>
       <body className="bg-black text-white min-h-dvh antialiased" style={{ fontFamily: 'var(--font-space-grotesk), Helvetica Neue, Arial, sans-serif' }}>
-        <SiteVisibilityProvider hidden={hiddenPages} navPages={navPages}>
-          <LayoutTransition>
-            {children}
-          </LayoutTransition>
-        </SiteVisibilityProvider>
-        <SiteAnalytics />
+        <CookieConsentProvider>
+          <SiteVisibilityProvider hidden={hiddenPages} navPages={navPages}>
+            <LayoutTransition>
+              {children}
+            </LayoutTransition>
+          </SiteVisibilityProvider>
+          <SiteAnalytics />
+        </CookieConsentProvider>
       </body>
     </html>
   );

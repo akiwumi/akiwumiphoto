@@ -1,0 +1,24 @@
+.banner { position: fixed; z-index: 80; right: 24px; bottom: 24px; width: min(520px, calc(100vw - 48px)); padding: 22px; border: 1px solid var(--site-border); background: var(--site-background); color: var(--site-text); box-shadow: 0 16px 45px rgb(34 34 34 / 18%); font-family: var(--font-space-grotesk), sans-serif; }
+.banner h2, .dialog h2, .dialog h3 { margin: 0; font-weight: 500; letter-spacing: -.015em; }
+.banner h2, .dialog h2 { font-size: 22px; }
+.banner p, .intro, .category p { margin: 9px 0 0; color: var(--site-muted); font-size: 14px; line-height: 1.55; }
+.actions, .dialogActions { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin-top: 18px; }
+.primary, .secondary, .textButton, .policyLink, .close { min-height: 44px; border: 1px solid var(--site-text); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.primary { padding: 10px 16px; background: var(--site-text); color: var(--site-background); }
+.secondary { padding: 10px 16px; background: var(--site-background); color: var(--site-text); }
+.textButton, .policyLink { padding: 10px 4px; border-color: transparent; background: transparent; color: var(--site-text); text-decoration: underline; text-underline-offset: 4px; }
+.dialog { width: min(600px, calc(100vw - 32px)); max-width: none; margin: auto; padding: 0; border: 0; background: transparent; color: var(--site-text); }
+.dialog::backdrop { background: rgb(34 34 34 / 72%); backdrop-filter: blur(3px); }
+.dialogPanel { padding: 28px 32px 32px; border: 1px solid var(--site-border); background: var(--site-background); font-family: var(--font-space-grotesk), sans-serif; }
+.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.close { display: grid; width: 44px; padding: 0; place-items: center; border-color: transparent; background: transparent; color: var(--site-text); font-size: 28px; line-height: 1; }
+.category { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--site-border); }
+.category h3 { font-size: 16px; }
+.alwaysOn { flex: 0 0 auto; padding-top: 2px; font-size: 13px; font-weight: 500; }
+.switch { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; padding-top: 1px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: var(--site-text); }
+.primary:hover, .secondary:hover, .textButton:hover, .policyLink:hover, .close:hover { transform: translateY(-1px); }
+.primary:focus-visible, .secondary:focus-visible, .textButton:focus-visible, .policyLink:focus-visible, .close:focus-visible, .switch input:focus-visible { outline: 2px solid var(--site-text); outline-offset: 3px; }
+@media (max-width: 700px) { .banner { right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); width: calc(100vw - 24px); padding: 18px; } .actions > * { flex: 1 1 auto; text-align: center; } .dialogPanel { padding: 22px 20px 24px; } .category { flex-direction: column; gap: 10px; } }
+@media (prefers-reduced-motion: reduce) { .primary:hover, .secondary:hover, .textButton:hover, .policyLink:hover, .close:hover { transform: none; } }
+
