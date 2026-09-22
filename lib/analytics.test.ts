@@ -17,6 +17,8 @@ test('normalizes device classes and hashes deterministically', () => {
   assert.equal(hashVisitorToken('same', 'secret'), hashVisitorToken('same', 'secret'));
   const event = normalizeAnalyticsEvent({ eventName: 'page_view', path: '/', visitorToken: 'opaque-token-123456' })!;
   assert.equal(createDedupeKey(event), createDedupeKey(event));
+  assert.notEqual(createDedupeKey(event, 1), createDedupeKey(event, 2));
+  assert.equal(createDedupeKey(event, 1), createDedupeKey(event, 1));
   assert.equal(normalizeReferrer('mailto:test@example.com'), null);
   assert.equal(sanitizeMetadata('bad'), null);
 });

@@ -6,6 +6,24 @@ const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 60;
 const requests = new Map<string, { count: number; resetAt: number }>();
 
+/**
+ * Vercel's x-vercel-forwarded-for is trusted as a platform-issued client IP.
+ * Generic forwarding headers are accepted only when the deployment explicitly
+ * sets TRUST_PROXY_HEADERS=true behind a known, trusted proxy.
+ */
+export function clientAddress(request: Request): string {
+  const platformAddress = request.headers.get('x-vercel-forwarded-for');
+  if (platformAddress) return platformAddress.split(',')[0].trim().slice(0, 128) || 'unknown';
+  if (process.env.TRUST_PROXY_HEADERS === 'true') {
+    return (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown').split(',')[0].trim().slice(0, 128) || 'unknown';
+  }
+  return 'unknown';
+}
+
+export function rateLimitKey(request: Request, visitorHash: string, eventName: string): string {
+  return `${clientAddress(request)}:${visitorHash.slice(0, 16)}:${eventName}`;
+}
+
 function ignored() { return Response.json({ ok: true }); }
 
 function isBot(userAgent: string) {
@@ -45,8 +63,7 @@ export async function POST(request: Request) {
   });
   if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || event.path.startsWith('/register/verified')) return ignored();
 
-  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown').split(',')[0].trim().slice(0, 128);
-  const rateKey = `${ip}:${hashVisitorToken(event.visitorToken).slice(0, 16)}:${event.eventName}`;
+  const rateKey = rateLimitKey(request, hashVisitorToken(event.visitorToken), event.eventName);
   const now = Date.now();
   const previous = requests.get(rateKey);
   if (previous && previous.resetAt > now && previous.count >= MAX_REQUESTS) return ignored();
