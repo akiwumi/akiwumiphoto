@@ -128,3 +128,43 @@ $$;
 
 revoke all on function public.get_analytics_summary(timestamptz, timestamptz) from public, anon;
 grant execute on function public.get_analytics_summary(timestamptz, timestamptz) to authenticated;
+
+-- Shared, atomic ingestion throttling across all application instances.
+create table public.analytics_rate_limits (
+  bucket text primary key check (length(bucket) between 1 and 256),
+  window_start timestamptz not null,
+  request_count integer not null check (request_count >= 0),
+  updated_at timestamptz not null default now()
+);
+alter table public.analytics_rate_limits enable row level security;
+revoke all on table public.analytics_rate_limits from public, anon, authenticated;
+
+create or replace function public.consume_analytics_rate_limit(
+  p_bucket text,
+  p_max_requests integer,
+  p_window_start timestamptz
+)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  current_count integer;
+begin
+  if p_bucket is null or length(p_bucket) = 0 or p_max_requests < 1 or p_max_requests > 10000 or p_window_start is null then
+    return false;
+  end if;
+  insert into public.analytics_rate_limits(bucket, window_start, request_count, updated_at)
+  values (p_bucket, p_window_start, 1, now())
+  on conflict (bucket) do update set
+    window_start = case when analytics_rate_limits.window_start < excluded.window_start then excluded.window_start else analytics_rate_limits.window_start end,
+    request_count = case when analytics_rate_limits.window_start < excluded.window_start then 1 else analytics_rate_limits.request_count + 1 end,
+    updated_at = now()
+  returning request_count into current_count;
+  return current_count <= p_max_requests;
+end;
+$$;
+revoke all on function public.consume_analytics_rate_limit(text, integer, timestamptz) from public, anon, authenticated;
+grant execute on function public.consume_analytics_rate_limit(text, integer, timestamptz) to service_role;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { POST, clientAddress, rateLimitKey, setAnalyticsServiceClientForTest } from './route.ts';
+import { POST, clientAddress, consumeSharedRateLimit, rateLimitKey, setAnalyticsServiceClientForTest } from './route.ts';
 import { hashVisitorToken } from '../../../../lib/analytics.ts';
 
 test('safely ignores requests without analytics consent', async () => {
@@ -56,7 +56,7 @@ test('unknown client addresses are rejected before insertion', async () => {
 
 test('inserts a normalized event through the service client', async () => {
   let inserted: Record<string, unknown> | null = null;
-  const mock = { from: () => ({ insert: async (payload: Record<string, unknown>) => { inserted = payload; return { error: null }; } }) } as unknown as import('@supabase/supabase-js').SupabaseClient;
+  const mock = { rpc: async () => ({ data: true, error: null }), from: () => ({ insert: async (payload: Record<string, unknown>) => { inserted = payload; return { error: null }; } }) } as unknown as import('@supabase/supabase-js').SupabaseClient;
   const priorVercel = process.env.VERCEL;
   process.env.VERCEL = '1';
   setAnalyticsServiceClientForTest(mock);
@@ -88,4 +88,21 @@ test('hashing fails closed outside explicit development/test mode', () => {
   env.NODE_ENV = priorNodeEnv;
   if (priorHash === undefined) delete process.env.ANALYTICS_HASH_SECRET; else process.env.ANALYTICS_HASH_SECRET = priorHash;
   if (priorService === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = priorService;
+});
+
+test('shared RPC allow, exhaust, and error behavior is fail-closed in production', async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const priorNodeEnv = env.NODE_ENV;
+  const priorHash = env.ANALYTICS_HASH_SECRET;
+  env.NODE_ENV = 'production';
+  env.ANALYTICS_HASH_SECRET = 'test-secret';
+  setAnalyticsServiceClientForTest({ rpc: async () => ({ data: true, error: null }) } as unknown as import('@supabase/supabase-js').SupabaseClient);
+  assert.equal(await consumeSharedRateLimit('allow', Date.now()), true);
+  setAnalyticsServiceClientForTest({ rpc: async () => ({ data: false, error: null }) } as unknown as import('@supabase/supabase-js').SupabaseClient);
+  assert.equal(await consumeSharedRateLimit('exhaust', Date.now()), false);
+  setAnalyticsServiceClientForTest({ rpc: async () => ({ data: null, error: new Error('unavailable') }) } as unknown as import('@supabase/supabase-js').SupabaseClient);
+  assert.equal(await consumeSharedRateLimit('error', Date.now()), false);
+  setAnalyticsServiceClientForTest(null);
+  env.NODE_ENV = priorNodeEnv;
+  if (priorHash === undefined) delete env.ANALYTICS_HASH_SECRET; else env.ANALYTICS_HASH_SECRET = priorHash;
 });

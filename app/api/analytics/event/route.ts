@@ -44,6 +44,24 @@ export function setAnalyticsServiceClientForTest(client: SupabaseClient | null) 
   testServiceClient = client;
 }
 
+export async function consumeSharedRateLimit(bucket: string, now: number): Promise<boolean> {
+  try {
+    const result = await serviceClient().rpc('consume_analytics_rate_limit', {
+      p_bucket: bucket,
+      p_max_requests: MAX_REQUESTS,
+      p_window_start: new Date(now - WINDOW_MS).toISOString(),
+    });
+    if (result.error) throw result.error;
+    return result.data === true;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[analytics] shared rate limiter unavailable', error);
+      return false;
+    }
+    return true;
+  }
+}
+
 export async function POST(request: Request) {
   const userAgent = request.headers.get('user-agent') || '';
   if (isBot(userAgent)) return ignored();
@@ -75,11 +93,14 @@ export async function POST(request: Request) {
   const visitorHash = hashVisitorToken(event.visitorToken);
   const rateKey = rateLimitKey(request, event.eventName);
   const now = Date.now();
-  for (const [key, entry] of requests) if (entry.resetAt <= now) requests.delete(key);
-  if (requests.size >= MAX_RATE_ENTRIES && !requests.has(rateKey)) return ignored();
-  const previous = requests.get(rateKey);
-  if (previous && previous.resetAt > now && previous.count >= MAX_REQUESTS) return ignored();
-  requests.set(rateKey, previous && previous.resetAt > now ? { count: previous.count + 1, resetAt: previous.resetAt } : { count: 1, resetAt: now + WINDOW_MS });
+  if (!(await consumeSharedRateLimit(rateKey, now))) return ignored();
+  if (process.env.NODE_ENV !== 'production') {
+    for (const [key, entry] of requests) if (entry.resetAt <= now) requests.delete(key);
+    if (requests.size >= MAX_RATE_ENTRIES && !requests.has(rateKey)) return ignored();
+    const previous = requests.get(rateKey);
+    if (previous && previous.resetAt > now && previous.count >= MAX_REQUESTS) return ignored();
+    requests.set(rateKey, previous && previous.resetAt > now ? { count: previous.count + 1, resetAt: previous.resetAt } : { count: 1, resetAt: now + WINDOW_MS });
+  }
 
   try {
     const { error } = await serviceClient().from('analytics_events').insert({
