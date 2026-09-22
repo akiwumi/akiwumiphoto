@@ -14,7 +14,11 @@ test('safely ignores requests without analytics consent', async () => {
 
 test('rejects oversized UTF-8 payloads and excludes bots/admin paths', async () => {
   const oversized = await POST(new Request('http://localhost/api/analytics/event', {
-    method: 'POST', headers: { 'content-length': '20000', 'x-analytics-consent': 'accepted' }, body: '{}',
+    method: 'POST',
+    headers: { 'x-analytics-consent': 'accepted' },
+    // Deliberately omit Content-Length: this must be rejected by the actual
+    // UTF-8 byte count, not by a client-provided size declaration.
+    body: JSON.stringify({ consent: true, eventName: 'page_view', path: '/', visitorToken: 'opaque-token-123456', metadata: { category: '😀'.repeat(5_000) } }),
   }));
   assert.deepEqual(await oversized.json(), { ok: true });
   const ignored = async (userAgent: string, path: string) => POST(new Request('http://localhost/api/analytics/event', {
