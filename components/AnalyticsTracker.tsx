@@ -22,6 +22,15 @@ function getToken() {
   return token;
 }
 
+/** Returns the opaque first-party token already used by analytics requests. */
+export function getAnalyticsVisitorToken(): string | null {
+  if (token) return token;
+  try {
+    token = window.localStorage.getItem(TOKEN_KEY);
+    return token;
+  } catch { return null; }
+}
+
 export async function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}): Promise<boolean> {
   try {
     if (getConsentStatus(window.localStorage) !== 'accepted') return false;

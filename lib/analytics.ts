@@ -17,6 +17,10 @@ const METADATA_KEYS = new Set([
 ]);
 const SAFE_VALUE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
+export function isValidAnalyticsToken(value: unknown): value is string {
+  return typeof value === 'string' && value.length >= 16 && value.length <= 128 && SAFE_VALUE.test(value) && !value.includes('@');
+}
+
 export type AnalyticsInput = {
   eventName: unknown;
   path: unknown;
@@ -85,11 +89,11 @@ export function createDedupeKey(event: Pick<NormalizedAnalyticsEvent, 'eventName
 
 export function normalizeAnalyticsEvent(input: AnalyticsInput): NormalizedAnalyticsEvent | null {
   if (typeof input.eventName !== 'string' || !EVENT_SET.has(input.eventName)) return null;
-  if (typeof input.visitorToken !== 'string' || input.visitorToken.length < 16 || input.visitorToken.length > 128 || !SAFE_VALUE.test(input.visitorToken) || input.visitorToken.includes('@')) return null;
+  if (!isValidAnalyticsToken(input.visitorToken)) return null;
   const path = normalizePath(input.path);
   const metadata = sanitizeMetadata(input.metadata);
   if (!path || !metadata) return null;
-  const sessionId = typeof input.sessionId === 'string' && input.sessionId.length >= 16 && input.sessionId.length <= 128 && SAFE_VALUE.test(input.sessionId) && !input.sessionId.includes('@')
+  const sessionId = isValidAnalyticsToken(input.sessionId)
     ? input.sessionId : input.visitorToken;
   return {
     eventName: input.eventName as AnalyticsEventName,
