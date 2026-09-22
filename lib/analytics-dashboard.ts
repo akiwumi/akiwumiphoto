@@ -38,6 +38,15 @@ function demoSummary(range: AnalyticsRange): AnalyticsSummary {
   return { ...EMPTY, range_start: range.start, range_end: range.end, headline: { unique_visitors: 42, sessions: 58, page_views: 121, contact_submissions: 4, checkout_starts: 7, completed_payments: 3, registrations: 9 }, daily, top_pages: [{ path: '/home', events: 44 }, { path: '/galleries', events: 31 }, { path: '/contact', events: 12 }], top_referrers: [{ referrer_origin: 'https://instagram.com', events: 18 }, { referrer_origin: 'https://google.com', events: 11 }], top_devices: [{ device_class: 'mobile', events: 72 }, { device_class: 'desktop', events: 39 }, { device_class: 'tablet', events: 10 }], funnels: { visit_to_gallery: { visits: 58, gallery_interactions: 22 }, gallery_to_paid: { visits: 58, gallery_interactions: 22, checkout_starts: 7, paid_orders: 3 }, visit_to_registration: { visits: 58, registrations: 9 } } };
 }
 
+/** Demo data is only a local-development fallback when Supabase is absent. */
+export const ANALYTICS_DEMO_NOTICE = 'Development demo fixture — Supabase is not configured; values are illustrative only.';
+
+function canUseDemoFixture(error: unknown): boolean {
+  return process.env.NODE_ENV !== 'production'
+    && error instanceof Error
+    && error.message.includes('Supabase not configured');
+}
+
 export async function getAnalyticsSummary(range?: Partial<AnalyticsRange>): Promise<{ data: AnalyticsSummary; demo: boolean }> {
   const bounded = clampAnalyticsRange(range?.start, range?.end);
   try {
@@ -48,7 +57,7 @@ export async function getAnalyticsSummary(range?: Partial<AnalyticsRange>): Prom
     if (error) throw error;
     return { data: { ...EMPTY, ...(data as Partial<AnalyticsSummary>), range_start: bounded.start, range_end: bounded.end }, demo: false };
   } catch (error) {
-    if (process.env.NODE_ENV === 'production' || !String(error).includes('Supabase not configured')) throw error;
+    if (!canUseDemoFixture(error)) throw error;
     return { data: demoSummary(bounded), demo: true };
   }
 }

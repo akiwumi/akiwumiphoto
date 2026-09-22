@@ -27,7 +27,7 @@ test('uses unresolved consent when storage cannot be read', () => {
 });
 
 test('analytics is gated by explicit consent', () => {
-  const analytics = source('components/SiteAnalytics.tsx');
+  const analytics = source('components/AnalyticsTracker.tsx');
   assert.match(analytics, /useCookieConsent/);
   assert.match(analytics, /status !== 'accepted'/);
 });
@@ -39,7 +39,10 @@ test('shared footer offers cookie settings', () => {
 test('cookie policy states categories, provider, retention, and contact route', () => {
   const policy = source('app/cookie-policy/page.tsx');
   assert.match(policy, /Essential cookies/);
-  assert.match(policy, /Vercel Web Analytics/);
+  assert.match(policy, /first-party analytics/);
+  assert.match(policy, /Supabase database/);
+  assert.match(policy, /anonymous identifier/);
+  assert.match(policy, /withdraw/);
   assert.match(policy, /six months/i);
   assert.match(policy, /href="\/contact"/);
 });

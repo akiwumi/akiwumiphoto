@@ -74,7 +74,7 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
         <aside className={styles.banner} aria-label="Cookie preferences">
           <div>
             <h2>Your privacy</h2>
-            <p>We use essential cookies to make the site work. With your permission, we also use analytics to understand visits and improve the site.</p>
+            <p>We use essential cookies to make the site work. With your permission, we also send privacy-conscious, first-party analytics to our Supabase database to understand visits and improve the site.</p>
           </div>
           <div className={styles.actions}>
             <button type="button" className={styles.primary} onClick={() => savePreference(true)}>Accept analytics</button>
@@ -89,13 +89,13 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
             <h2 id="cookie-settings-title">Cookie settings</h2>
             <button type="button" className={styles.close} aria-label="Close cookie settings" onClick={() => setSettingsOpen(false)}>×</button>
           </div>
-          <p className={styles.intro}>Choose whether this site may use optional analytics. You can revisit this at any time from the footer.</p>
+          <p className={styles.intro}>Choose whether this site may use optional, first-party analytics. You can revisit this at any time from the footer.</p>
           <section className={styles.category} aria-labelledby="essential-cookies-title">
             <div><h3 id="essential-cookies-title">Essential cookies</h3><p>Always on. These support security, signed-in accounts, the basket and saved site preferences.</p></div>
             <span className={styles.alwaysOn}>Always on</span>
           </section>
           <section className={styles.category} aria-labelledby="analytics-cookies-title">
-            <div><h3 id="analytics-cookies-title">Analytics</h3><p>Optional. Vercel Web Analytics helps us understand aggregate visits and improve the site.</p></div>
+            <div><h3 id="analytics-cookies-title">Analytics</h3><p>Optional. With consent, we send an anonymous browser session identifier and event details to our Supabase database. This covers page views, gallery and image interactions, contact submissions, print activity, checkout and payment outcomes, and registrations.</p></div>
             <label className={styles.switch}><input type="checkbox" checked={analyticsEnabled} onChange={(event) => setAnalyticsEnabled(event.target.checked)} /><span>Enable analytics</span></label>
           </section>
           <div className={styles.dialogActions}>
