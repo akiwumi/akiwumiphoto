@@ -3,6 +3,7 @@ import { requireOutreachAdmin } from '@/lib/outreach/auth';
 import { serviceClient } from '@/lib/stripe';
 
 const MAX_IDS = 200;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function DELETE(request: Request) {
   try {
@@ -21,13 +22,19 @@ export async function DELETE(request: Request) {
       .map((id) => id.trim()))]
     : [];
 
-  if (ids.length === 0 || ids.length > MAX_IDS) {
+  if (ids.length === 0 || ids.length > MAX_IDS || ids.some((id) => !UUID_RE.test(id))) {
     return NextResponse.json({ error: `Choose between 1 and ${MAX_IDS} delivery records.` }, { status: 422 });
   }
 
-  const { error } = await serviceClient().from('outreach_deliveries').delete().in('id', ids);
-  if (error) {
-    return NextResponse.json({ error: error.message || 'Unable to erase delivery records.' }, { status: 500 });
+  try {
+    const { error } = await serviceClient().from('outreach_deliveries').delete().in('id', ids);
+    if (error) {
+      console.error('[outreach-report] could not erase delivery records:', error);
+      return NextResponse.json({ error: 'Unable to erase delivery records.' }, { status: 500 });
+    }
+  } catch (error) {
+    console.error('[outreach-report] could not erase delivery records:', error);
+    return NextResponse.json({ error: 'Unable to erase delivery records.' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, deletedCount: ids.length });
