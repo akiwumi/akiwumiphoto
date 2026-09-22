@@ -72,6 +72,9 @@ export function sanitizeMetadata(value: unknown): AnalyticsMetadata | null {
 }
 
 export function hashVisitorToken(token: string, secret = process.env.ANALYTICS_HASH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'development-analytics-secret'): string {
+  if (!process.env.ANALYTICS_HASH_SECRET && !process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+    throw new Error('Analytics hash secret is not configured');
+  }
   return createHmac('sha256', secret).update(token).digest('hex');
 }
 

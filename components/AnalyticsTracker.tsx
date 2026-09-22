@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useCookieConsent } from './CookieConsentProvider';
 import type { AnalyticsEventName, AnalyticsMetadata } from '@/lib/analytics';
 
@@ -21,7 +21,7 @@ function getToken() {
   return token;
 }
 
-export function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}): boolean {
+export async function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}): Promise<boolean> {
   const visitorToken = getToken();
   if (!visitorToken) return false;
   const body = JSON.stringify({ consent: true, eventName: name, path: window.location.pathname, visitorToken, sessionId: visitorToken, metadata, referrer: document.referrer });
@@ -30,8 +30,8 @@ export function trackAnalyticsEvent(name: AnalyticsEventName, metadata: Analytic
       const accepted = navigator.sendBeacon('/api/analytics/event', new Blob([body], { type: 'application/json' }));
       if (accepted) return true;
     }
-    void fetch('/api/analytics/event', { method: 'POST', headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted' }, body, keepalive: true }).catch(() => undefined);
-    return true;
+    const response = await fetch('/api/analytics/event', { method: 'POST', headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted' }, body, keepalive: true });
+    return response.ok;
   } catch { /* analytics never blocks site interactions */ return false; }
 }
 
@@ -39,13 +39,13 @@ export default function AnalyticsTracker() {
   const { status } = useCookieConsent();
   const pathname = usePathname() || '/';
   const track = useCallback(() => {
-    if (status !== 'accepted' || sentPaths.has(pathname)) return;
-    if (trackAnalyticsEvent('page_view')) sentPaths.add(pathname);
+    if (status !== 'accepted' || sentPaths.has(pathname)) return Promise.resolve(false);
+    return trackAnalyticsEvent('page_view');
   }, [pathname, status]);
-  const lastStatus = useRef(status);
   useEffect(() => {
-    if (lastStatus.current !== status) lastStatus.current = status;
-    track();
-  }, [status, track]);
+    void track().then((delivered) => {
+      if (delivered) sentPaths.add(pathname);
+    });
+  }, [pathname, status, track]);
   return null;
 }

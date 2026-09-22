@@ -4,6 +4,7 @@ import { createDedupeKey, hashVisitorToken, normalizeAnalyticsEvent, normalizeDe
 const MAX_BODY_BYTES = 16_384;
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 60;
+const MAX_RATE_ENTRIES = 10_000;
 const requests = new Map<string, { count: number; resetAt: number }>();
 
 /**
@@ -12,7 +13,7 @@ const requests = new Map<string, { count: number; resetAt: number }>();
  * sets TRUST_PROXY_HEADERS=true behind a known, trusted proxy.
  */
 export function clientAddress(request: Request): string {
-  const platformAddress = request.headers.get('x-vercel-forwarded-for');
+  const platformAddress = process.env.VERCEL === '1' ? request.headers.get('x-vercel-forwarded-for') : null;
   if (platformAddress) return platformAddress.split(',')[0].trim().slice(0, 128) || 'unknown';
   if (process.env.TRUST_PROXY_HEADERS === 'true') {
     return (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown').split(',')[0].trim().slice(0, 128) || 'unknown';
@@ -20,8 +21,8 @@ export function clientAddress(request: Request): string {
   return 'unknown';
 }
 
-export function rateLimitKey(request: Request, visitorHash: string, eventName: string): string {
-  return `${clientAddress(request)}:${visitorHash.slice(0, 16)}:${eventName}`;
+export function rateLimitKey(request: Request, eventName: string): string {
+  return `${clientAddress(request)}:${eventName}`;
 }
 
 function ignored() { return Response.json({ ok: true }); }
@@ -63,8 +64,10 @@ export async function POST(request: Request) {
   });
   if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || event.path.startsWith('/register/verified')) return ignored();
 
-  const rateKey = rateLimitKey(request, hashVisitorToken(event.visitorToken), event.eventName);
+  const rateKey = rateLimitKey(request, event.eventName);
   const now = Date.now();
+  for (const [key, entry] of requests) if (entry.resetAt <= now) requests.delete(key);
+  if (requests.size >= MAX_RATE_ENTRIES && !requests.has(rateKey)) return ignored();
   const previous = requests.get(rateKey);
   if (previous && previous.resetAt > now && previous.count >= MAX_REQUESTS) return ignored();
   requests.set(rateKey, previous && previous.resetAt > now ? { count: previous.count + 1, resetAt: previous.resetAt } : { count: 1, resetAt: now + WINDOW_MS });
