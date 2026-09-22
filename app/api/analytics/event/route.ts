@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     metadata: raw.metadata,
     referrer: raw.referrer,
   });
-  if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || event.path.startsWith('/register/verified')) return ignored();
+  if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || (event.path.startsWith('/register/verified') && event.eventName !== 'registration_complete')) return ignored();
   const address = clientAddress(request);
   if (address === 'unknown') return ignored();
 

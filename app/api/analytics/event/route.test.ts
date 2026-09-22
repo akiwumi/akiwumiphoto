@@ -76,6 +76,32 @@ test('inserts a normalized event through the service client', async () => {
   }
 });
 
+test('retains verified registration completion but ignores other verified events', async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const priorVercel = env.VERCEL;
+  env.VERCEL = '1';
+  const inserted: Record<string, unknown>[] = [];
+  const mock = {
+    rpc: async () => ({ data: true, error: null }),
+    from: () => ({ insert: async (payload: Record<string, unknown>) => { inserted.push(payload); return { error: null }; } }),
+  } as unknown as import('@supabase/supabase-js').SupabaseClient;
+  setAnalyticsServiceClientForTest(mock);
+  const request = (eventName: string) => POST(new Request('http://localhost/api/analytics/event', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted', 'user-agent': 'Mozilla/5.0', 'x-vercel-forwarded-for': '203.0.113.8' },
+    body: JSON.stringify({ eventName, path: '/register/verified', visitorToken: `opaque-${eventName}-123456` }),
+  }));
+  try {
+    assert.deepEqual(await (await request('registration_complete')).json(), { ok: true });
+    assert.deepEqual(await (await request('page_view')).json(), { ok: true });
+    assert.equal(inserted.length, 1);
+    assert.equal(inserted[0].event_name, 'registration_complete');
+  } finally {
+    setAnalyticsServiceClientForTest(null);
+    if (priorVercel === undefined) delete env.VERCEL; else env.VERCEL = priorVercel;
+  }
+});
+
 test('hashing fails closed outside explicit development/test mode', () => {
   const env = process.env as Record<string, string | undefined>;
   const priorNodeEnv = process.env.NODE_ENV;
