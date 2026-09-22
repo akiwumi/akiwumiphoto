@@ -26,6 +26,19 @@ test('reports an accepted email when delivery tracking is unavailable', async ()
   assert.equal(body.trackingError, 'Email accepted, but delivery tracking could not be recorded.');
 });
 
+test('returns a clear quota response when Resend refuses a send', async () => {
+  const route = load('app/api/admin/outreach/campaigns/[id]/send-test/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: null, user: null }) },
+    '@/lib/outreach/providers': { getOutreachProvider: () => ({ send: async () => { throw new Error('You have reached your daily email sending quota.'); } }) },
+  });
+  const response = await route.POST(request());
+  assert.equal(response.status, 429);
+  assert.deepEqual(await response.json(), {
+    error: 'Resend sending limit reached. Wait for the quota reset or upgrade the Resend plan before sending again.',
+    code: 'RESEND_QUOTA_EXCEEDED',
+  });
+});
+
 test('completed campaign navigates directly to the delivery report', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '../app/admin/outreach/campaigns/new/final/FinalPreview.tsx'), 'utf8');
   assert.match(source, /useRouter\(\)/);

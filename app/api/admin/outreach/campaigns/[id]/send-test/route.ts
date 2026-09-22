@@ -36,6 +36,11 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ ok: true, providerMessageId: result.providerMessageId, deliveryId, recipientStatusChanged: false, trackingError });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to record delivery.' }, { status: 400 });
+    const message = error instanceof Error ? error.message : 'Unable to record delivery.';
+    const quotaExceeded = /quota|rate limit|too many requests|daily limit/i.test(message);
+    return NextResponse.json({
+      error: quotaExceeded ? 'Resend sending limit reached. Wait for the quota reset or upgrade the Resend plan before sending again.' : message,
+      code: quotaExceeded ? 'RESEND_QUOTA_EXCEEDED' : 'OUTREACH_SEND_FAILED',
+    }, { status: quotaExceeded ? 429 : 400 });
   }
 }
