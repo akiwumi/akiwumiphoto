@@ -21,17 +21,18 @@ function getToken() {
   return token;
 }
 
-export function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}) {
+export function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}): boolean {
   const visitorToken = getToken();
-  if (!visitorToken) return;
+  if (!visitorToken) return false;
   const body = JSON.stringify({ consent: true, eventName: name, path: window.location.pathname, visitorToken, sessionId: visitorToken, metadata, referrer: document.referrer });
   try {
     if (navigator.sendBeacon) {
       const accepted = navigator.sendBeacon('/api/analytics/event', new Blob([body], { type: 'application/json' }));
-      if (accepted) return;
+      if (accepted) return true;
     }
     void fetch('/api/analytics/event', { method: 'POST', headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted' }, body, keepalive: true }).catch(() => undefined);
-  } catch { /* analytics never blocks site interactions */ }
+    return true;
+  } catch { /* analytics never blocks site interactions */ return false; }
 }
 
 export default function AnalyticsTracker() {
@@ -39,8 +40,7 @@ export default function AnalyticsTracker() {
   const pathname = usePathname() || '/';
   const track = useCallback(() => {
     if (status !== 'accepted' || sentPaths.has(pathname)) return;
-    sentPaths.add(pathname);
-    trackAnalyticsEvent('page_view');
+    if (trackAnalyticsEvent('page_view')) sentPaths.add(pathname);
   }, [pathname, status]);
   const lastStatus = useRef(status);
   useEffect(() => {

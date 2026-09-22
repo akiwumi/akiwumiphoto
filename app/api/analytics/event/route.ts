@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
-import { createDedupeKey, hashVisitorToken, normalizeAnalyticsEvent, normalizeDeviceClass } from '@/lib/analytics';
+import { createDedupeKey, hashVisitorToken, normalizeAnalyticsEvent, normalizeDeviceClass } from '../../../../lib/analytics.ts';
 
 const MAX_BODY_BYTES = 16_384;
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 60;
 const requests = new Map<string, { count: number; resetAt: number }>();
 
-function ignored() { return NextResponse.json({ ok: true }); }
+function ignored() { return Response.json({ ok: true }); }
 
 function isBot(userAgent: string) {
   return /bot|crawl|spider|slurp|headless|monitor|uptime|preview|facebookexternalhit|linkedinbot/i.test(userAgent);
@@ -25,18 +24,12 @@ export async function POST(request: Request) {
   if (isBot(userAgent)) return ignored();
   const headerConsent = request.headers.get('x-analytics-consent') === 'accepted';
   const contentLength = Number(request.headers.get('content-length') || 0);
-  if (contentLength > MAX_BODY_BYTES) return ignored();
-
-  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown').split(',')[0].trim();
-  const now = Date.now();
-  const previous = requests.get(ip);
-  if (previous && previous.resetAt > now && previous.count >= MAX_REQUESTS) return ignored();
-  requests.set(ip, previous && previous.resetAt > now ? { count: previous.count + 1, resetAt: previous.resetAt } : { count: 1, resetAt: now + WINDOW_MS });
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) return ignored();
 
   let body: unknown;
   try {
     const text = await request.text();
-    if (text.length > MAX_BODY_BYTES) return ignored();
+    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) return ignored();
     body = JSON.parse(text);
   } catch { return ignored(); }
   if (!body || typeof body !== 'object' || Array.isArray(body)) return ignored();
@@ -52,6 +45,13 @@ export async function POST(request: Request) {
   });
   if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || event.path.startsWith('/register/verified')) return ignored();
 
+  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown').split(',')[0].trim().slice(0, 128);
+  const rateKey = `${ip}:${hashVisitorToken(event.visitorToken).slice(0, 16)}:${event.eventName}`;
+  const now = Date.now();
+  const previous = requests.get(rateKey);
+  if (previous && previous.resetAt > now && previous.count >= MAX_REQUESTS) return ignored();
+  requests.set(rateKey, previous && previous.resetAt > now ? { count: previous.count + 1, resetAt: previous.resetAt } : { count: 1, resetAt: now + WINDOW_MS });
+
   try {
     const { error } = await serviceClient().from('analytics_events').insert({
       event_name: event.eventName,
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       referrer_origin: event.referrerOrigin,
       device_class: normalizeDeviceClass(userAgent),
       metadata: event.metadata,
-      dedupe_key: createDedupeKey(event),
+      dedupe_key: createDedupeKey(event, Math.floor(now / 10_000)),
     });
     if (error && !/duplicate|unique/i.test(error.message)) console.error('[analytics] insert failed', error.message);
   } catch (error) { console.error('[analytics] unavailable', error); }

@@ -75,8 +75,8 @@ export function hashVisitorToken(token: string, secret = process.env.ANALYTICS_H
   return createHmac('sha256', secret).update(token).digest('hex');
 }
 
-export function createDedupeKey(event: Pick<NormalizedAnalyticsEvent, 'eventName' | 'path' | 'visitorToken' | 'metadata'>): string {
-  const payload = JSON.stringify([event.eventName, event.path, event.visitorToken, event.metadata]);
+export function createDedupeKey(event: Pick<NormalizedAnalyticsEvent, 'eventName' | 'path' | 'visitorToken' | 'metadata'>, bucket = Math.floor(Date.now() / 10_000)): string {
+  const payload = JSON.stringify([event.eventName, event.path, event.visitorToken, event.metadata, bucket]);
   return hashVisitorToken(payload).slice(0, 64);
 }
 

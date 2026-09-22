@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDedupeKey, hashVisitorToken, normalizeAnalyticsEvent, normalizeDeviceClass, normalizePath, normalizeReferrer, sanitizeMetadata } from './analytics';
+import { createDedupeKey, hashVisitorToken, normalizeAnalyticsEvent, normalizeDeviceClass, normalizePath, normalizeReferrer, sanitizeMetadata } from './analytics.ts';
 
 test('normalizes the privacy-sensitive event fields', () => {
   const event = normalizeAnalyticsEvent({ eventName: 'gallery_view', path: '/gallery/forest', visitorToken: 'opaque-token-123456', metadata: { gallerySlug: 'forest', email: 'nope@example.com' }, referrer: 'https://example.com/page?x=1' });
