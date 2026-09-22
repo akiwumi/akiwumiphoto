@@ -20,7 +20,7 @@ export default async function PaidPage({ searchParams }: { searchParams: Promise
   return (
     <main className="full-screen flex flex-col overflow-y-auto">
       <NavBar />
-      <ClearBasket />
+      <ClearBasket reference={reference} />
       <div className="basket-content page-enter">
         <div className="basket-thanks" role="status">
           <h1>Thank you</h1>

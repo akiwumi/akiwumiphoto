@@ -77,7 +77,7 @@ export default function RegisterClient({
 
       if (res.ok && data?.ok) {
         setStatus(data.status === 'already_registered' ? 'already_registered' : 'sent');
-        void trackAnalyticsEvent('registration_complete');
+        if (data.status === 'verification_sent') void trackAnalyticsEvent('registration_complete');
         return true;
       }
 

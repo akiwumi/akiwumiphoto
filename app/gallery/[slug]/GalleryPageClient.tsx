@@ -9,6 +9,7 @@ import TileBasketButton from '@/components/TileBasketButton';
 import FavoriteButton from '@/components/FavoriteButton';
 import NotForSaleStamp from '@/components/NotForSaleStamp';
 import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
+import { useCookieConsent } from '@/components/CookieConsentProvider';
 import { defaultSize } from '@/lib/print-availability';
 import { sectionCover, sectionImages } from '@/lib/sub-galleries';
 import type { Gallery, GalleryImage, GallerySection, GallerySectionImage, PrintSize, SoldBySize } from '@/types';
@@ -44,6 +45,7 @@ interface Props {
  * so a sub-gallery can be shared, and switching doesn't reload the page.
  */
 export default function GalleryPageClient({ gallery, images, sizes, sold, sections, memberships, initialSub }: Props) {
+  const { status: consentStatus } = useCookieConsent();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(initialSub);
 
@@ -57,14 +59,15 @@ export default function GalleryPageClient({ gallery, images, sizes, sold, sectio
   const tiles = active ? active.members : images.filter((image) => !grouped.has(image.id));
 
   useEffect(() => {
+    if (consentStatus !== 'accepted') return;
     trackGalleryEventOnce(`gallery:${gallery.slug}`, 'gallery_view', { galleryId: gallery.id, gallerySlug: gallery.slug });
-  }, [gallery.id, gallery.slug]);
+  }, [consentStatus, gallery.id, gallery.slug]);
 
   useEffect(() => {
-    if (lightboxIndex === null) return;
+    if (consentStatus !== 'accepted' || lightboxIndex === null) return;
     const image = tiles[lightboxIndex];
     if (image) trackGalleryEventOnce(`image:${image.id}`, 'image_open', { imageId: image.id });
-  }, [lightboxIndex, tiles]);
+  }, [consentStatus, lightboxIndex, tiles]);
 
   // Back and forward move between sub-galleries.
   useEffect(() => {
