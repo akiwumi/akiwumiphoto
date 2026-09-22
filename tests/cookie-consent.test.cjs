@@ -41,7 +41,9 @@ test('cookie policy states categories, provider, retention, and contact route', 
   assert.match(policy, /Essential cookies/);
   assert.match(policy, /first-party analytics/);
   assert.match(policy, /Supabase database/);
-  assert.match(policy, /anonymous identifier/);
+  assert.match(policy, /persistent anonymous browser identifier/);
+  assert.match(policy, /local storage/);
+  assert.match(policy, /consent again/);
   assert.match(policy, /withdraw/);
   assert.match(policy, /six months/i);
   assert.match(policy, /href="\/contact"/);

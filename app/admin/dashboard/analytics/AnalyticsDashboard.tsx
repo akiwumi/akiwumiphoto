@@ -2,7 +2,8 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, Eye, Globe2, MousePointerClick, Users, type LucideIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { ANALYTICS_DEMO_NOTICE, type AnalyticsSummary } from '@/lib/analytics-dashboard';
+import { type AnalyticsSummary } from '@/lib/analytics-dashboard';
+import { ANALYTICS_DEMO_NOTICE } from '@/lib/analytics-demo';
 import shell from '../AdminShell.module.css';
 import styles from './AnalyticsDashboard.module.css';
 const n = (v: unknown) => new Intl.NumberFormat().format(Number(v || 0));
