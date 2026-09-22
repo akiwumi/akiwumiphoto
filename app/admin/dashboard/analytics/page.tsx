@@ -1,12 +1,20 @@
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase-server';
 import { isAdmin } from '@/lib/admin-auth';
-import { getAnalyticsSummary } from '@/lib/analytics-dashboard';
+import { clampAnalyticsRange, getAnalyticsSummary } from '@/lib/analytics-dashboard';
+import { getAnalyticsDemoSummary } from '@/lib/analytics-demo';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ start?: string; end?: string }> }) {
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ start?: string; end?: string; demo?: string }> }) {
+  const params = await searchParams;
+  const previewDemo = process.env.NODE_ENV !== 'production' && params.demo === '1';
+  if (previewDemo) {
+    const bounded = clampAnalyticsRange(params.start, params.end);
+    return <AnalyticsDashboard initial={getAnalyticsDemoSummary(bounded)} demo customRange={Boolean(params.start?.match(/^\d{4}-\d{2}-\d{2}$/) || params.end?.match(/^\d{4}-\d{2}-\d{2}$/))} />;
+  }
+
   try {
     const auth = await createServerClient();
     const { data: { user } } = await auth.auth.getUser();
@@ -14,7 +22,6 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   } catch {
     if (process.env.NODE_ENV === 'production') redirect('/admin');
   }
-  const params = await searchParams;
   let result: Awaited<ReturnType<typeof getAnalyticsSummary>> | null = null;
   try { result = await getAnalyticsSummary({ start: params.start, end: params.end }); } catch { /* rendered below */ }
   return result
