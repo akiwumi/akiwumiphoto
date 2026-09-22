@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Reveal from '@/components/Reveal';
+import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
 
 /**
  * Web3Forms only accepts submissions from the browser on the free plan —
@@ -108,6 +109,7 @@ function ContactForm() {
       if (res.ok && data?.success) {
         setStatus('success');
         setForm({ ...EMPTY, message: '' });
+        void trackAnalyticsEvent('contact_submit', { category: 'contact' });
         return;
       }
 

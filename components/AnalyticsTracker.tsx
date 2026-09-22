@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 import { useCookieConsent } from './CookieConsentProvider';
+import { getConsentStatus } from '@/lib/cookie-consent';
 import type { AnalyticsEventName, AnalyticsMetadata } from '@/lib/analytics';
 
 const TOKEN_KEY = 'akiwumi-analytics-token-v1';
@@ -22,6 +23,9 @@ function getToken() {
 }
 
 export async function trackAnalyticsEvent(name: AnalyticsEventName, metadata: AnalyticsMetadata = {}): Promise<boolean> {
+  try {
+    if (getConsentStatus(window.localStorage) !== 'accepted') return false;
+  } catch { return false; }
   const visitorToken = getToken();
   if (!visitorToken) return false;
   const body = JSON.stringify({ consent: true, eventName: name, path: window.location.pathname, visitorToken, sessionId: visitorToken, metadata, referrer: document.referrer });

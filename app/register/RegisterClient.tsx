@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import { validateCollector, type FieldErrors } from '@/lib/collector-validation';
+import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
 
 interface CountryOption {
   code: string;
@@ -76,6 +77,7 @@ export default function RegisterClient({
 
       if (res.ok && data?.ok) {
         setStatus(data.status === 'already_registered' ? 'already_registered' : 'sent');
+        void trackAnalyticsEvent('registration_complete');
         return true;
       }
 

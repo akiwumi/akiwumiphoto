@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { addToBasket } from '@/lib/basket-store';
+import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
 import type { PrintSize } from '@/types';
 
 /**
@@ -27,6 +28,7 @@ export default function TileBasketButton({ imageId, size }: { imageId: string; s
         // The tile itself opens the lightbox.
         e.stopPropagation();
         addToBasket(imageId, size.id);
+        void trackAnalyticsEvent('basket_add', { imageId, sizeId: size.id });
         setAdded(true);
       }}
     >

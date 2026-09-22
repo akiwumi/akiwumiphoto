@@ -7,6 +7,7 @@ import CurrencySelect from '@/components/CurrencySelect';
 import PriceTag from '@/components/PriceTag';
 import { getPrintSizes, getPrintsPageContent, listItems } from '@/lib/print-shop';
 import { SHIPPING_POLICY, DISPATCH_NOTICE } from '@/lib/shipping';
+import PrintsAnalytics from '@/components/PrintsAnalytics';
 
 export const metadata: Metadata = {
   title: 'Limited Edition Prints | Eugene Akiwumi',
@@ -29,6 +30,7 @@ export default async function PrintsPage() {
       className="full-screen flex flex-col overflow-y-auto"
     >
       <NavBar />
+      <PrintsAnalytics />
 
       <div className="prints-content flex-1 pb-12 page-enter" style={{ padding: '14px 60px 60px' }}>
         <Reveal>

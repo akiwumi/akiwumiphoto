@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { addToBasket, useBasketCount, useMoney } from '@/lib/basket-store';
+import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
 import { editionLabel, isPurchasable, remaining } from '@/lib/print-availability';
 import type { PrintSize, SoldBySize } from '@/types';
 
@@ -52,6 +53,7 @@ export default function BuyPrintPanel({ imageId, sizes, sold, onClose }: Props) 
                   className="buy-panel-add"
                   onClick={() => {
                     addToBasket(imageId, size.id);
+                    void trackAnalyticsEvent('basket_add', { imageId, sizeId: size.id });
                     setAdded(key);
                   }}
                   aria-label={`Add ${size.name} print to basket`}
