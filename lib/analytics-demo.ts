@@ -2,6 +2,14 @@ import type { AnalyticsRange, AnalyticsSummary } from './analytics-dashboard';
 
 export const ANALYTICS_DEMO_NOTICE = 'Development demo fixture — Supabase has no analytics rows; values are illustrative only.';
 
+/** Preview-only fallback for unavailable Supabase/RPC infrastructure, never auth failures or production. */
+export function canUseDemoFixture(error: unknown): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  const message = error instanceof Error ? error.message : String(error);
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+  return !/admin required/i.test(message) && code !== '42501';
+}
+
 const DEMO_DAILY_VALUES = Array.from({ length: 30 }, (_, index) => ({
   unique_visitors: 12 + (index % 5),
   sessions: 16 + (index % 7),

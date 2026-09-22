@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase-server';
 import { isAdmin } from '@/lib/admin-auth';
-import { getAnalyticsDemoSummary } from './analytics-demo';
+import { canUseDemoFixture, getAnalyticsDemoSummary } from './analytics-demo';
 
 export type AnalyticsRange = { start: string; end: string };
 export type AnalyticsSummary = {
@@ -30,12 +30,6 @@ export function clampAnalyticsRange(start?: string | null, end?: string | null):
   const requestedStart = start && !Number.isNaN(Date.parse(start)) ? Date.parse(start) : endMs - 30 * 86400000;
   const startMs = Math.max(Math.min(requestedStart, endMs), endMs - 366 * 86400000);
   return { start: new Date(startMs).toISOString(), end: new Date(endMs).toISOString() };
-}
-
-function canUseDemoFixture(error: unknown): boolean {
-  return process.env.NODE_ENV !== 'production'
-    && error instanceof Error
-    && error.message.includes('Supabase not configured');
 }
 
 export async function getAnalyticsSummary(range?: Partial<AnalyticsRange>): Promise<{ data: AnalyticsSummary; demo: boolean }> {
