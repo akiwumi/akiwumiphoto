@@ -47,20 +47,21 @@ export default function FinalPreview({ initialContacts, resendActive }: { initia
   async function sendAll() {
     if (!draft || selected.length === 0) return;
     if (!window.confirm(`Record personalized sends for ${selected.length} recipients? This is the final confirmation.`)) return;
-    setSending(true); setMessage(''); let completed = 0; const campaignId = draft.campaignId ?? crypto.randomUUID();
+    setSending(true); setMessage(''); let completed = 0; let trackingWarning = false; const campaignId = draft.campaignId ?? crypto.randomUUID();
     try {
       for (const contact of selected) {
         const rendered = renderMessage({ html: draft.html, text: draft.text, subject: draft.subject, data: mergeData(contact) });
         const response = await fetch('/api/admin/outreach/campaigns/local/send-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ campaignId, contactId: contact.id, name: contact.name, studio: contact.studio, country: contact.country, website: contact.website, to: contact.email, from: 'info@akiwumiphoto.com', replyTo: 'info@akiwumiphoto.com', subject: rendered.subject, html: rendered.html, text: rendered.text }) });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? 'Unable to record send');
+        trackingWarning ||= Boolean(result.trackingError);
         const record = { contactId: contact.id, email: contact.email, sentAt: new Date().toISOString(), providerMessageId: result.providerMessageId, subject: rendered.subject, html: rendered.html, text: rendered.text };
         setSent((current) => { const next = { ...current, [contact.id]: record }; window.localStorage.setItem(SENT_CONTACTS_STORAGE_KEY, JSON.stringify(Object.values(next))); return next; });
         completed += 1;
       }
       window.localStorage.removeItem(OUTREACH_DRAFT_STORAGE_KEY);
       setSendComplete(true);
-      setMessage(`Sent ${completed} personalized email${completed === 1 ? '' : 's'} successfully. Delivery status is now being tracked.`);
+      setMessage(`Sent ${completed} personalized email${completed === 1 ? '' : 's'} successfully.${trackingWarning ? ' Delivery tracking could not be recorded for one or more sends.' : ' Delivery status is now being tracked.'}`);
     } catch (error) { setMessage(`${completed} recorded. ${error instanceof Error ? error.message : 'Unable to complete send.'}`); }
     finally { setSending(false); }
   }
