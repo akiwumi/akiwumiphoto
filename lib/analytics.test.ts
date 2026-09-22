@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDedupeKey, hashVisitorToken, isValidAnalyticsToken, normalizeAnalyticsEvent, normalizeDeviceClass, normalizePath, normalizeReferrer, sanitizeMetadata } from './analytics.ts';
+import { createDedupeKey, hashVisitorToken, isConsentedAnalyticsVisitor, isValidAnalyticsToken, normalizeAnalyticsEvent, normalizeDeviceClass, normalizePath, normalizeReferrer, sanitizeMetadata } from './analytics.ts';
 
 test('normalizes the privacy-sensitive event fields', () => {
   const event = normalizeAnalyticsEvent({ eventName: 'gallery_view', path: '/gallery/forest', visitorToken: 'opaque-token-123456', metadata: { gallerySlug: 'forest', email: 'nope@example.com' }, referrer: 'https://example.com/page?x=1' });
@@ -28,4 +28,7 @@ test('accepts only opaque analytics visitor tokens for attribution', () => {
   assert.equal(isValidAnalyticsToken('short'), false);
   assert.equal(isValidAnalyticsToken('visitor@example.com'), false);
   assert.equal(isValidAnalyticsToken('bad token with spaces'), false);
+  assert.equal(isConsentedAnalyticsVisitor('accepted', 'opaque-token-123456'), true);
+  assert.equal(isConsentedAnalyticsVisitor('declined', 'opaque-token-123456'), false);
+  assert.equal(isConsentedAnalyticsVisitor('accepted', null), false);
 });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { hashVisitorToken, isValidAnalyticsToken } from '@/lib/analytics';
+import { hashVisitorToken, isConsentedAnalyticsVisitor } from '@/lib/analytics';
 import { serviceClient, stripe } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
@@ -8,6 +8,7 @@ export const runtime = 'nodejs';
 export async function GET(request: Request) {
   const sessionId = new URL(request.url).searchParams.get('session_id');
   const visitorToken = request.headers.get('x-analytics-visitor-token');
+  const consent = request.headers.get('x-analytics-consent');
   if (!sessionId || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
@@ -24,7 +25,8 @@ export async function GET(request: Request) {
     if (error) throw error;
     if (!data) return NextResponse.json({ ok: false });
 
-    const attributionToken = isValidAnalyticsToken(visitorToken) ? visitorToken : sessionId;
+    if (!isConsentedAnalyticsVisitor(consent, visitorToken)) return NextResponse.json({ ok: true, tracked: false });
+    const attributionToken = visitorToken;
     const hashedAttribution = hashVisitorToken(attributionToken);
     const { error: analyticsError } = await serviceClient().from('analytics_events').insert({
       event_name: 'payment_success',
@@ -37,7 +39,7 @@ export async function GET(request: Request) {
       dedupe_key: hashVisitorToken(`payment_success:${sessionId}`).slice(0, 64),
     });
     if (analyticsError && !/duplicate|unique/i.test(analyticsError.message)) throw analyticsError;
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, tracked: true });
   } catch (error) {
     console.error('[verify-paid] could not verify order:', error);
     return NextResponse.json({ ok: false }, { status: 503 });

@@ -21,6 +21,10 @@ export function isValidAnalyticsToken(value: unknown): value is string {
   return typeof value === 'string' && value.length >= 16 && value.length <= 128 && SAFE_VALUE.test(value) && !value.includes('@');
 }
 
+export function isConsentedAnalyticsVisitor(consent: unknown, token: unknown): token is string {
+  return consent === 'accepted' && isValidAnalyticsToken(token);
+}
+
 export type AnalyticsInput = {
   eventName: unknown;
   path: unknown;
