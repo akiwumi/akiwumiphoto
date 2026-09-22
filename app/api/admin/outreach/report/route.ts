@@ -1,9 +1,22 @@
 import { NextResponse } from 'next/server';
 import { requireOutreachAdmin } from '@/lib/outreach/auth';
 import { serviceClient } from '@/lib/stripe';
+import { getDeliveryReport } from '@/lib/outreach/delivery-report';
 
 const MAX_IDS = 200;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function GET() {
+  try {
+    await requireOutreachAdmin();
+    return NextResponse.json({ rows: await getDeliveryReport() });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'OUTREACH_UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 });
+    }
+    return NextResponse.json({ error: 'Unable to refresh delivery report.' }, { status: 500 });
+  }
+}
 
 export async function DELETE(request: Request) {
   try {
