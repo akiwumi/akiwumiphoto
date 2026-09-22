@@ -113,6 +113,7 @@ begin
         'gallery_interactions', (select count(distinct session_id) from public.analytics_events where event_name in ('gallery_view', 'image_open') and occurred_at >= range_start and occurred_at < range_end)
       ),
       'gallery_to_paid', jsonb_build_object(
+        'visits', (select count(distinct session_id) from public.analytics_events where event_name = 'page_view' and occurred_at >= range_start and occurred_at < range_end),
         'gallery_interactions', (select count(distinct session_id) from public.analytics_events where event_name in ('gallery_view', 'image_open') and occurred_at >= range_start and occurred_at < range_end),
         'checkout_starts', (select count(distinct session_id) from public.analytics_events where event_name = 'checkout_start' and occurred_at >= range_start and occurred_at < range_end),
         'paid_orders', (select count(distinct session_id) from public.analytics_events where event_name = 'payment_success' and occurred_at >= range_start and occurred_at < range_end)
