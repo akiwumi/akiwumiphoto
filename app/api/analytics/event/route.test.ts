@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { POST, clientAddress, rateLimitKey } from './route.ts';
+import { POST, clientAddress, rateLimitKey, setAnalyticsServiceClientForTest } from './route.ts';
 import { hashVisitorToken } from '../../../../lib/analytics.ts';
 
 test('safely ignores requests without analytics consent', async () => {
@@ -42,6 +42,31 @@ test('uses only trusted client address headers for rate buckets', () => {
   assert.equal(clientAddress(platform), '203.0.113.1');
   assert.equal(rateLimitKey(platform, 'page_view'), rateLimitKey(platform, 'page_view'));
   if (priorVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = priorVercel;
+});
+
+test('degraded unknown-client buckets remain independent per visitor', () => {
+  const request = new Request('http://localhost');
+  const first = rateLimitKey(request, 'page_view', hashVisitorToken('visitor-one-123456'));
+  const second = rateLimitKey(request, 'page_view', hashVisitorToken('visitor-two-123456'));
+  assert.notEqual(first, second);
+  assert.equal(clientAddress(request), 'unknown');
+});
+
+test('inserts a normalized event through the service client', async () => {
+  let inserted: Record<string, unknown> | null = null;
+  const mock = { from: () => ({ insert: async (payload: Record<string, unknown>) => { inserted = payload; return { error: null }; } }) } as unknown as import('@supabase/supabase-js').SupabaseClient;
+  setAnalyticsServiceClientForTest(mock);
+  try {
+    const response = await POST(new Request('http://localhost/api/analytics/event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-analytics-consent': 'accepted', 'user-agent': 'Mozilla/5.0' },
+      body: JSON.stringify({ eventName: 'gallery_view', path: '/gallery/forest', visitorToken: 'opaque-token-123456', metadata: { gallerySlug: 'forest' } }),
+    }));
+    assert.deepEqual(await response.json(), { ok: true });
+    const saved = inserted as unknown as Record<string, unknown>;
+    assert.equal(saved.event_name, 'gallery_view');
+    assert.equal(saved.path, '/gallery/forest');
+  } finally { setAnalyticsServiceClientForTest(null); }
 });
 
 test('hashing fails closed outside explicit development/test mode', () => {

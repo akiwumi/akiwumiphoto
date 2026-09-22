@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createDedupeKey, hashVisitorToken, normalizeAnalyticsEvent, normalizeDeviceClass } from '../../../../lib/analytics.ts';
 
 const MAX_BODY_BYTES = 16_384;
@@ -6,6 +6,7 @@ const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 60;
 const MAX_RATE_ENTRIES = 10_000;
 const requests = new Map<string, { count: number; resetAt: number }>();
+let testServiceClient: SupabaseClient | null = null;
 
 /**
  * Vercel's x-vercel-forwarded-for is trusted as a platform-issued client IP.
@@ -21,8 +22,11 @@ export function clientAddress(request: Request): string {
   return 'unknown';
 }
 
-export function rateLimitKey(request: Request, eventName: string): string {
-  return `${clientAddress(request)}:${eventName}`;
+export function rateLimitKey(request: Request, eventName: string, visitorHash?: string): string {
+  const address = clientAddress(request);
+  return address === 'unknown'
+    ? `visitor:${(visitorHash || 'unknown').slice(0, 16)}:${eventName}`
+    : `${address}:${eventName}`;
 }
 
 function ignored() { return Response.json({ ok: true }); }
@@ -32,10 +36,15 @@ function isBot(userAgent: string) {
 }
 
 function serviceClient() {
+  if (testServiceClient) return testServiceClient;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('Supabase service role is not configured');
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+export function setAnalyticsServiceClientForTest(client: SupabaseClient | null) {
+  testServiceClient = client;
 }
 
 export async function POST(request: Request) {
@@ -64,7 +73,10 @@ export async function POST(request: Request) {
   });
   if (!event || event.path.startsWith('/admin') || event.path.startsWith('/auth') || event.path.startsWith('/register/verified')) return ignored();
 
-  const rateKey = rateLimitKey(request, event.eventName);
+  const visitorHash = hashVisitorToken(event.visitorToken);
+  // Local/non-proxy mode has no trustworthy IP. Fall back to the server hash
+  // so one anonymous client cannot starve every other visitor.
+  const rateKey = rateLimitKey(request, event.eventName, visitorHash);
   const now = Date.now();
   for (const [key, entry] of requests) if (entry.resetAt <= now) requests.delete(key);
   if (requests.size >= MAX_RATE_ENTRIES && !requests.has(rateKey)) return ignored();
@@ -75,7 +87,7 @@ export async function POST(request: Request) {
   try {
     const { error } = await serviceClient().from('analytics_events').insert({
       event_name: event.eventName,
-      visitor_hash: hashVisitorToken(event.visitorToken),
+      visitor_hash: visitorHash,
       session_id: hashVisitorToken(event.sessionId).slice(0, 64),
       path: event.path,
       referrer_origin: event.referrerOrigin,
