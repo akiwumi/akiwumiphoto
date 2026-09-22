@@ -95,7 +95,7 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
             <span className={styles.alwaysOn}>Always on</span>
           </section>
           <section className={styles.category} aria-labelledby="analytics-cookies-title">
-            <div><h3 id="analytics-cookies-title">Analytics</h3><p>Optional. With consent, we store a persistent anonymous browser identifier in local storage and reuse it if you consent again. Its one-way hash and event details go to our Supabase database. This covers page views, gallery and image interactions, contact submissions, print activity, checkout and payment outcomes, and registrations.</p></div>
+            <div><h3 id="analytics-cookies-title">Analytics</h3><p>Optional. With consent, we store a pseudonymous persistent browser identifier in local storage and reuse it if you consent again. Its one-way hash and event details go to our Supabase database; no direct identity fields are used for analytics. This covers page views, gallery and image interactions, contact submissions, print activity, checkout and payment outcomes, and registrations.</p></div>
             <label className={styles.switch}><input type="checkbox" checked={analyticsEnabled} onChange={(event) => setAnalyticsEnabled(event.target.checked)} /><span>Enable analytics</span></label>
           </section>
           <div className={styles.dialogActions}>
