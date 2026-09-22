@@ -18,7 +18,7 @@
 - Modify `components/SiteAnalytics.tsx`: replace Vercel tracking with first-party page-view and interaction tracking helpers.
 - Create `components/AnalyticsTracker.tsx`: client hook/context for interaction events that public components can call without blocking UX.
 - Modify `components/CookieConsentProvider.tsx` and `app/cookie-policy/page.tsx`: describe first-party analytics consistently with existing consent controls.
-- Create `lib/analytics-dashboard.ts`: authenticated server-side Supabase queries and demo fallback.
+- Create `lib/analytics-dashboard.ts`: authenticated server-side Supabase queries; empty storage returns an empty report.
 - Create `app/admin/dashboard/analytics/page.tsx` and `app/admin/dashboard/analytics/AnalyticsDashboard.tsx`: protected dashboard route and UI.
 - Modify `app/admin/dashboard/AdminSidebar.tsx` and `app/admin/dashboard/AdminShell.tsx`: expose the analytics navigation item and active state.
 - Modify public interaction owners (`app/gallery/[slug]/GalleryPageClient.tsx`, `app/contact/*`, `app/basket/*`, checkout/payment routes, and registration success paths): emit named events through the tracker.
@@ -139,24 +139,24 @@ Add an Analytics item to the existing dashboard sidebar and mark `/admin/dashboa
 
 Check anonymous users redirect to `/admin`, admin users can open the page, and narrow viewport layout remains readable. Commit as `feat: add admin analytics dashboard`.
 
-### Task 5: Add privacy copy
+### Task 5: Keep reporting tied to stored data and add privacy copy
 
 **Files:**
 - Modify: `lib/analytics-dashboard.ts`
 - Modify: `components/CookieConsentProvider.tsx`
 - Modify: `app/cookie-policy/page.tsx`
 
-- [ ] **Step 1: Create deterministic demo aggregates**
+- [x] **Step 1: Remove deterministic demo aggregates**
 
-Generate a fixed 30-day dataset in memory with clearly labelled demo values for every metric and event type. Enable it only when `NODE_ENV !== 'production'` and the database has no analytics rows; never insert it into Supabase.
+Remove the demo fixture and fallback paths. Empty storage returns an empty report; storage errors remain visible as errors.
 
 - [ ] **Step 2: Update consent language**
 
 Replace Vercel-specific copy with first-party Supabase-backed analytics wording, explain anonymous session identifiers and tracked action categories, and keep the existing accept/reject/settings behavior unchanged.
 
-- [ ] **Step 3: Test the production guard**
+- [x] **Step 3: Verify the empty state**
 
-Verify that an empty database produces an empty report and that the dashboard reads only stored analytics. Commit as `feat: add analytics privacy copy`.
+Verify that the dashboard reads only stored analytics. Commit as `feat: add analytics privacy copy`.
 
 ### Task 6: Full verification and preview handoff
 
@@ -169,12 +169,12 @@ Run `npm run lint` and `node --test lib/analytics.test.ts app/api/analytics/even
 
 - [ ] **Step 2: Run a production build**
 
-Run `npm run build`. Expected: successful Next.js build with no demo-data production path errors.
+Run `npm run build`. Expected: successful Next.js build.
 
 - [ ] **Step 3: Run manual preview checks**
 
-Open the branch preview, accept analytics consent, browse pages, open a gallery image, submit a test contact form, add/remove a test basket item, and inspect `/admin/dashboard/analytics`. Confirm metrics update only after consent and admin routes remain excluded.
+Open the branch preview, accept analytics consent, browse pages, open a gallery image, submit a test contact form, add/remove a test basket item, and inspect `/admin/dashboard/analytics`. Confirm metrics update only after consent and admin routes remain excluded. With no stored rows, confirm the dashboard shows an empty report.
 
 - [ ] **Step 4: Review branch status**
 
-Run `git diff --check` and `git status --short`; ensure only intentional analytics files are present. Leave the branch unmerged for user review.
+Run `git diff --check` and `git status --short`; ensure only intentional analytics files are present. Integrate only after explicit user approval.

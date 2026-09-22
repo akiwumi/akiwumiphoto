@@ -54,7 +54,7 @@ Analytics must never block navigation, purchases, registration, or form submissi
 - Unit tests for schema validation, sanitization, deduplication, bot exclusion, and aggregate calculations
 - Route tests for authorization, invalid payload rejection, and valid event persistence
 - Component tests or manual browser checks for page tracking and each interaction event
-- Build/lint verification, with the production build checked to ensure demo-seeding code is excluded
+- Build/lint verification, with the production build checked for the analytics dashboard
 
 ## Deployment boundary
 
