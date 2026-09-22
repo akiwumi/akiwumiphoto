@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         description: `Print order ${order.reference}`,
         metadata: { reference: order.reference },
       },
-      success_url: `${siteOrigin(request)}/basket/paid?ref=${encodeURIComponent(order.reference)}`,
+      success_url: `${siteOrigin(request)}/basket/paid?session_id={CHECKOUT_SESSION_ID}&ref=${encodeURIComponent(order.reference)}`,
       cancel_url: `${siteOrigin(request)}/basket`,
     });
 
