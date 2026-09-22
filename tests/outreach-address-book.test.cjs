@@ -7,6 +7,7 @@ test('preserves imported country labels and names missing countries Unknown', ()
   assert.equal(addressBookCountry('United Kingdom'), 'United Kingdom');
   assert.equal(addressBookCountry('  France  '), 'France');
   assert.equal(addressBookCountry(null), 'Unknown');
+  assert.equal(addressBookCountry(42), 'Unknown');
   assert.equal(addressBookCountry('   '), 'Unknown');
 });
 
@@ -28,8 +29,25 @@ test('filters campaign audience by country and keeps all recipients with no coun
     { id: '1', country: 'Sweden' },
     { id: '2', country: 'Germany' },
     { id: '3', country: 'Germany' },
+    { id: '4', country: null },
   ];
 
   assert.deepEqual(campaignAudienceForCountry(recipients, 'Germany').map((recipient) => recipient.id), ['2', '3']);
-  assert.deepEqual(campaignAudienceForCountry(recipients, '').map((recipient) => recipient.id), ['1', '2', '3']);
+  assert.deepEqual(campaignAudienceForCountry(recipients, 'Unknown').map((recipient) => recipient.id), ['4']);
+  assert.deepEqual(campaignAudienceForCountry(recipients, '').map((recipient) => recipient.id), ['1', '2', '3', '4']);
+});
+
+test('campaign audience visible bulk selection only changes the current country view', () => {
+  const { campaignAudienceSelectionForVisible } = load('lib/outreach/address-book.ts');
+  const sweden = [{ id: 'se-01' }, { id: 'se-02' }];
+  const germany = [{ id: 'de-01' }, { id: 'de-02' }];
+
+  let selected = campaignAudienceSelectionForVisible([], sweden, false);
+  assert.deepEqual(selected, ['se-01', 'se-02']);
+
+  selected = campaignAudienceSelectionForVisible(selected, germany, false);
+  assert.deepEqual(selected, ['se-01', 'se-02', 'de-01', 'de-02']);
+
+  selected = campaignAudienceSelectionForVisible(selected, germany, true);
+  assert.deepEqual(selected, ['se-01', 'se-02']);
 });

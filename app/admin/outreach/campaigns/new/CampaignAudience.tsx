@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { campaignAudienceForCountry, type AddressBookContact } from '@/lib/outreach/address-book';
+import { addressBookCountry, campaignAudienceForCountry, campaignAudienceSelectionForVisible, type AddressBookContact } from '@/lib/outreach/address-book';
 import { OUTREACH_DRAFT_STORAGE_KEY, type OutreachDraft } from '@/lib/outreach/draft';
 import { ERASED_CONTACTS_STORAGE_KEY, MANUAL_CONTACTS_STORAGE_KEY, SENT_CONTACTS_STORAGE_KEY, sentContactMap, type SentContactRecord } from '@/lib/outreach/sent-contacts';
 import { INTERIOR_DESIGNER_MAILER_SUBJECT, INTERIOR_DESIGNER_MAILER_TEXT } from '@/lib/outreach/mailer-template';
@@ -30,17 +30,14 @@ export default function CampaignAudience({ contacts: initialContacts, mailerHtml
     return () => window.clearTimeout(timer);
   }, [initialContacts]);
 
-  const countries = [...new Set(contacts.map((entry) => entry.country))].sort((left, right) => left.localeCompare(right));
+  const countries = [...new Set(contacts.map((entry) => addressBookCountry(entry.country)))].sort((left, right) => left.localeCompare(right));
   const visibleContacts = campaignAudienceForCountry(contacts, country);
   const visibleAvailable = visibleContacts.filter((entry) => !sent[entry.id]);
   const selected = contacts.filter((entry) => selectedIds.includes(entry.id) && !sent[entry.id]);
   const allVisibleAvailableSelected = visibleAvailable.length > 0 && visibleAvailable.every((entry) => selectedIds.includes(entry.id));
 
   function toggleAllVisibleAvailable() {
-    const availableIds = new Set(visibleAvailable.map((entry) => entry.id));
-    setSelectedIds((current) => allVisibleAvailableSelected
-      ? current.filter((id) => !availableIds.has(id))
-      : [...current.filter((id) => !availableIds.has(id)), ...visibleAvailable.map((entry) => entry.id)]);
+    setSelectedIds((current) => campaignAudienceSelectionForVisible(current, visibleAvailable, allVisibleAvailableSelected));
   }
 
   function saveAndReview() {

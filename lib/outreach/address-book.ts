@@ -17,15 +17,26 @@ export interface AddressBookContact {
   suppressed: boolean;
 }
 
-export function addressBookCountry(value: string | null | undefined): string {
-  return value?.trim() || 'Unknown';
+export function addressBookCountry(value: unknown): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : 'Unknown';
 }
 
-export function campaignAudienceForCountry<T extends Pick<AddressBookContact, 'country'>>(
+export function campaignAudienceForCountry<T extends { country: unknown }>(
   recipients: T[],
   country: string,
 ): T[] {
-  return country ? recipients.filter((recipient) => recipient.country === country) : recipients;
+  return country ? recipients.filter((recipient) => addressBookCountry(recipient.country) === country) : recipients;
+}
+
+export function campaignAudienceSelectionForVisible<T extends { id: string }>(
+  currentIds: string[],
+  visibleAvailable: T[],
+  allVisibleAvailableSelected: boolean,
+): string[] {
+  const availableIds = new Set(visibleAvailable.map((entry) => entry.id));
+  return allVisibleAvailableSelected
+    ? currentIds.filter((id) => !availableIds.has(id))
+    : [...currentIds.filter((id) => !availableIds.has(id)), ...visibleAvailable.map((entry) => entry.id)];
 }
 
 export function filterAddressBookContacts<T extends Pick<AddressBookContact, 'name' | 'studio' | 'email' | 'country'>>(
@@ -35,9 +46,9 @@ export function filterAddressBookContacts<T extends Pick<AddressBookContact, 'na
 ): T[] {
   const normalizedQuery = query.trim().toLowerCase();
   return contacts.filter((contact) => {
-    const matchesSearch = !normalizedQuery || [contact.name, contact.studio, contact.email, contact.country]
+    const matchesSearch = !normalizedQuery || [contact.name, contact.studio, contact.email, addressBookCountry(contact.country)]
       .some((value) => value.toLowerCase().includes(normalizedQuery));
-    return matchesSearch && (!country || contact.country === country);
+    return matchesSearch && (!country || addressBookCountry(contact.country) === country);
   });
 }
 
