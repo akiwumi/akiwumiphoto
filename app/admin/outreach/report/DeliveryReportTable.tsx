@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { deliveryReportCountries, filterDeliveryReportRows } from '@/lib/outreach/delivery-report';
 import type { DeliveryReportRow } from '@/lib/outreach/delivery-report';
 import styles from '../Outreach.module.css';
@@ -8,6 +9,7 @@ import styles from '../Outreach.module.css';
 function formatDate(value: string | null) { return value ? new Date(value).toLocaleString() : '—'; }
 
 export default function DeliveryReportTable({ rows }: { rows: DeliveryReportRow[] }) {
+  const router = useRouter();
   const [reportRows, setReportRows] = useState(rows);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -61,6 +63,7 @@ export default function DeliveryReportTable({ rows }: { rows: DeliveryReportRow[
         ids.forEach((id) => next.delete(id));
         return next;
       });
+      router.refresh();
     } catch {
       setErrorMessage('Unable to erase delivery records.');
     } finally {
