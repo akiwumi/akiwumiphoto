@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:analytics": "NODE_ENV=test node --experimental-strip-types --test lib/analytics.test.ts app/api/analytics/event/route.test.ts"
+    "test:analytics": "NODE_ENV=test node --experimental-strip-types --test lib/analytics.test.ts app/api/analytics/event/route.test.ts",
+    "analytics:import:vercel": "node scripts/import-vercel-analytics.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
