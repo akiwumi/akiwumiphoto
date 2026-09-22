@@ -18,6 +18,6 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   let result: Awaited<ReturnType<typeof getAnalyticsSummary>> | null = null;
   try { result = await getAnalyticsSummary({ start: params.start, end: params.end }); } catch { /* rendered below */ }
   return result
-    ? <AnalyticsDashboard initial={result.data} demo={result.demo} />
+    ? <AnalyticsDashboard initial={result.data} demo={result.demo} customRange={Boolean(params.start?.match(/^\d{4}-\d{2}-\d{2}$/) || params.end?.match(/^\d{4}-\d{2}-\d{2}$/))} />
     : <AnalyticsDashboard initial={null} demo={false} error="Analytics are temporarily unavailable. Try again later." />;
 }

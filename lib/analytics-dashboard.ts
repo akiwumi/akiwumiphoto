@@ -24,7 +24,8 @@ const EMPTY: AnalyticsSummary = {
 
 export function clampAnalyticsRange(start?: string | null, end?: string | null): AnalyticsRange {
   const now = Date.now();
-  const endMs = Math.min(end && !Number.isNaN(Date.parse(end)) ? Date.parse(end) : now, now);
+  const parsedEnd = end && !Number.isNaN(Date.parse(end)) ? Date.parse(end) + (/^\d{4}-\d{2}-\d{2}$/.test(end) ? 86400000 : 0) : now;
+  const endMs = Math.min(parsedEnd, now);
   const requestedStart = start && !Number.isNaN(Date.parse(start)) ? Date.parse(start) : endMs - 30 * 86400000;
   const startMs = Math.max(Math.min(requestedStart, endMs), endMs - 366 * 86400000);
   return { start: new Date(startMs).toISOString(), end: new Date(endMs).toISOString() };
