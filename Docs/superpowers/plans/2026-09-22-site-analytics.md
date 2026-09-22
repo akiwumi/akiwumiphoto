@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add consent-gated, first-party visitor and conversion analytics stored in Supabase, with a protected admin dashboard and preview-only demo data.
+**Goal:** Add consent-gated, first-party visitor and conversion analytics stored in Supabase, with a protected admin dashboard that displays stored data only.
 
 **Architecture:** A browser tracker creates an opaque local session token and sends a strict event payload to `POST /api/analytics/event`. The route sanitizes and rate-limits events before inserting them into `analytics_events`; server-side aggregation helpers feed `/admin/dashboard/analytics`. Existing cookie consent gates the tracker, and existing admin auth protects reporting.
 
@@ -22,7 +22,7 @@
 - Create `app/admin/dashboard/analytics/page.tsx` and `app/admin/dashboard/analytics/AnalyticsDashboard.tsx`: protected dashboard route and UI.
 - Modify `app/admin/dashboard/AdminSidebar.tsx` and `app/admin/dashboard/AdminShell.tsx`: expose the analytics navigation item and active state.
 - Modify public interaction owners (`app/gallery/[slug]/GalleryPageClient.tsx`, `app/contact/*`, `app/basket/*`, checkout/payment routes, and registration success paths): emit named events through the tracker.
-- Create `scripts/seed-analytics-demo.mjs` or a fixture module guarded by `NODE_ENV !== 'production'`: generate labelled preview data without a production path.
+- Do not seed or render sample analytics; an empty database must show an empty report.
 - Create `lib/analytics.test.ts` and `app/api/analytics/event/route.test.ts`: deterministic unit/route coverage using Node's built-in test runner.
 
 ### Task 1: Define the Supabase event store
@@ -129,7 +129,7 @@ Use `createServerClient()` and `isAdmin()` before querying the aggregate functio
 
 - [ ] **Step 2: Build the dashboard view**
 
-Render headline cards for unique visitors, sessions, page views, contact submissions, checkout starts, completed payments, and registrations; a daily traffic table/chart; top pages/referrers/devices; and the two requested funnels. Include loading/empty/error states and a visible “Demo data” label when fixture data is used.
+Render headline cards for unique visitors, sessions, page views, contact submissions, checkout starts, completed payments, and registrations; a daily traffic table/chart; top pages/referrers/devices; and the two requested funnels. Include loading, empty, and error states.
 
 - [ ] **Step 3: Add admin navigation**
 
@@ -139,10 +139,9 @@ Add an Analytics item to the existing dashboard sidebar and mark `/admin/dashboa
 
 Check anonymous users redirect to `/admin`, admin users can open the page, and narrow viewport layout remains readable. Commit as `feat: add admin analytics dashboard`.
 
-### Task 5: Add isolated preview fixtures and privacy copy
+### Task 5: Add privacy copy
 
 **Files:**
-- Create: `lib/analytics-demo.ts`
 - Modify: `lib/analytics-dashboard.ts`
 - Modify: `components/CookieConsentProvider.tsx`
 - Modify: `app/cookie-policy/page.tsx`
@@ -157,7 +156,7 @@ Replace Vercel-specific copy with first-party Supabase-backed analytics wording,
 
 - [ ] **Step 3: Test the production guard**
 
-Run a production-mode dashboard check and assert demo data cannot be selected. Commit as `feat: add analytics preview fixtures and privacy copy`.
+Verify that an empty database produces an empty report and that the dashboard reads only stored analytics. Commit as `feat: add analytics privacy copy`.
 
 ### Task 6: Full verification and preview handoff
 
@@ -179,4 +178,3 @@ Open the branch preview, accept analytics consent, browse pages, open a gallery 
 - [ ] **Step 4: Review branch status**
 
 Run `git diff --check` and `git status --short`; ensure only intentional analytics files are present. Leave the branch unmerged for user review.
-

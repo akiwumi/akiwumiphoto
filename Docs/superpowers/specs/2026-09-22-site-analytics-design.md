@@ -43,7 +43,7 @@ Add `/admin/dashboard/analytics`, protected by the existing `isAdmin` check and 
 - Funnel cards: visit → gallery interaction → checkout → paid order, and visit → registration completion
 - A date-range selector with common ranges and a custom bounded range
 
-For branch preview, a development-only seed route or fixture data renders clearly labelled demo analytics when the database has no event records. It must never be reachable in production or mix sample data with real reporting.
+The dashboard reads only stored analytics. Empty storage produces an empty report; unavailable storage produces an error state. No sample or seed events are used.
 
 ## Failure handling
 
@@ -58,4 +58,4 @@ Analytics must never block navigation, purchases, registration, or form submissi
 
 ## Deployment boundary
 
-This implementation remains in `codex/site-analytics` until the user reviews the preview and explicitly asks to merge/deploy it. The preview is allowed to write only to the configured non-production environment or use demo data; it must not silently collect production visitor analytics.
+The implementation is isolated on `codex/site-analytics` for review before integration. The dashboard reads stored analytics only. Empty storage produces an empty report; unavailable storage produces an error state.

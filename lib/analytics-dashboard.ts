@@ -1,6 +1,5 @@
 import { createServerClient } from '@/lib/supabase-server';
 import { isAdmin } from '@/lib/admin-auth';
-import { canUseDemoFixture, getAnalyticsDemoSummary } from './analytics-demo';
 
 export type AnalyticsRange = { start: string; end: string };
 export type AnalyticsSummary = {
@@ -32,21 +31,13 @@ export function clampAnalyticsRange(start?: string | null, end?: string | null):
   return { start: new Date(startMs).toISOString(), end: new Date(endMs).toISOString() };
 }
 
-export async function getAnalyticsSummary(range?: Partial<AnalyticsRange>): Promise<{ data: AnalyticsSummary; demo: boolean }> {
+export async function getAnalyticsSummary(range?: Partial<AnalyticsRange>): Promise<AnalyticsSummary> {
   const bounded = clampAnalyticsRange(range?.start, range?.end);
-  try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!isAdmin(user)) throw new Error('Admin required');
-    const { data, error } = await supabase.rpc('get_analytics_summary', { start_at: bounded.start, end_at: bounded.end });
-    if (error) throw error;
-    const { data: hasEvents, error: presenceError } = await supabase.rpc('has_analytics_events');
-    if (presenceError) throw presenceError;
-    const summary = data as Partial<AnalyticsSummary>;
-    if (process.env.NODE_ENV !== 'production' && hasEvents === false) return { data: getAnalyticsDemoSummary(bounded), demo: true };
-    return { data: { ...EMPTY, ...summary, range_start: bounded.start, range_end: bounded.end }, demo: false };
-  } catch (error) {
-    if (!canUseDemoFixture(error)) throw error;
-    return { data: getAnalyticsDemoSummary(bounded), demo: true };
-  }
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!isAdmin(user)) throw new Error('Admin required');
+  const { data, error } = await supabase.rpc('get_analytics_summary', { start_at: bounded.start, end_at: bounded.end });
+  if (error) throw error;
+  const summary = data as Partial<AnalyticsSummary>;
+  return { ...EMPTY, ...summary, range_start: bounded.start, range_end: bounded.end };
 }
