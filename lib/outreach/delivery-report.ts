@@ -2,11 +2,14 @@ import { serviceClient } from '@/lib/stripe';
 import { effectiveDeliveryStatus } from '@/lib/outreach/domain';
 import { getOutreachProvider } from '@/lib/outreach/providers';
 import type { DeliveryStatus } from '@/types/outreach';
+import { addressBookCountry } from './address-book';
+import { categoryLabel } from './categories';
 
 export type DeliveryReportRow = {
   id: string;
   email: string;
   country: string;
+  category: string;
   contactName: string;
   studio: string;
   campaign: string;
@@ -22,20 +25,26 @@ export type DeliveryReportRow = {
 };
 
 export function deliveryReportCountries(rows: Array<Pick<DeliveryReportRow, 'country'>>): string[] {
-  return [...new Set(rows.map((row) => row.country?.trim() || 'Unknown'))]
+  return [...new Set(rows.map((row) => addressBookCountry(row.country)))]
     .sort((left, right) => left.localeCompare(right));
 }
 
-export function filterDeliveryReportRows<T extends Pick<DeliveryReportRow, 'country' | 'status' | 'sentAt'>>(
+export function deliveryReportCategories(rows: Array<Pick<DeliveryReportRow, 'category'>>): string[] {
+  return [...new Set(rows.map((row) => categoryLabel(row.category)))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
+export function filterDeliveryReportRows<T extends Pick<DeliveryReportRow, 'country' | 'category' | 'status' | 'sentAt'>>(
   rows: T[],
-  filters: { country: string; status: string; from?: string; to?: string },
+  filters: { country: string; category?: string; status: string; from?: string; to?: string },
 ): T[] {
   const after = filters.from ? new Date(`${filters.from}T00:00:00`).getTime() : -Infinity;
   const before = filters.to ? new Date(`${filters.to}T23:59:59.999`).getTime() : Infinity;
   return rows.filter((row) => {
     const sent = row.sentAt ? new Date(row.sentAt).getTime() : 0;
     return sent >= after && sent <= before
-      && (!filters.country || (row.country?.trim() || 'Unknown') === filters.country)
+      && (!filters.country || addressBookCountry(row.country) === filters.country)
+      && (!filters.category || categoryLabel(row.category) === filters.category)
       && (filters.status === 'all' || row.status === filters.status);
   });
 }
@@ -46,7 +55,7 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
     // service client so report reads are not affected by the browser session's
     // RLS claims, which can otherwise make a successful send look missing.
     const client = serviceClient();
-    const { data, error } = await client.from('outreach_deliveries').select('id, provider_message_id, status, rendered_subject, sent_at, delivered_at, opened_at, clicked_at, bounced_at, error_message, outreach_contacts(email, first_name, last_name, company_name, country), outreach_campaigns(name), outreach_events(event_type, occurred_at)').order('created_at', { ascending: false });
+    const { data, error } = await client.from('outreach_deliveries').select('id, provider_message_id, status, rendered_subject, sent_at, delivered_at, opened_at, clicked_at, bounced_at, error_message, outreach_contacts(email, first_name, last_name, company_name, country, outreach_contact_categories(name)), outreach_campaigns(name), outreach_events(event_type, occurred_at)').order('created_at', { ascending: false });
     if (error) throw error;
     const resendEnabled = process.env.OUTREACH_EMAIL_PROVIDER === 'resend' || process.env.OUTREACH_PROVIDER === 'resend';
     const provider = resendEnabled && (process.env.OUTREACH_PROVIDER_API_KEY || process.env.RESEND_API_KEY) ? getOutreachProvider() : null;
@@ -58,6 +67,7 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
       : null;
     return await Promise.all((data ?? []).map(async (row) => {
       const contact = Array.isArray(row.outreach_contacts) ? row.outreach_contacts[0] : row.outreach_contacts;
+      const contactCategory = contact && (Array.isArray(contact.outreach_contact_categories) ? contact.outreach_contact_categories[0] : contact.outreach_contact_categories);
       const campaign = Array.isArray(row.outreach_campaigns) ? row.outreach_campaigns[0] : row.outreach_campaigns;
       const events = Array.isArray(row.outreach_events) ? row.outreach_events : [];
       let status = effectiveDeliveryStatus(row.status as DeliveryStatus, events.map((event) => event.event_type as DeliveryStatus));
@@ -73,7 +83,8 @@ export async function getDeliveryReport(): Promise<DeliveryReportRow[]> {
       return {
         id: row.id,
         email: contact?.email ?? 'Unknown email',
-        country: contact?.country?.trim() || 'Unknown',
+        country: addressBookCountry(contact?.country),
+        category: categoryLabel(contactCategory?.name),
         contactName: [contact?.first_name, contact?.last_name].filter(Boolean).join(' ') || 'Unknown contact',
         studio: contact?.company_name ?? '—',
         campaign: campaign?.name ?? 'Outreach campaign',

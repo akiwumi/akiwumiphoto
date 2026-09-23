@@ -22,6 +22,8 @@ test('delivery report refreshes reconciled rows while the page is visible', () =
   assert.match(table, /\/api\/admin\/outreach\/report/);
   assert.match(table, /setInterval/);
   assert.match(table, /visibilitychange/);
+  assert.match(table, /Category/);
+  assert.match(table, /category/);
 });
 
 test('returns freshly reconciled report rows for live refreshes', async () => {

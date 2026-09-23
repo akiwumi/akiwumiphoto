@@ -62,6 +62,25 @@ test('intersects country and category campaign filters while preserving no-filte
   assert.deepEqual(campaignAudienceForCountries(recipients, [], []).map((recipient) => recipient.id), ['1', '2', '3', '4']);
 });
 
+test('campaign audience category selection intersects country filters', () => {
+  const { campaignAudienceForCountries } = load('lib/outreach/address-book.ts');
+  const recipients = [
+    { id: '1', country: 'Sweden', category: 'Galleries' },
+    { id: '2', country: 'Germany', category: 'Galleries' },
+    { id: '3', country: 'Germany', category: 'Design stores' },
+    { id: '4', country: 'Germany', category: null },
+  ];
+  assert.deepEqual(campaignAudienceForCountries(recipients, ['Germany'], ['Galleries', 'Uncategorised']).map((recipient) => recipient.id), ['2', '4']);
+});
+
+test('campaign page passes managed categories to the audience selector', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const page = fs.readFileSync(path.resolve(__dirname, '../app/admin/outreach/campaigns/new/page.tsx'), 'utf8');
+  assert.match(page, /getOutreachContactCategories/);
+  assert.match(page, /categories=\{categories\}/);
+});
+
 test('maps a category join safely when the relation is returned as an array or missing', async () => {
   const { getAddressBook } = load('lib/outreach/address-book-server.ts', {
     '@/lib/supabase-server': { createServerClient: async () => ({ from: () => ({ select: () => ({ order: async () => ({ error: null, data: [
