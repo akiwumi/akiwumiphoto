@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../Outreach.module.css';
 import type { AddressBookContact } from '@/lib/outreach/address-book';
 import type { OutreachContactCategory } from '@/lib/outreach/categories-server';
 
-type ImportResult = { error?: string; ok?: boolean; importedCount?: number; duplicateCount?: number; message?: string };
+type SkippedRow = { rowNumber: number; issues: string[] };
+type ImportResult = { error?: string; ok?: boolean; importedCount?: number; duplicateCount?: number; skippedCount?: number; skippedRows?: SkippedRow[]; message?: string };
 
 export default function ImportClient({ initialContacts, initialCategories }: { initialContacts: AddressBookContact[]; initialCategories: OutreachContactCategory[] }) {
   const router = useRouter();
@@ -17,9 +18,23 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [draggingFile, setDraggingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function selectFile(nextFile: File | null) {
+    if (!nextFile) return;
+    if (!/\.(csv|xlsx)$/i.test(nextFile.name)) {
+      setFile(null);
+      setResult({ error: 'Choose a .csv or .xlsx file.' });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    setFile(nextFile);
+    setResult(null);
+  }
 
   async function importWorkbook() {
-    if (!file || !categoryId) { setResult({ error: !file ? 'Choose an .xlsx workbook first.' : 'Choose a contact category before importing.' }); return; }
+    if (!file || !categoryId) { setResult({ error: !file ? 'Choose a .csv or .xlsx file.' : 'Choose a contact category before importing.' }); return; }
     setBusy(true); setResult(null);
     try {
       const form = new FormData();
@@ -52,9 +67,26 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
     <div className={styles.notice}>Workbook rows are imported directly into Supabase and the address book as approved contacts. No email is sent by importing.</div>
     <div className={styles.formGrid}>
       <div className={`${styles.field} ${styles.fieldFull}`}>
-        <label htmlFor="workbook">Source workbook</label>
-        <input className={styles.input} id="workbook" type="file" accept=".xlsx" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setResult(null); }} />
-        {file && <small>{file.name} · ready to import</small>}
+        <label id="import-file-label" htmlFor="workbook">Source file</label>
+        <input ref={fileInputRef} className={styles.srOnly} id="workbook" type="file" accept=".csv,.xlsx" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />
+        <div
+          aria-describedby="import-file-hint import-file-status"
+          aria-disabled={busy}
+          aria-labelledby="import-file-label"
+          className={`${styles.dropZone} ${draggingFile ? styles.dropZoneDragging : ''}`}
+          onClick={() => { if (!busy) fileInputRef.current?.click(); }}
+          onDragEnter={(event) => { event.preventDefault(); if (!busy) setDraggingFile(true); }}
+          onDragLeave={(event) => { event.preventDefault(); setDraggingFile(false); }}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => { event.preventDefault(); setDraggingFile(false); if (!busy) selectFile(event.dataTransfer.files?.[0] ?? null); }}
+          onKeyDown={(event) => { if (!busy && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); fileInputRef.current?.click(); } }}
+          role="button"
+          tabIndex={busy ? -1 : 0}
+        >
+          <strong>{draggingFile ? 'Drop the file to select it' : 'Drag and drop a CSV or XLSX file here'}</strong>
+          <span id="import-file-hint">or press Enter or Space to browse</span>
+        </div>
+        <small id="import-file-status" className={styles.dropZoneStatus}>{file ? `${file.name} · ready to import` : 'No file selected'}</small>
       </div>
       <div className={styles.field}>
         <label htmlFor="import-category">Contact category</label>
@@ -72,7 +104,10 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
       </div>
       <div className={`${styles.field} ${styles.fieldFull}`}><button type="button" className={styles.button} disabled={busy || !file || !categoryId} onClick={importWorkbook}>{busy ? 'Importing…' : 'Import into Supabase & address book →'}</button></div>
       {result?.error && <p className={styles.notice}>{result.error}</p>}
-      {result?.ok && <p className={styles.success}>{result.message} {result.duplicateCount ? `${result.duplicateCount} existing rows were updated.` : ''}</p>}
+      {result?.ok && <div className={styles.importResult} role="status">
+        <p className={styles.success}>{result.message} {result.duplicateCount ? `${result.duplicateCount} existing rows were updated.` : ''} {result.skippedCount ?? 0} invalid {result.skippedCount === 1 ? 'row was' : 'rows were'} skipped.</p>
+        {(result.skippedRows?.length ?? 0) > 0 && <ul className={styles.skippedRows}>{result.skippedRows!.slice(0, 10).map((row) => <li key={row.rowNumber}>Row {row.rowNumber}: {row.issues.join(', ') || 'Invalid contact'}</li>)}</ul>}
+      </div>}
     </div>
   </section>;
 }

@@ -26,6 +26,16 @@
 .contactLink:hover, .contactLink:focus-visible { background:#f4dfc7; color:#744325; outline:none; }
 .formGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:22px; } .field { display:flex; flex-direction:column; gap:7px; } .fieldFull { grid-column:1 / -1; } .field label { color:#786e64; font:600 11px ui-monospace,monospace; letter-spacing:.05em; text-transform:uppercase; } .input, .textarea, .select { border:1px solid #d9cfc3; border-radius:10px; padding:11px 12px; background:#fffdf8; color:#2d2925; font:inherit; } .textarea { min-height:180px; resize:vertical; }
 .notice { margin:0 22px 20px; padding:12px 14px; background:#f7ead8; border-left:3px solid #b46e42; color:#715037; font-size:13px; line-height:1.45; }
+.dropZone { display:grid; gap:6px; min-height:122px; padding:22px; border:2px dashed #b6a99a; border-radius:12px; background:#fffdf8; color:#40362e; cursor:pointer; place-content:center; text-align:center; transition:background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.dropZone strong { font:600 13px ui-monospace,monospace; }
+.dropZone span, .dropZoneStatus { color:#746b62; font-size:12px; }
+.dropZone:hover { background:#fbf4ea; border-color:#9b5a35; }
+.dropZone:focus-visible { outline:3px solid #2c2925; outline-offset:3px; box-shadow:0 0 0 6px #f4dfc7; }
+.dropZone[aria-disabled="true"] { cursor:not-allowed; opacity:.65; }
+.dropZoneDragging { border-color:#2c2925; border-style:solid; background:#f4dfc7; box-shadow:0 0 0 5px #f4dfc7; transform:translateY(-2px); }
+.dropZoneStatus { min-height:18px; }
+.importResult { margin-top:10px; }
+.skippedRows { margin:8px 0 0; padding:10px 14px 10px 32px; border-left:3px solid #b46e42; background:#f7ead8; color:#715037; font:12px/1.5 ui-monospace,monospace; }
 .panelMeta { margin:6px 0 0; color:#867b70; font-size:12px; font-weight:400; }
 .previewMeta { display:flex; flex-wrap:wrap; gap:8px 18px; padding:12px 14px; background:#f4f0e9; border:1px solid #e6ddd1; border-radius:10px 10px 0 0; color:#6e6257; font:12px ui-monospace,monospace; }
 .mailerPreview { display:block; width:100%; min-height:900px; border:1px solid #e6ddd1; border-top:0; border-radius:0 0 10px 10px; background:#e9e9e5; }
