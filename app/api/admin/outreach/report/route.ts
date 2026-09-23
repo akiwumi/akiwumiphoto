@@ -11,9 +11,7 @@ export async function GET() {
     await requireOutreachAdmin();
     return NextResponse.json({ rows: await getDeliveryReport() });
   } catch (error) {
-    if (error instanceof Error && error.message === 'OUTREACH_UNAUTHORIZED') {
-      return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 });
-    }
+    if (error instanceof Error && error.message === 'OUTREACH_UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 });
     return NextResponse.json({ error: 'Unable to refresh delivery report.' }, { status: 500 });
   }
 }

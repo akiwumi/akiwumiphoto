@@ -1,4 +1,4 @@
-export const OUTREACH_DRAFT_STORAGE_KEY = 'akiwumi-outreach-draft';
+export const OUTREACH_DRAFT_STORAGE_KEY = 'akiwumi-outreach-draft-v2';
 
 export interface OutreachDraft {
   campaignId?: string;

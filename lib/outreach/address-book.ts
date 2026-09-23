@@ -38,6 +38,10 @@ export function campaignAudienceForCountries<T extends { country: unknown; categ
   ));
 }
 
+export function campaignAudienceForCountry<T extends { country: unknown }>(recipients: T[], country: string): T[] {
+  return country ? recipients.filter((recipient) => addressBookCountry(recipient.country) === country) : recipients;
+}
+
 export function campaignAudienceSelectionForVisible<T extends { id: string }>(
   currentIds: string[],
   visibleAvailable: T[],

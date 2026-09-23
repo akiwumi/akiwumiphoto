@@ -8,7 +8,8 @@ export async function POST(request: Request) {
     const result = await getOutreachProvider().send({ to: body.to, from: 'Eugene Akiwumi <info@akiwumiphoto.com>', replyTo: 'info@akiwumiphoto.com', subject: body.subject, html: body.html, text: body.text, headers: { 'Reply-To': 'info@akiwumiphoto.com' } });
 
     let deliveryId: string | null = null;
-    if (client && body.campaignId && body.contactId) {
+    let trackingError: string | null = null;
+    if (client && body.campaignId && body.contactId) try {
       const database = serviceClient();
       const existingContact = await database.from('outreach_contacts').select('id').eq('email', body.to).maybeSingle();
       if (existingContact.error) throw existingContact.error;
@@ -29,9 +30,17 @@ export async function POST(request: Request) {
         : await database.from('outreach_deliveries').insert({ campaign_id: campaign.data.id, contact_id: contactId, provider_message_id: result.providerMessageId, status: 'submitted', rendered_subject: body.subject, sent_at: sentAt }).select('id').single();
       if (delivery.error) throw delivery.error;
       deliveryId = delivery.data.id;
+    } catch (error) {
+      console.error('[outreach-send] email accepted but delivery tracking failed', error);
+      trackingError = 'Email accepted, but delivery tracking could not be recorded.';
     }
-    return NextResponse.json({ ok: true, providerMessageId: result.providerMessageId, deliveryId, recipientStatusChanged: false });
+    return NextResponse.json({ ok: true, providerMessageId: result.providerMessageId, deliveryId, recipientStatusChanged: false, trackingError });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to record delivery.' }, { status: 400 });
+    const message = error instanceof Error ? error.message : 'Unable to record delivery.';
+    const quotaExceeded = /quota|rate limit|too many requests|daily limit/i.test(message);
+    return NextResponse.json({
+      error: quotaExceeded ? 'Resend sending limit reached. Wait for the quota reset or upgrade the Resend plan before sending again.' : message,
+      code: quotaExceeded ? 'RESEND_QUOTA_EXCEEDED' : 'OUTREACH_SEND_FAILED',
+    }, { status: quotaExceeded ? 429 : 400 });
   }
 }

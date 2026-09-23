@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { AddressBookContact } from '@/lib/outreach/address-book';
 import { OUTREACH_DRAFT_STORAGE_KEY, type OutreachDraft } from '@/lib/outreach/draft';
@@ -12,13 +13,13 @@ function firstName(name: string): string { if (/founding design team/i.test(name
 function mergeData(contact: AddressBookContact) { return { first_name: firstName(contact.name), company_name: contact.studio, website: contact.website, city: contact.country === 'Sweden' ? 'Stockholm' : null }; }
 
 export default function FinalPreview({ initialContacts, resendActive }: { initialContacts: AddressBookContact[]; resendActive: boolean }) {
+  const router = useRouter();
   const [contacts, setContacts] = useState(initialContacts);
   const [sent, setSent] = useState<Record<string, SentContactRecord>>({});
   const [draft, setDraft] = useState<OutreachDraft | null>(null);
   const [previewId, setPreviewId] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [sendComplete, setSendComplete] = useState(false);
   const [testRecipient, setTestRecipient] = useState('');
   const [testStatus, setTestStatus] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
@@ -59,8 +60,7 @@ export default function FinalPreview({ initialContacts, resendActive }: { initia
         completed += 1;
       }
       window.localStorage.removeItem(OUTREACH_DRAFT_STORAGE_KEY);
-      setSendComplete(true);
-      setMessage(`Sent ${completed} personalized email${completed === 1 ? '' : 's'} successfully. Delivery status is now being tracked.`);
+      router.push('/admin/outreach/report');
     } catch (error) { setMessage(`${completed} recorded. ${error instanceof Error ? error.message : 'Unable to complete send.'}`); }
     finally { setSending(false); }
   }
@@ -75,7 +75,6 @@ export default function FinalPreview({ initialContacts, resendActive }: { initia
   }
 
   if (!draft) return <section className={styles.panel}><div className={styles.emptyState}>No campaign draft is ready. <Link className={styles.link} href="/admin/outreach/campaigns/new">Choose recipients →</Link></div></section>;
-  if (sendComplete) return <section className={styles.panel}><div className={styles.emptyState}><h2 className={styles.panelTitle}>Campaign sent successfully</h2><p className={styles.panelMeta}>{message}</p><div className={styles.actions}><Link className={styles.button} href="/admin/outreach/report">Open delivery report →</Link><Link className={styles.buttonSecondary} href="/admin/outreach/campaigns/new">Start another campaign</Link></div></div></section>;
   if (selected.length === 0) return <section className={styles.panel}><div className={styles.emptyState}>All selected contacts have already been sent or are unavailable. <Link className={styles.link} href="/admin/outreach/campaigns/new">Choose recipients →</Link></div></section>;
   return <><section className={styles.panel}><div className={styles.panelHead}><div><h2 className={styles.panelTitle}>Final preview</h2><p className={styles.panelMeta}>Step 3 · confirm the exact personalized email before any contact send.</p></div><span className={`${styles.chip} ${styles.chipWarn}`}>Step 3 · final check</span></div><div className={styles.bulkList}>{selected.map((contact) => <div className={styles.bulkRow} key={contact.id}><span className={styles.bulkRowLabel}><span className={styles.bulkRowName}>{contact.name} · {contact.studio}</span><span className={styles.bulkRowEmail}>{contact.email}</span></span><span className={styles.chip}>ready</span></div>)}</div><div className={styles.bulkToolbar}><span className={styles.bulkCount}>{selected.length} personalized emails ready</span><div className={styles.actions}><Link className={styles.buttonSecondary} href="/admin/outreach/campaigns/new/review">Back to edit</Link><button type="button" className={styles.button} disabled={sending} onClick={sendAll}>{sending ? 'Recording…' : `Confirm and send ${selected.length} email${selected.length === 1 ? '' : 's'} →`}</button></div></div></section><section className={styles.panel}><div className={styles.panelHead}><div><h2 className={styles.panelTitle}>Personalized final preview</h2><p className={styles.panelMeta}>This is the exact rendered version for the selected recipient.</p></div><select className={styles.select} aria-label="Final preview recipient" value={previewContact.id} onChange={(event) => setPreviewId(event.target.value)}>{selected.map((entry) => <option key={entry.id} value={entry.id}>{entry.name} · {entry.email}</option>)}</select></div><div className={styles.formGrid}><div className={`${styles.field} ${styles.fieldFull}`}><div className={styles.previewMeta}><span>To: {previewContact.email}</span><span>Subject: {preview?.subject}</span><span>Greeting: Hello {firstName(previewContact.name)},</span></div><iframe className={styles.mailerPreview} title={`Final personalized mailer for ${previewContact.name}`} srcDoc={preview?.html ?? ''} /></div><div className={`${styles.field} ${styles.fieldFull}`}><div className={styles.actions}><input className={styles.input} type="email" value={testRecipient} onChange={(event) => setTestRecipient(event.target.value)} placeholder="your email address" aria-label="Test recipient email" /><button type="button" className={styles.button} disabled={!resendActive || sendingTest || !testRecipient} onClick={sendTest}>{sendingTest ? 'Sending…' : 'Send test to me'}</button></div>{!resendActive && <p className={styles.notice}>Set OUTREACH_EMAIL_PROVIDER=resend and restart the server to enable live test sending.</p>}{testStatus && <p className={styles.success}>{testStatus}</p>}{message && <p className={styles.success}>{message}</p>}</div></div></section></>;
 }
