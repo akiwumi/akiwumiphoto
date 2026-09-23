@@ -20,6 +20,19 @@ const COLUMN_ALIASES: Record<CanonicalField, string[]> = {
 
 function normalizedColumn(value: string): string { return value.toLowerCase().replace(/[\s_/-]+/g, ' ').trim(); }
 
+function isKnownColumn(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const normalized = normalizedColumn(value);
+  return (Object.entries(COLUMN_ALIASES) as [CanonicalField, string[]][]).some(([field, aliases]) =>
+    normalizedColumn(field) === normalized || aliases.some((alias) => normalizedColumn(alias) === normalized),
+  );
+}
+
+function findHeaderRow(sheet: XLSX.WorkSheet): number {
+  const values = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null, blankrows: true });
+  return values.findIndex((row) => row.some(isKnownColumn));
+}
+
 export function autoMapColumns(columns: string[]): Partial<Record<string, CanonicalField>> {
   const mapping: Partial<Record<string, CanonicalField>> = {};
   for (const column of columns) {
@@ -30,8 +43,11 @@ export function autoMapColumns(columns: string[]): Partial<Record<string, Canoni
   return mapping;
 }
 export function parseWorkbook(buffer: ArrayBuffer, mapping: Partial<Record<string, CanonicalField>>): { columns: string[]; rows: ImportRow[]; summary: { rowCount: number; validCount: number; invalidCount: number; duplicateCount: number } } {
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: false, sheetRows: 1001 }); const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  if (!sheet) throw new Error('Workbook has no worksheet'); const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null, raw: false, blankrows: false });
+  const workbook = XLSX.read(buffer, { type: 'array', cellDates: false }); const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!sheet) throw new Error('Workbook has no worksheet');
+  const headerRow = findHeaderRow(sheet);
+  if (headerRow < 0) throw new Error('Workbook has no recognizable header row');
+  const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: headerRow, defval: null, raw: false, blankrows: false });
   const columns = Object.keys(records[0] ?? {});
   const seen = new Set<string>();
   const rows = records.slice(0, 1000).map((record, index) => {
@@ -45,7 +61,7 @@ export function parseWorkbook(buffer: ArrayBuffer, mapping: Partial<Record<strin
     const duplicate = !!row.email && seen.has(row.email);
     if (duplicate) issues.push('Duplicate email in workbook');
     if (row.email) seen.add(row.email);
-    return { ...row, rowNumber: index + 2, valid: issues.length === 0, issues, duplicate };
+    return { ...row, rowNumber: headerRow + index + 2, valid: issues.length === 0, issues, duplicate };
   });
   return { columns, rows, summary: { rowCount: rows.length, validCount: rows.filter((row) => row.valid).length, invalidCount: rows.filter((row) => !row.valid).length, duplicateCount: rows.filter((row) => row.duplicate).length } };
 }

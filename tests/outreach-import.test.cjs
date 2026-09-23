@@ -1,6 +1,30 @@
 const { test } = require('node:test'); const assert = require('node:assert/strict'); const XLSX = require('xlsx'); const { load } = require('./test-loader.cjs'); const { parseWorkbook } = load('lib/outreach/import.ts');
 test('parses, normalizes, and flags duplicate workbook rows', () => { const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Email','First'],[' ANA@example.com ','Ana'],['ana@example.com','Ana 2'],['bad','No']])); const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }); const result = parseWorkbook(buffer, { Email: 'email', First: 'first_name' }); assert.equal(result.summary.rowCount, 3); assert.equal(result.summary.duplicateCount, 1); assert.equal(result.rows[0].email, 'ana@example.com'); assert.equal(result.rows[2].valid, false); });
 
+test('parses CSV after title rows and flags only malformed or missing email rows', () => {
+  const csv = [
+    'Akiwumi Photo address book',
+    'Exported 2026-09-23',
+    'Contact Name,City,Public Professional Email',
+    'Ana,Accra,ana@example.com',
+    'Bea,Kumasi,not-an-email',
+    'Cy,Tema,',
+  ].join('\n');
+  const result = parseWorkbook(Buffer.from(csv), {
+    'Contact Name': 'display_name',
+    City: 'city',
+    'Public Professional Email': 'email',
+  });
+  assert.deepEqual(result.columns, ['Contact Name', 'City', 'Public Professional Email']);
+  assert.equal(result.summary.rowCount, 3);
+  assert.equal(result.summary.validCount, 1);
+  assert.equal(result.summary.invalidCount, 2);
+  assert.equal(result.rows[0].rowNumber, 4);
+  assert.equal(result.rows[0].valid, true);
+  assert.equal(result.rows[1].valid, false);
+  assert.equal(result.rows[2].valid, false);
+});
+
 function importRequest(fields = {}) {
   const form = new FormData();
   form.set('file', new File([new Uint8Array([1])], 'contacts.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
