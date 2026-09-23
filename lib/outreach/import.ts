@@ -7,11 +7,11 @@ const MAX_IMPORT_ROWS = 1000;
 const MAX_TITLE_ROWS = 100;
 const COLUMN_ALIASES: Record<CanonicalField, string[]> = {
   email: ['email', 'public professional email', 'primary email', 'designer email', 'studio email'],
-  display_name: ['name', 'contact name', 'contact name / routing', 'designer name', 'full name'],
+  display_name: ['name', 'contact name', 'contact name / routing', 'contact person', 'designer name', 'full name'],
   role: ['role', 'title', 'job title'],
   first_name: ['first name', 'first_name'],
   last_name: ['last name', 'last_name'],
-  company_name: ['studio', 'company', 'company name', 'studio / company'],
+  company_name: ['studio', 'company', 'company name', 'studio / company', 'business'],
   city: ['city', 'location'],
   country: ['country'],
   website: ['website', 'web site', 'url'],

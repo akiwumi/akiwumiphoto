@@ -1,4 +1,4 @@
-const { test } = require('node:test'); const assert = require('node:assert/strict'); const XLSX = require('xlsx'); const { load } = require('./test-loader.cjs'); const { parseWorkbook } = load('lib/outreach/import.ts');
+const { test } = require('node:test'); const assert = require('node:assert/strict'); const XLSX = require('xlsx'); const { load } = require('./test-loader.cjs'); const { parseWorkbook, autoMapColumns } = load('lib/outreach/import.ts');
 test('parses, normalizes, and flags duplicate workbook rows', () => { const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Email','First'],[' ANA@example.com ','Ana'],['ana@example.com','Ana 2'],['bad','No']])); const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }); const result = parseWorkbook(buffer, { Email: 'email', First: 'first_name' }); assert.equal(result.summary.rowCount, 3); assert.equal(result.summary.duplicateCount, 1); assert.equal(result.rows[0].email, 'ana@example.com'); assert.equal(result.rows[2].valid, false); });
 
 test('parses CSV after title rows and flags only malformed or missing email rows', () => {
@@ -81,6 +81,24 @@ test('parses XLSX title rows before the detected address-book header', () => {
   assert.deepEqual(result.columns, ['Contact Name', 'Public Professional Email']);
   assert.equal(result.rows[0].rowNumber, 4);
   assert.equal(result.rows[0].email, 'ana@example.com');
+});
+
+test('finds a contact header after workbook title rows', () => {
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+    ['Sweden High-End Interior Design Outreach Contacts'],
+    ['Verified public contact details'], [],
+    ['Business', 'Contact person', 'Email'],
+    ['Svenskt Tenn', 'Tora Grape', 'tora.grape@svenskttenn.se'],
+  ]));
+  const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  const result = parseWorkbook(buffer, autoMapColumns(parseWorkbook(buffer, {}).columns));
+  assert.equal(result.summary.rowCount, 1);
+  assert.equal(result.summary.invalidCount, 0);
+  assert.equal(result.rows[0].rowNumber, 5);
+  assert.equal(result.rows[0].email, 'tora.grape@svenskttenn.se');
+  assert.equal(result.rows[0].company_name, 'Svenskt Tenn');
+  assert.equal(result.rows[0].display_name, 'Tora Grape');
 });
 
 function importRequest(fields = {}) {
