@@ -1,4 +1,29 @@
 const { test } = require('node:test'); const assert = require('node:assert/strict'); const XLSX = require('xlsx'); const { load } = require('./test-loader.cjs'); const { parseWorkbook, autoMapColumns } = load('lib/outreach/import.ts');
+const fs = require('node:fs'); const path = require('node:path');
+
+const DELETE_URL = 'https://example.com/api/admin/outreach/contacts/delete';
+const CONTACT_ONE = '00000000-0000-0000-0000-000000000001';
+const CONTACT_TWO = '00000000-0000-0000-0000-000000000002';
+const CATEGORY_ONE = '00000000-0000-0000-0000-000000000010';
+
+function deleteRequest(body) {
+  return new Request(DELETE_URL, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+}
+
+function deleteRoute(client, auth = async () => ({ client, user: { id: 'admin-1' } })) {
+  return load('app/api/admin/outreach/contacts/delete/route.ts', { '@/lib/outreach/auth': { requireOutreachAdmin: auth } });
+}
+
+test('guarded deletion is implemented as one admin-only database RPC without changing cascade history semantics', () => {
+  const route = fs.readFileSync(path.resolve(__dirname, '../app/api/admin/outreach/contacts/delete/route.ts'), 'utf8');
+  const migration = fs.readFileSync(path.resolve(__dirname, '../supabase/migrations/20260924100000_guarded_outreach_contact_deletion.sql'), 'utf8');
+  assert.match(route, /\.rpc\('outreach_delete_contacts_guarded'/);
+  assert.match(migration, /FOR UPDATE/);
+  assert.match(migration, /NOT EXISTS\s*\(\s*SELECT 1\s*FROM public\.outreach_deliveries/);
+  assert.match(migration, /outreach_is_admin\(\)/);
+  assert.match(migration, /revoke execute on function public\.outreach_delete_contacts_guarded/i);
+  assert.doesNotMatch(migration, /on delete restrict/i);
+});
 test('parses, normalizes, and flags duplicate workbook rows', () => { const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Email','First'],[' ANA@example.com ','Ana'],['ana@example.com','Ana 2'],['bad','No']])); const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }); const result = parseWorkbook(buffer, { Email: 'email', First: 'first_name' }); assert.equal(result.summary.rowCount, 3); assert.equal(result.summary.duplicateCount, 1); assert.equal(result.rows[0].email, 'ana@example.com'); assert.equal(result.rows[2].valid, false); });
 
 test('parses CSV after title rows and flags only malformed or missing email rows', () => {
@@ -247,4 +272,86 @@ test('import commit rejects a workbook with no valid email rows before writes', 
   assert.equal(response.status, 422);
   assert.equal((await response.json()).error, 'No valid email rows found to import.');
   assert.equal(writes, 0);
+});
+
+test('contact deletion rejects invalid, empty, and oversized selections before querying Supabase', async () => {
+  let queried = false;
+  const route = deleteRoute({ from: () => { queried = true; throw new Error('must not query'); } });
+  for (const body of [{ contactIds: [] }, { contactIds: ['not-a-uuid'] }, { contactIds: Array.from({ length: 501 }, (_, index) => `00000000-0000-0000-0000-${String(index).padStart(12, '0')}`) }]) {
+    const response = await route.POST(deleteRequest(body));
+    assert.equal(response.status, 422);
+  }
+  assert.equal(queried, false);
+});
+
+test('contact deletion preserves delivery-backed contacts, deletes unique eligible IDs, and audits actual counts', async () => {
+  let rpc; let audit;
+  const client = { from: (table) => {
+    if (table === 'outreach_audit_log') return { insert: async (value) => { audit = value; return { error: null }; } };
+    throw new Error(`unexpected ${table}`);
+  }, rpc: async (name, args) => { rpc = { name, args }; return { data: [{ deleted_contact_ids: [CONTACT_TWO], protected_contact_ids: [CONTACT_ONE], category_deleted: false }], error: null }; } };
+  const route = deleteRoute(client);
+  const response = await route.POST(deleteRequest({ contactIds: [` ${CONTACT_ONE} `, CONTACT_ONE, CONTACT_TWO] }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true, deletedCount: 1, protectedCount: 1, protectedIds: [CONTACT_ONE], deletedIds: [CONTACT_TWO], categoryDeleted: false });
+  assert.deepEqual(rpc, { name: 'outreach_delete_contacts_guarded', args: { p_contact_ids: [CONTACT_ONE, CONTACT_TWO], p_category_id: null } });
+  assert.deepEqual(audit, { actor_id: 'admin-1', action: 'delete_contacts', entity_type: 'outreach_contact', entity_id: null, metadata: { requested_count: 2, deleted_count: 1, protected_count: 1, protected_ids: [CONTACT_ONE] } });
+});
+
+test('category deletion requires the exact normalized name and makes no destructive writes on mismatch', async () => {
+  let writes = 0;
+  const client = { from: (table) => {
+    if (table !== 'outreach_contact_categories') throw new Error(`unexpected ${table}`);
+    return {
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: CATEGORY_ONE, name: 'Galleries' }, error: null }) }) }),
+      delete: () => { writes += 1; return { eq: async () => ({ error: null }) }; },
+    };
+  } };
+  const route = deleteRoute(client);
+  const response = await route.POST(deleteRequest({ categoryId: CATEGORY_ONE, categoryName: 'galleries' }));
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error, 'Type the exact category name to delete it.');
+  assert.equal(writes, 0);
+});
+
+test('category deletion keeps the category when a contact has delivery history while deleting eligible contacts', async () => {
+  let categoryDeleted = false; let audit; let rpc;
+  const client = { from: (table) => {
+    if (table === 'outreach_contact_categories') return {
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: CATEGORY_ONE, name: 'Galleries' }, error: null }) }) }),
+      delete: () => ({ eq: async () => { categoryDeleted = true; return { error: null }; } }),
+    };
+    if (table === 'outreach_audit_log') return { insert: async (value) => { audit = value; return { error: null }; } };
+    throw new Error(`unexpected ${table}`);
+  }, rpc: async (name, args) => { rpc = { name, args }; return { data: [{ deleted_contact_ids: [CONTACT_ONE], protected_contact_ids: [CONTACT_TWO], category_deleted: false, requested_count: 2 }], error: null }; } };
+  const route = deleteRoute(client);
+  const response = await route.POST(deleteRequest({ categoryId: CATEGORY_ONE, categoryName: ' Galleries ' }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true, deletedCount: 1, protectedCount: 1, protectedIds: [CONTACT_TWO], deletedIds: [CONTACT_ONE], categoryDeleted: false });
+  assert.deepEqual(rpc, { name: 'outreach_delete_contacts_guarded', args: { p_contact_ids: null, p_category_id: CATEGORY_ONE } });
+  assert.equal(categoryDeleted, false);
+  assert.deepEqual(audit.metadata, { requested_count: 2, deleted_count: 1, protected_count: 1, protected_ids: [CONTACT_TWO], category_id: CATEGORY_ONE, category_name: 'Galleries', category_deleted: false });
+});
+
+test('category deletion deletes all eligible contacts then its exact category and audits counts', async () => {
+  let audit; let rpc;
+  const client = { from: (table) => {
+    if (table === 'outreach_contact_categories') return {
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: CATEGORY_ONE, name: 'Galleries' }, error: null }) }) }),
+    };
+    if (table === 'outreach_audit_log') return { insert: async (value) => { audit = value; return { error: null }; } };
+    throw new Error(`unexpected ${table}`);
+  }, rpc: async (name, args) => { rpc = { name, args }; return { data: [{ deleted_contact_ids: [CONTACT_ONE, CONTACT_TWO], protected_contact_ids: [], category_deleted: true, requested_count: 2 }], error: null }; } };
+  const route = deleteRoute(client);
+  const response = await route.POST(deleteRequest({ categoryId: CATEGORY_ONE, categoryName: 'Galleries' }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true, deletedCount: 2, protectedCount: 0, protectedIds: [], deletedIds: [CONTACT_ONE, CONTACT_TWO], categoryDeleted: true });
+  assert.deepEqual(rpc, { name: 'outreach_delete_contacts_guarded', args: { p_contact_ids: null, p_category_id: CATEGORY_ONE } });
+  assert.equal(audit.action, 'delete_contact_category');
+  assert.equal(audit.metadata.category_deleted, true);
+});
+
+test('contact deletion returns 403 when outreach admin authorization fails', async () => {
+  const route = deleteRoute(null, async () => { throw new Error('OUTREACH_UNAUTHORIZED'); });
+  assert.equal((await route.POST(deleteRequest({ contactIds: [CONTACT_ONE] }))).status, 403);
 });
