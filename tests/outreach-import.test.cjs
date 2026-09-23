@@ -32,18 +32,35 @@ test('keeps row zero as the header when a manual mapping uses unknown column nam
   assert.equal(result.rows[0].rowNumber, 2);
 });
 
-test('skips a single-cell Title row before a later manually mapped table header', () => {
+test('skips a two-cell metadata row before a standard email header', () => {
   const csv = [
-    'Title',
-    'Akiwumi Photo contacts',
-    'Contact Name,Custom Email',
+    'Title,Exported',
+    'Akiwumi Photo contacts,2026-09-23',
+    'Contact Name,Public Professional Email',
     'Ana,ana@example.com',
   ].join('\n');
   const result = parseWorkbook(Buffer.from(csv), {
     'Contact Name': 'display_name',
-    'Custom Email': 'email',
+    'Public Professional Email': 'email',
   });
-  assert.deepEqual(result.columns, ['Contact Name', 'Custom Email']);
+  assert.deepEqual(result.columns, ['Contact Name', 'Public Professional Email']);
+  assert.equal(result.rows.length, 1);
+  assert.equal(result.rows[0].rowNumber, 4);
+  assert.equal(result.rows[0].email, 'ana@example.com');
+});
+
+test('skips a single-cell Title row before a later manually mapped table header', () => {
+  const csv = [
+    'Title',
+    'Akiwumi Photo contacts',
+    'Custom Name,Public Professional Email',
+    'Ana,ana@example.com',
+  ].join('\n');
+  const result = parseWorkbook(Buffer.from(csv), {
+    'Custom Name': 'display_name',
+    'Public Professional Email': 'email',
+  });
+  assert.deepEqual(result.columns, ['Custom Name', 'Public Professional Email']);
   assert.equal(result.rows.length, 1);
   assert.equal(result.rows[0].rowNumber, 4);
   assert.equal(result.rows[0].email, 'ana@example.com');

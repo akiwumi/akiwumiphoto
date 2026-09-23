@@ -32,12 +32,7 @@ function canonicalFieldForColumn(value: unknown): CanonicalField | undefined {
 
 function findHeaderRow(sheet: XLSX.WorkSheet): number {
   const values = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null, blankrows: true });
-  return values.findIndex((row) => {
-    const recognizedFields = row.map(canonicalFieldForColumn);
-    return recognizedFields.includes('email') || (
-      recognizedFields.some(Boolean) && row.filter((value) => value != null && String(value).trim() !== '').length >= 2
-    );
-  });
+  return values.findIndex((row) => row.some((value) => canonicalFieldForColumn(value) === 'email'));
 }
 
 export function autoMapColumns(columns: string[]): Partial<Record<string, CanonicalField>> {
