@@ -165,3 +165,68 @@ test('import commit returns a server error when category lookup fails', async ()
   assert.equal(response.status, 500);
   assert.equal((await response.json()).error, 'Could not validate contact category.');
 });
+
+test('import commit skips invalid rows and reports their source row issues', async () => {
+  const categoryId = '00000000-0000-0000-0000-000000000001';
+  const mixedParsed = {
+    columns: ['Email'],
+    rows: [
+      { email: 'ana@example.com', valid: true, rowNumber: 2 },
+      { email: null, valid: false, rowNumber: 3, issues: ['Email is invalid or missing'] },
+    ],
+    summary: { rowCount: 2, validCount: 1, duplicateCount: 0, invalidCount: 1 },
+  };
+  let contacts; let batch;
+  const client = { from: (table) => ({
+    select: () => table === 'outreach_contact_categories'
+      ? ({ eq: () => ({ maybeSingle: async () => ({ data: { id: categoryId, name: 'Galleries' }, error: null }) }) })
+      : ({ in: async () => ({ data: [], error: null }) }),
+    insert: (value) => table === 'outreach_import_batches'
+      ? (batch = value, { select: () => ({ single: async () => ({ data: { id: 'batch-1' }, error: null }) }) })
+      : Promise.resolve({ error: null }),
+    upsert: (value) => { contacts = value; return Promise.resolve({ error: null }); },
+    update: () => ({ eq: async () => ({ error: null }) }),
+  }) };
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client, user: { id: 'admin' } }) },
+    '@/lib/outreach/import': { parseWorkbook: () => mixedParsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const response = await route.POST(importRequest({ commit: '1', categoryId }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(contacts.map((contact) => contact.email), ['ana@example.com']);
+  assert.deepEqual({ rowCount: batch.row_count, invalidCount: batch.invalid_count }, { rowCount: 2, invalidCount: 1 });
+  assert.deepEqual(await response.json(), {
+    ok: true,
+    importedCount: 1,
+    duplicateCount: 0,
+    skippedCount: 1,
+    skippedRows: [{ rowNumber: 3, issues: ['Email is invalid or missing'] }],
+    batchId: 'batch-1',
+    message: '1 contacts imported into Supabase and approved for outreach.',
+  });
+});
+
+test('import commit rejects a workbook with no valid email rows before writes', async () => {
+  const categoryId = '00000000-0000-0000-0000-000000000001';
+  const invalidParsed = {
+    columns: ['Email'],
+    rows: [{ email: null, valid: false, rowNumber: 3, issues: ['Email is invalid or missing'] }],
+    summary: { rowCount: 1, validCount: 0, duplicateCount: 0, invalidCount: 1 },
+  };
+  let writes = 0;
+  const client = { from: (table) => ({
+    select: () => table === 'outreach_contact_categories'
+      ? ({ eq: () => ({ maybeSingle: async () => ({ data: { id: categoryId, name: 'Galleries' }, error: null }) }) })
+      : ({ in: async () => ({ data: [], error: null }) }),
+    insert: () => { writes += 1; return Promise.resolve({ error: null }); },
+    upsert: () => { writes += 1; return Promise.resolve({ error: null }); },
+  }) };
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client }) },
+    '@/lib/outreach/import': { parseWorkbook: () => invalidParsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const response = await route.POST(importRequest({ commit: '1', categoryId }));
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error, 'No valid email rows found to import.');
+  assert.equal(writes, 0);
+});

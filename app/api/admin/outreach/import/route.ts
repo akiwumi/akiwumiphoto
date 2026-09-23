@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const { client, user } = await requireOutreachAdmin();
     const form = await request.formData();
     const file = form.get('file');
-    if (!(file instanceof File) || !file.name.toLowerCase().endsWith('.xlsx')) return NextResponse.json({ error: 'Only .xlsx files are accepted.' }, { status: 400 });
+    if (!(file instanceof File) || !/\.(xlsx|csv)$/i.test(file.name)) return NextResponse.json({ error: 'Only .xlsx and .csv files are accepted.' }, { status: 400 });
     if (file.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'Workbook is too large.' }, { status: 413 });
     const buffer = await file.arrayBuffer();
     const mappingValue = String(form.get('mapping') ?? '');
@@ -30,7 +30,11 @@ export async function POST(request: Request) {
     if (!categoryId) return NextResponse.json({ error: 'Choose a contact category before importing.' }, { status: 422 });
     if (!UUID_RE.test(categoryId)) return NextResponse.json({ error: 'Choose a valid contact category before importing.' }, { status: 422 });
     if (!client) return NextResponse.json({ error: 'Supabase is not configured for persistent imports.' }, { status: 503 });
-    if (parsed.summary.invalidCount > 0) return NextResponse.json({ error: 'Fix invalid or missing email rows before importing.', ...parsed, mapping: effectiveMapping, preview: parsed.rows.slice(0, 20) }, { status: 422 });
+    const validRows = parsed.rows.filter((row) => row.valid && Boolean(row.email));
+    const skippedRows = parsed.rows
+      .filter((row) => !row.valid || !row.email)
+      .map((row) => ({ rowNumber: row.rowNumber, issues: row.issues }));
+    if (!validRows.length) return NextResponse.json({ error: 'No valid email rows found to import.' }, { status: 422 });
     const categoryResult = await client.from('outreach_contact_categories').select('id,name').eq('id', categoryId).maybeSingle();
     if (categoryResult.error) return NextResponse.json({ error: 'Could not validate contact category.' }, { status: 500 });
     if (!categoryResult.data) return NextResponse.json({ error: 'Choose a valid contact category before importing.' }, { status: 422 });
@@ -39,11 +43,11 @@ export async function POST(request: Request) {
     const batchInsert = await client.from('outreach_import_batches').insert({ filename: file.name, source_label: 'address book import', row_count: parsed.summary.rowCount, duplicate_count: parsed.summary.duplicateCount, invalid_count: parsed.summary.invalidCount, created_by: user?.id ?? null }).select('id').single();
     if (batchInsert.error) throw batchInsert.error;
     const batchId = batchInsert.data.id as string;
-    const emails = parsed.rows.map((row) => row.email).filter((email): email is string => Boolean(email));
+    const emails = validRows.map((row) => row.email).filter((email): email is string => Boolean(email));
     const existingResult = await client.from('outreach_contacts').select('email,contact_status,suppressed_at').in('email', emails);
     if (existingResult.error) throw existingResult.error;
     const existingByEmail = new Map((existingResult.data ?? []).map((row) => [row.email, row]));
-    const contacts = parsed.rows.map((row) => {
+    const contacts = validRows.map((row) => {
       const name = row.display_name || [row.first_name, row.last_name].filter(Boolean).join(' ') || null;
       const split = splitName(name);
       const existing = existingByEmail.get(row.email!);
@@ -53,9 +57,9 @@ export async function POST(request: Request) {
     });
     const upsert = await client.from('outreach_contacts').upsert(contacts, { onConflict: 'email' });
     if (upsert.error) throw upsert.error;
-    await client.from('outreach_import_batches').update({ imported_count: contacts.length }).eq('id', batchId);
-    await client.from('outreach_audit_log').insert({ actor_id: user?.id ?? null, action: 'import_contacts', entity_type: 'outreach_import_batch', entity_id: batchId, metadata: { filename: file.name, imported_count: contacts.length, duplicate_count: parsed.summary.duplicateCount, approved_immediately: true, category_id: category.id, category_name: category.name } });
-    return NextResponse.json({ ok: true, importedCount: contacts.length, duplicateCount: parsed.summary.duplicateCount, batchId, message: `${contacts.length} contacts imported into Supabase and approved for outreach.` });
+    await client.from('outreach_import_batches').update({ imported_count: validRows.length }).eq('id', batchId);
+    await client.from('outreach_audit_log').insert({ actor_id: user?.id ?? null, action: 'import_contacts', entity_type: 'outreach_import_batch', entity_id: batchId, metadata: { filename: file.name, imported_count: validRows.length, duplicate_count: parsed.summary.duplicateCount, approved_immediately: true, category_id: category.id, category_name: category.name } });
+    return NextResponse.json({ ok: true, importedCount: validRows.length, duplicateCount: parsed.summary.duplicateCount, skippedCount: skippedRows.length, skippedRows, batchId, message: `${validRows.length} contacts imported into Supabase and approved for outreach.` });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not import workbook.';
     return NextResponse.json({ error: message === 'OUTREACH_UNAUTHORIZED' ? 'Unauthorized' : message }, { status: message === 'OUTREACH_UNAUTHORIZED' ? 401 : 400 });
