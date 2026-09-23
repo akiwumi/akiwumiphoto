@@ -75,6 +75,35 @@ test('category POST trims names and reuses an existing duplicate', async () => {
   assert.deepEqual(await response.json(), { category: { id: 'existing', name: 'Galleries' } });
 });
 
+test('category POST escapes LIKE wildcards so Art% does not match Artisan', async () => {
+  let pattern;
+  let inserted;
+  const route = load('app/api/admin/outreach/categories/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => ({
+      select: () => ({ ilike: (column, value) => { pattern = { column, value }; return { maybeSingle: async () => ({ data: null, error: null }) }; } }),
+      insert: (value) => { inserted = value; return { select: () => ({ single: async () => ({ data: { id: 'art-percent', name: value.name }, error: null }) }) }; },
+    }) } }) },
+  });
+  const response = await route.POST(jsonRequest('https://example.com/categories', 'POST', { name: 'Art%' }));
+  assert.equal(response.status, 201);
+  assert.deepEqual(pattern, { column: 'name', value: 'Art\\%' });
+  assert.deepEqual(inserted, { name: 'Art%' });
+});
+
+test('category POST re-fetches the exact category when creation loses a unique-key race', async () => {
+  let lookups = 0;
+  const route = load('app/api/admin/outreach/categories/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => ({
+      select: () => ({ ilike: () => ({ maybeSingle: async () => (++lookups === 1 ? { data: null, error: null } : { data: { id: 'winner', name: 'Galleries' }, error: null }) }) }),
+      insert: () => ({ select: () => ({ single: async () => ({ data: null, error: { code: '23505' } }) }) }),
+    }) } }) },
+  });
+  const response = await route.POST(jsonRequest('https://example.com/categories', 'POST', { name: 'Galleries' }));
+  assert.equal(response.status, 200);
+  assert.equal(lookups, 2);
+  assert.deepEqual(await response.json(), { category: { id: 'winner', name: 'Galleries' } });
+});
+
 test('category POST creates a missing normalized category', async () => {
   let inserted;
   const route = load('app/api/admin/outreach/categories/route.ts', {

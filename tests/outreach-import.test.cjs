@@ -59,3 +59,14 @@ test('import commit rejects an unknown category id before any import write', asy
   assert.equal((await response.json()).error, 'Choose a valid contact category before importing.');
   assert.equal(writes, 0);
 });
+
+test('import commit returns a server error when category lookup fails', async () => {
+  const categoryId = '00000000-0000-0000-0000-000000000001';
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: { message: 'database unavailable' } }) }) }) }) } }) },
+    '@/lib/outreach/import': { parseWorkbook: () => parsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const response = await route.POST(importRequest({ commit: '1', categoryId }));
+  assert.equal(response.status, 500);
+  assert.equal((await response.json()).error, 'Could not validate contact category.');
+});

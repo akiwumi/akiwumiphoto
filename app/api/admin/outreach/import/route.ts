@@ -29,7 +29,8 @@ export async function POST(request: Request) {
     if (!client) return NextResponse.json({ error: 'Supabase is not configured for persistent imports.' }, { status: 503 });
     if (parsed.summary.invalidCount > 0) return NextResponse.json({ error: 'Fix invalid or missing email rows before importing.', ...parsed, mapping: effectiveMapping, preview: parsed.rows.slice(0, 20) }, { status: 422 });
     const categoryResult = await client.from('outreach_contact_categories').select('id,name').eq('id', categoryId).maybeSingle();
-    if (categoryResult.error || !categoryResult.data) return NextResponse.json({ error: 'Choose a valid contact category before importing.' }, { status: 422 });
+    if (categoryResult.error) return NextResponse.json({ error: 'Could not validate contact category.' }, { status: 500 });
+    if (!categoryResult.data) return NextResponse.json({ error: 'Choose a valid contact category before importing.' }, { status: 422 });
     const category = categoryResult.data as { id: string; name: string };
 
     const batchInsert = await client.from('outreach_import_batches').insert({ filename: file.name, source_label: 'address book import', row_count: parsed.summary.rowCount, duplicate_count: parsed.summary.duplicateCount, invalid_count: parsed.summary.invalidCount, created_by: user?.id ?? null }).select('id').single();
