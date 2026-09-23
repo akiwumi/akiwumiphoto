@@ -23,3 +23,15 @@ test('filters by selected categories and explicitly selects uncategorised contac
   assert.deepEqual(filterByCategories(rows, []).map((row) => row.id), ['1', '2', '3', '4']);
   assert.deepEqual(filterByCategories(rows, ['Galleries', 'Uncategorised']).map((row) => row.id), ['1', '2', '3']);
 });
+
+test('filters raw contact joins with an explicit category selector', () => {
+  const rows = [
+    { id: '1', category_id: 'category-1', outreach_contact_categories: { id: 'category-1', name: 'Galleries' } },
+    { id: '2', category_id: null, outreach_contact_categories: null },
+  ];
+
+  assert.deepEqual(
+    filterByCategories(rows, ['Galleries'], (row) => row.outreach_contact_categories?.name).map((row) => row.id),
+    ['1'],
+  );
+});

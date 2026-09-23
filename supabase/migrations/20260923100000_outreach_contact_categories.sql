@@ -8,7 +8,8 @@ create table if not exists public.outreach_contact_categories (
 create unique index if not exists outreach_contact_categories_name_key
   on public.outreach_contact_categories (lower(btrim(name, E' \t\n\r\f\v')));
 
-create trigger update_outreach_contact_categories_updated_at
+drop trigger if exists outreach_contact_categories_updated_at on public.outreach_contact_categories;
+create trigger outreach_contact_categories_updated_at
   before update on public.outreach_contact_categories
   for each row execute function public.update_updated_at_column();
 

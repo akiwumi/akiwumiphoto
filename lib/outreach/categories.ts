@@ -15,9 +15,21 @@ export function categoryKey(value: unknown): string {
   return categoryLabel(value).toLowerCase();
 }
 
-export function filterByCategories<T extends { category: unknown }>(rows: T[], selected: readonly string[]): T[] {
+const defaultCategoryValue = (row: unknown): unknown => (
+  typeof row === 'object' && row !== null ? (row as { category?: unknown }).category : undefined
+);
+
+/**
+ * Filters mapped rows by their optional `category` display projection. Pass a
+ * selector when filtering raw records, such as a Supabase category join.
+ */
+export function filterByCategories<T>(
+  rows: T[],
+  selected: readonly string[],
+  categoryValue: (row: T) => unknown = defaultCategoryValue,
+): T[] {
   if (selected.length === 0) return rows;
 
   const selectedKeys = new Set(selected.map(categoryKey));
-  return rows.filter((row) => selectedKeys.has(categoryKey(row.category)));
+  return rows.filter((row) => selectedKeys.has(categoryKey(categoryValue(row))));
 }
