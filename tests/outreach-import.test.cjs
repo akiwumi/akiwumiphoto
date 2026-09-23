@@ -38,7 +38,8 @@ test('import commit rejects an unknown category and attaches a valid category to
   assert.equal(response.status, 200);
   assert.equal(contacts.length, 2);
   assert.ok(contacts.every((contact) => contact.category_id === categoryId));
-  assert.deepEqual(audit.metadata.category, { id: categoryId, name: 'Galleries' });
+  assert.deepEqual(audit.metadata.category_id, categoryId);
+  assert.deepEqual(audit.metadata.category_name, 'Galleries');
 });
 
 test('import commit rejects an unknown category id before any import write', async () => {
@@ -58,6 +59,18 @@ test('import commit rejects an unknown category id before any import write', asy
   assert.equal(response.status, 422);
   assert.equal((await response.json()).error, 'Choose a valid contact category before importing.');
   assert.equal(writes, 0);
+});
+
+test('import commit rejects a malformed category id before querying Supabase', async () => {
+  let queried = false;
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => { queried = true; throw new Error('should not query'); } } }) },
+    '@/lib/outreach/import': { parseWorkbook: () => parsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const response = await route.POST(importRequest({ commit: '1', categoryId: 'not-a-uuid' }));
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error, 'Choose a valid contact category before importing.');
+  assert.equal(queried, false);
 });
 
 test('import commit returns a server error when category lookup fails', async () => {

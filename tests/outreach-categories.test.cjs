@@ -1,5 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { load } = require('./test-loader.cjs');
 
 const { categoryLabel, categoryKey, filterByCategories, trimCategoryName } = load('lib/outreach/categories.ts');
@@ -34,6 +36,12 @@ test('filters raw contact joins with an explicit category selector', () => {
     filterByCategories(rows, ['Galleries'], (row) => row.outreach_contact_categories?.name).map((row) => row.id),
     ['1'],
   );
+});
+
+test('outreach dashboard counts distinct contact category labels, including Uncategorised', () => {
+  const page = fs.readFileSync(path.resolve(__dirname, '../app/admin/outreach/page.tsx'), 'utf8');
+  assert.match(page, /new Set\(contacts\.map\(\(contact\) => categoryLabel\(contact\.category\)\)\)/);
+  assert.doesNotMatch(page, /String\(categories\.length\)/);
 });
 
 test('lists server categories by name and returns no categories when the query fails', async () => {

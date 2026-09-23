@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { parseWorkbook, autoMapColumns } from '@/lib/outreach/import';
 import { requireOutreachAdmin } from '@/lib/outreach/auth';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function splitName(value: string | null): { first_name: string | null; last_name: string | null } {
   const name = value?.trim() || '';
   if (!name) return { first_name: null, last_name: null };
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
     if (!shouldCommit) return NextResponse.json({ ...parsed, mapping: effectiveMapping, preview: parsed.rows.slice(0, 20) });
     const categoryId = typeof form.get('categoryId') === 'string' ? String(form.get('categoryId')).trim() : '';
     if (!categoryId) return NextResponse.json({ error: 'Choose a contact category before importing.' }, { status: 422 });
+    if (!UUID_RE.test(categoryId)) return NextResponse.json({ error: 'Choose a valid contact category before importing.' }, { status: 422 });
     if (!client) return NextResponse.json({ error: 'Supabase is not configured for persistent imports.' }, { status: 503 });
     if (parsed.summary.invalidCount > 0) return NextResponse.json({ error: 'Fix invalid or missing email rows before importing.', ...parsed, mapping: effectiveMapping, preview: parsed.rows.slice(0, 20) }, { status: 422 });
     const categoryResult = await client.from('outreach_contact_categories').select('id,name').eq('id', categoryId).maybeSingle();
@@ -51,7 +54,7 @@ export async function POST(request: Request) {
     const upsert = await client.from('outreach_contacts').upsert(contacts, { onConflict: 'email' });
     if (upsert.error) throw upsert.error;
     await client.from('outreach_import_batches').update({ imported_count: contacts.length }).eq('id', batchId);
-    await client.from('outreach_audit_log').insert({ actor_id: user?.id ?? null, action: 'import_contacts', entity_type: 'outreach_import_batch', entity_id: batchId, metadata: { filename: file.name, imported_count: contacts.length, duplicate_count: parsed.summary.duplicateCount, approved_immediately: true, category: { id: category.id, name: category.name } } });
+    await client.from('outreach_audit_log').insert({ actor_id: user?.id ?? null, action: 'import_contacts', entity_type: 'outreach_import_batch', entity_id: batchId, metadata: { filename: file.name, imported_count: contacts.length, duplicate_count: parsed.summary.duplicateCount, approved_immediately: true, category_id: category.id, category_name: category.name } });
     return NextResponse.json({ ok: true, importedCount: contacts.length, duplicateCount: parsed.summary.duplicateCount, batchId, message: `${contacts.length} contacts imported into Supabase and approved for outreach.` });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not import workbook.';
