@@ -8,7 +8,7 @@ function importRequest(fields = {}) {
   return new Request('https://example.com/api/admin/outreach/import', { method: 'POST', body: form });
 }
 
-const parsed = { columns: ['Email'], rows: [{ email: 'ana@example.com', valid: true }], summary: { rowCount: 1, duplicateCount: 0, invalidCount: 0 } };
+const parsed = { columns: ['Email'], rows: [{ email: 'ana@example.com', valid: true }, { email: 'bea@example.com', valid: true }], summary: { rowCount: 2, duplicateCount: 0, invalidCount: 0 } };
 
 test('import commit requires a category but preview does not', async () => {
   const route = load('app/api/admin/outreach/import/route.ts', {
@@ -36,7 +36,8 @@ test('import commit rejects an unknown category and attaches a valid category to
   });
   const response = await route.POST(importRequest({ commit: '1', categoryId }));
   assert.equal(response.status, 200);
-  assert.equal(contacts[0].category_id, categoryId);
+  assert.equal(contacts.length, 2);
+  assert.ok(contacts.every((contact) => contact.category_id === categoryId));
   assert.deepEqual(audit.metadata.category, { id: categoryId, name: 'Galleries' });
 });
 

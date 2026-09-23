@@ -102,6 +102,17 @@ test('contact category PATCH validates ids, validates selected category, and upd
   const response = await route.PATCH(jsonRequest('https://example.com', 'PATCH', { categoryId }), { params: Promise.resolve({ id }) });
   assert.equal(response.status, 200);
   assert.deepEqual(updated, { category_id: categoryId });
+  assert.deepEqual(await response.json(), { contactId: id, categoryId });
+});
+
+test('contact category PATCH rejects unauthenticated malformed requests before validating them', async () => {
+  let authorized = false;
+  const route = load('app/api/admin/outreach/contacts/[id]/category/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => { authorized = true; throw new Error('OUTREACH_UNAUTHORIZED'); } },
+  });
+  const response = await route.PATCH(jsonRequest('https://example.com', 'PATCH', { categoryId: 'not-a-uuid' }), { params: Promise.resolve({ id: 'also-not-a-uuid' }) });
+  assert.equal(authorized, true);
+  assert.equal(response.status, 401);
 });
 
 test('contact category PATCH rejects a non-existent non-null category', async () => {

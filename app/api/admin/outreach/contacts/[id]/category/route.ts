@@ -5,6 +5,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { client } = await requireOutreachAdmin();
     const { id } = await params;
     const body = await request.json().catch(() => null);
     const categoryId = body?.categoryId;
@@ -12,7 +13,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'A valid contact and category are required.' }, { status: 422 });
     }
 
-    const { client } = await requireOutreachAdmin();
     if (!client) return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
     if (categoryId) {
       const category = await client.from('outreach_contact_categories').select('id').eq('id', categoryId).maybeSingle();
@@ -22,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const updated = await client.from('outreach_contacts').update({ category_id: categoryId }).eq('id', id).select('id,category_id').maybeSingle();
     if (updated.error) throw updated.error;
     if (!updated.data) return NextResponse.json({ error: 'Contact not found.' }, { status: 404 });
-    return NextResponse.json({ contact: updated.data });
+    return NextResponse.json({ contactId: id, categoryId });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     return NextResponse.json({ error: message === 'OUTREACH_UNAUTHORIZED' ? 'Unauthorized' : 'Could not update contact category.' }, { status: message === 'OUTREACH_UNAUTHORIZED' ? 401 : 400 });
