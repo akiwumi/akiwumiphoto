@@ -107,6 +107,7 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
       {result?.ok && <div className={styles.importResult} role="status">
         <p className={styles.success}>{result.message} {result.duplicateCount ? `${result.duplicateCount} existing rows were updated.` : ''} {result.skippedCount ?? 0} invalid {result.skippedCount === 1 ? 'row was' : 'rows were'} skipped.</p>
         {(result.skippedRows?.length ?? 0) > 0 && <ul className={styles.skippedRows}>{result.skippedRows!.slice(0, 10).map((row) => <li key={row.rowNumber}>Row {row.rowNumber}: {row.issues.join(', ') || 'Invalid contact'}</li>)}</ul>}
+        {(result.skippedRows?.length ?? 0) > 10 && <p className={styles.panelMeta}>{result.skippedRows!.length - 10} more skipped rows are not shown.</p>}
       </div>}
     </div>
   </section>;
