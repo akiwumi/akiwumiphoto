@@ -35,3 +35,82 @@ test('filters raw contact joins with an explicit category selector', () => {
     ['1'],
   );
 });
+
+test('lists server categories by name and returns no categories when the query fails', async () => {
+  let orderedBy;
+  const categories = load('lib/outreach/categories-server.ts', {
+    '@/lib/supabase-server': { createServerClient: async () => ({ from: () => ({ select: () => ({ order: async (column) => { orderedBy = column; return { data: [{ id: 'one', name: 'Galleries' }], error: null }; } }) }) }) },
+  });
+  assert.deepEqual(await categories.getOutreachContactCategories(), [{ id: 'one', name: 'Galleries' }]);
+  assert.equal(orderedBy, 'name');
+
+  const unavailable = load('lib/outreach/categories-server.ts', {
+    '@/lib/supabase-server': { createServerClient: async () => ({ from: () => ({ select: () => ({ order: async () => ({ data: null, error: { message: 'offline' } }) }) }) }) },
+  });
+  assert.deepEqual(await unavailable.getOutreachContactCategories(), []);
+});
+
+function jsonRequest(url, method, body) {
+  return new Request(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+}
+
+test('category GET is authenticated and returns alphabetized categories', async () => {
+  const route = load('app/api/admin/outreach/categories/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: {} }) },
+    '@/lib/outreach/categories-server': { getOutreachContactCategories: async () => [{ id: 'two', name: 'Artists' }] },
+  });
+  const response = await route.GET();
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { categories: [{ id: 'two', name: 'Artists' }] });
+});
+
+test('category POST trims names and reuses an existing duplicate', async () => {
+  let sought;
+  const route = load('app/api/admin/outreach/categories/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => ({ select: () => ({ ilike: (column, value) => { sought = { column, value }; return { maybeSingle: async () => ({ data: { id: 'existing', name: 'Galleries' }, error: null }) }; } }) }) } }) },
+  });
+  const response = await route.POST(jsonRequest('https://example.com/categories', 'POST', { name: ' \tGalleries\n ' }));
+  assert.equal(response.status, 200);
+  assert.equal(sought.value, 'Galleries');
+  assert.deepEqual(await response.json(), { category: { id: 'existing', name: 'Galleries' } });
+});
+
+test('category POST creates a missing normalized category', async () => {
+  let inserted;
+  const route = load('app/api/admin/outreach/categories/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => ({ select: () => ({ ilike: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }), insert: (value) => { inserted = value; return { select: () => ({ single: async () => ({ data: { id: 'new', name: value.name }, error: null }) }) }; } }) } }) },
+  });
+  const response = await route.POST(jsonRequest('https://example.com/categories', 'POST', { name: ' Artists ' }));
+  assert.equal(response.status, 201);
+  assert.deepEqual(inserted, { name: 'Artists' });
+});
+
+test('contact category PATCH validates ids, validates selected category, and updates only category_id', async () => {
+  const id = '00000000-0000-0000-0000-000000000001';
+  const categoryId = '00000000-0000-0000-0000-000000000002';
+  assert.equal((await load('app/api/admin/outreach/contacts/[id]/category/route.ts', { '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: {} }) } }).PATCH(jsonRequest('https://example.com', 'PATCH', { categoryId }), { params: Promise.resolve({ id: 'nope' }) })).status, 422);
+  let updated;
+  const client = {
+    from: (table) => {
+      if (table === 'outreach_contact_categories') return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: categoryId }, error: null }) }) }) };
+      return { update: (value) => { updated = value; return { eq: () => ({ select: () => ({ maybeSingle: async () => ({ data: { id, category_id: categoryId }, error: null }) }) }) }; } };
+    },
+  };
+  const route = load('app/api/admin/outreach/contacts/[id]/category/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client }) },
+  });
+  const response = await route.PATCH(jsonRequest('https://example.com', 'PATCH', { categoryId }), { params: Promise.resolve({ id }) });
+  assert.equal(response.status, 200);
+  assert.deepEqual(updated, { category_id: categoryId });
+});
+
+test('contact category PATCH rejects a non-existent non-null category', async () => {
+  const id = '00000000-0000-0000-0000-000000000001';
+  const categoryId = '00000000-0000-0000-0000-000000000002';
+  const route = load('app/api/admin/outreach/contacts/[id]/category/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }) } }) },
+  });
+  const response = await route.PATCH(jsonRequest('https://example.com', 'PATCH', { categoryId }), { params: Promise.resolve({ id }) });
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error, 'Choose a valid contact category.');
+});

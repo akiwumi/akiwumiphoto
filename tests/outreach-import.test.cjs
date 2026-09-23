@@ -1,3 +1,60 @@
 const { test } = require('node:test'); const assert = require('node:assert/strict'); const XLSX = require('xlsx'); const { load } = require('./test-loader.cjs'); const { parseWorkbook } = load('lib/outreach/import.ts');
 test('parses, normalizes, and flags duplicate workbook rows', () => { const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Email','First'],[' ANA@example.com ','Ana'],['ana@example.com','Ana 2'],['bad','No']])); const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }); const result = parseWorkbook(buffer, { Email: 'email', First: 'first_name' }); assert.equal(result.summary.rowCount, 3); assert.equal(result.summary.duplicateCount, 1); assert.equal(result.rows[0].email, 'ana@example.com'); assert.equal(result.rows[2].valid, false); });
 
+function importRequest(fields = {}) {
+  const form = new FormData();
+  form.set('file', new File([new Uint8Array([1])], 'contacts.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  Object.entries(fields).forEach(([key, value]) => form.set(key, value));
+  return new Request('https://example.com/api/admin/outreach/import', { method: 'POST', body: form });
+}
+
+const parsed = { columns: ['Email'], rows: [{ email: 'ana@example.com', valid: true }], summary: { rowCount: 1, duplicateCount: 0, invalidCount: 0 } };
+
+test('import commit requires a category but preview does not', async () => {
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client: {} }) },
+    '@/lib/outreach/import': { parseWorkbook: () => parsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const commit = await route.POST(importRequest({ commit: '1' }));
+  assert.equal(commit.status, 422);
+  assert.equal((await commit.json()).error, 'Choose a contact category before importing.');
+  assert.equal((await route.POST(importRequest())).status, 200);
+});
+
+test('import commit rejects an unknown category and attaches a valid category to contacts and audit metadata', async () => {
+  const categoryId = '00000000-0000-0000-0000-000000000001';
+  let contacts; let audit;
+  const client = { from: (table) => ({
+    select: () => table === 'outreach_contact_categories' ? ({ eq: () => ({ maybeSingle: async () => ({ data: { id: categoryId, name: 'Galleries' }, error: null }) }) }) : ({ in: async () => ({ data: [], error: null }) }),
+    insert: (value) => table === 'outreach_import_batches' ? ({ select: () => ({ single: async () => ({ data: { id: 'batch-1' }, error: null }) }) }) : (audit = value, Promise.resolve({ error: null })),
+    upsert: (value) => { contacts = value; return Promise.resolve({ error: null }); },
+    update: () => ({ eq: async () => ({ error: null }) }),
+  }) };
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client, user: { id: 'admin' } }) },
+    '@/lib/outreach/import': { parseWorkbook: () => parsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const response = await route.POST(importRequest({ commit: '1', categoryId }));
+  assert.equal(response.status, 200);
+  assert.equal(contacts[0].category_id, categoryId);
+  assert.deepEqual(audit.metadata.category, { id: categoryId, name: 'Galleries' });
+});
+
+test('import commit rejects an unknown category id before any import write', async () => {
+  const categoryId = '00000000-0000-0000-0000-000000000001';
+  let writes = 0;
+  const client = {
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+      insert: () => { writes += 1; },
+    }),
+  };
+  const route = load('app/api/admin/outreach/import/route.ts', {
+    '@/lib/outreach/auth': { requireOutreachAdmin: async () => ({ client }) },
+    '@/lib/outreach/import': { parseWorkbook: () => parsed, autoMapColumns: () => ({ Email: 'email' }) },
+  });
+  const response = await route.POST(importRequest({ commit: '1', categoryId }));
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error, 'Choose a valid contact category before importing.');
+  assert.equal(writes, 0);
+});

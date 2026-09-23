@@ -24,8 +24,13 @@ export async function POST(request: Request) {
     const parsed = mappingValue || Object.keys(effectiveMapping).length ? parseWorkbook(buffer, effectiveMapping) : parsedWithoutMapping;
     const shouldCommit = String(form.get('commit') ?? '') === '1';
     if (!shouldCommit) return NextResponse.json({ ...parsed, mapping: effectiveMapping, preview: parsed.rows.slice(0, 20) });
+    const categoryId = typeof form.get('categoryId') === 'string' ? String(form.get('categoryId')).trim() : '';
+    if (!categoryId) return NextResponse.json({ error: 'Choose a contact category before importing.' }, { status: 422 });
     if (!client) return NextResponse.json({ error: 'Supabase is not configured for persistent imports.' }, { status: 503 });
     if (parsed.summary.invalidCount > 0) return NextResponse.json({ error: 'Fix invalid or missing email rows before importing.', ...parsed, mapping: effectiveMapping, preview: parsed.rows.slice(0, 20) }, { status: 422 });
+    const categoryResult = await client.from('outreach_contact_categories').select('id,name').eq('id', categoryId).maybeSingle();
+    if (categoryResult.error || !categoryResult.data) return NextResponse.json({ error: 'Choose a valid contact category before importing.' }, { status: 422 });
+    const category = categoryResult.data as { id: string; name: string };
 
     const batchInsert = await client.from('outreach_import_batches').insert({ filename: file.name, source_label: 'address book import', row_count: parsed.summary.rowCount, duplicate_count: parsed.summary.duplicateCount, invalid_count: parsed.summary.invalidCount, created_by: user?.id ?? null }).select('id').single();
     if (batchInsert.error) throw batchInsert.error;
@@ -40,12 +45,12 @@ export async function POST(request: Request) {
       const existing = existingByEmail.get(row.email!);
       const preservedStatus = existing?.contact_status && !['imported', 'needs_review', 'approved'].includes(existing.contact_status) ? existing.contact_status : 'approved';
       const notes = [row.role ? `Role: ${row.role}` : '', row.notes || ''].filter(Boolean).join(' · ') || null;
-      return { email: row.email, first_name: split.first_name, last_name: split.last_name, company_name: row.company_name, city: row.city, country: row.country, website: row.website, source: row.source || file.name, source_url: row.source_url, notes, approved_for_outreach: preservedStatus !== 'suppressed', contact_status: preservedStatus, import_batch_id: batchId };
+      return { email: row.email, first_name: split.first_name, last_name: split.last_name, company_name: row.company_name, city: row.city, country: row.country, website: row.website, source: row.source || file.name, source_url: row.source_url, notes, category_id: category.id, approved_for_outreach: preservedStatus !== 'suppressed', contact_status: preservedStatus, import_batch_id: batchId };
     });
     const upsert = await client.from('outreach_contacts').upsert(contacts, { onConflict: 'email' });
     if (upsert.error) throw upsert.error;
     await client.from('outreach_import_batches').update({ imported_count: contacts.length }).eq('id', batchId);
-    await client.from('outreach_audit_log').insert({ actor_id: user?.id ?? null, action: 'import_contacts', entity_type: 'outreach_import_batch', entity_id: batchId, metadata: { filename: file.name, imported_count: contacts.length, duplicate_count: parsed.summary.duplicateCount, approved_immediately: true } });
+    await client.from('outreach_audit_log').insert({ actor_id: user?.id ?? null, action: 'import_contacts', entity_type: 'outreach_import_batch', entity_id: batchId, metadata: { filename: file.name, imported_count: contacts.length, duplicate_count: parsed.summary.duplicateCount, approved_immediately: true, category: { id: category.id, name: category.name } } });
     return NextResponse.json({ ok: true, importedCount: contacts.length, duplicateCount: parsed.summary.duplicateCount, batchId, message: `${contacts.length} contacts imported into Supabase and approved for outreach.` });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not import workbook.';
