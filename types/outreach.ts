@@ -11,6 +11,8 @@ export interface OutreachContact {
   id: string; email: string; first_name: string | null; last_name: string | null;
   company_name: string | null; city: string | null; country: string | null;
   website: string | null; source: string | null; source_url: string | null; notes: string | null;
+  category_id: string | null;
+  outreach_contact_categories?: { id: string; name: string } | { id: string; name: string }[] | null;
   approved_for_outreach: boolean; contact_status: ContactStatus; suppressed_at: string | null;
   suppression_reason: string | null; replied_at: string | null; follow_up_at: string | null;
   created_at: string; updated_at: string;
@@ -22,4 +24,3 @@ export interface OutreachCampaign {
   started_at: string | null; completed_at: string | null; created_at: string; updated_at: string;
 }
 export interface OutreachDelivery { id: string; campaign_id: string; contact_id: string; provider_message_id: string | null; status: DeliveryStatus; rendered_subject: string | null; sent_at: string | null; delivered_at: string | null; opened_at: string | null; clicked_at: string | null; bounced_at: string | null; error_message: string | null; created_at: string; updated_at: string; }
-
