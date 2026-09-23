@@ -25,6 +25,30 @@ test('parses CSV after title rows and flags only malformed or missing email rows
   assert.equal(result.rows[2].valid, false);
 });
 
+test('keeps row zero as the header when a manual mapping uses unknown column names', () => {
+  const result = parseWorkbook(Buffer.from('Primary Contact\nana@example.com\n'), { 'Primary Contact': 'email' });
+  assert.deepEqual(result.columns, ['Primary Contact']);
+  assert.equal(result.rows[0].email, 'ana@example.com');
+  assert.equal(result.rows[0].rowNumber, 2);
+});
+
+test('parses XLSX title rows before the detected address-book header', () => {
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+    ['Akiwumi Photo address book'],
+    ['Exported 2026-09-23'],
+    ['Contact Name', 'Public Professional Email'],
+    ['Ana', 'ana@example.com'],
+  ]));
+  const result = parseWorkbook(XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }), {
+    'Contact Name': 'display_name',
+    'Public Professional Email': 'email',
+  });
+  assert.deepEqual(result.columns, ['Contact Name', 'Public Professional Email']);
+  assert.equal(result.rows[0].rowNumber, 4);
+  assert.equal(result.rows[0].email, 'ana@example.com');
+});
+
 function importRequest(fields = {}) {
   const form = new FormData();
   form.set('file', new File([new Uint8Array([1])], 'contacts.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));

@@ -3,6 +3,8 @@ import { cleanCell, isValidEmail, normalizeEmail } from './domain';
 export const CANONICAL_FIELDS = ['email','display_name','role','first_name','last_name','company_name','city','country','website','source','source_url','notes'] as const;
 export type CanonicalField = typeof CANONICAL_FIELDS[number];
 export type ImportRow = Record<CanonicalField, string | null> & { rowNumber: number; valid: boolean; issues: string[]; duplicate: boolean };
+const MAX_IMPORT_ROWS = 1000;
+const MAX_TITLE_ROWS = 100;
 const COLUMN_ALIASES: Record<CanonicalField, string[]> = {
   email: ['email', 'public professional email', 'primary email', 'designer email', 'studio email'],
   display_name: ['name', 'contact name', 'contact name / routing', 'designer name', 'full name'],
@@ -43,14 +45,13 @@ export function autoMapColumns(columns: string[]): Partial<Record<string, Canoni
   return mapping;
 }
 export function parseWorkbook(buffer: ArrayBuffer, mapping: Partial<Record<string, CanonicalField>>): { columns: string[]; rows: ImportRow[]; summary: { rowCount: number; validCount: number; invalidCount: number; duplicateCount: number } } {
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: false }); const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const workbook = XLSX.read(buffer, { type: 'array', cellDates: false, sheetRows: MAX_IMPORT_ROWS + MAX_TITLE_ROWS + 1 }); const sheet = workbook.Sheets[workbook.SheetNames[0]];
   if (!sheet) throw new Error('Workbook has no worksheet');
-  const headerRow = findHeaderRow(sheet);
-  if (headerRow < 0) throw new Error('Workbook has no recognizable header row');
+  const headerRow = Math.max(findHeaderRow(sheet), 0);
   const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: headerRow, defval: null, raw: false, blankrows: false });
   const columns = Object.keys(records[0] ?? {});
   const seen = new Set<string>();
-  const rows = records.slice(0, 1000).map((record, index) => {
+  const rows = records.slice(0, MAX_IMPORT_ROWS).map((record, index) => {
     const row = Object.fromEntries(CANONICAL_FIELDS.map((field) => {
       const sourceColumn = Object.entries(mapping).find(([, target]) => target === field)?.[0];
       return [field, cleanCell(sourceColumn ? record[sourceColumn] : null)];
