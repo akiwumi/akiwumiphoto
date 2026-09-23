@@ -22,7 +22,7 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function selectFile(nextFile: File | null) {
-    if (!nextFile) return;
+    if (busy || !nextFile) return;
     if (!/\.(csv|xlsx)$/i.test(nextFile.name)) {
       setFile(null);
       setResult({ error: 'Choose a .csv or .xlsx file.' });
@@ -68,7 +68,7 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
     <div className={styles.formGrid}>
       <div className={`${styles.field} ${styles.fieldFull}`}>
         <label id="import-file-label" htmlFor="workbook">Source file</label>
-        <input ref={fileInputRef} className={styles.srOnly} id="workbook" type="file" accept=".csv,.xlsx" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />
+        <input ref={fileInputRef} className={styles.srOnly} disabled={busy} id="workbook" type="file" accept=".csv,.xlsx" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />
         <div
           aria-describedby="import-file-hint import-file-status"
           aria-disabled={busy}
@@ -103,7 +103,7 @@ export default function ImportClient({ initialContacts, initialCategories }: { i
         <div className={styles.panel}><table className={styles.table}><thead><tr><th>Name</th><th>Studio</th><th>Primary email</th><th>Status</th></tr></thead><tbody>{initialContacts.slice(0, 5).map((contact) => <tr key={contact.id}><td>{contact.name}</td><td>{contact.studio}</td><td>{contact.email}</td><td>{contact.suppressed ? 'suppressed' : contact.approvedForOutreach ? 'ready' : 'needs review'}</td></tr>)}</tbody></table></div>
       </div>
       <div className={`${styles.field} ${styles.fieldFull}`}><button type="button" className={styles.button} disabled={busy || !file || !categoryId} onClick={importWorkbook}>{busy ? 'Importing…' : 'Import into Supabase & address book →'}</button></div>
-      {result?.error && <p className={styles.notice}>{result.error}</p>}
+      {result?.error && <p className={styles.notice} role="alert">{result.error}</p>}
       {result?.ok && <div className={styles.importResult} role="status">
         <p className={styles.success}>{result.message} {result.duplicateCount ? `${result.duplicateCount} existing rows were updated.` : ''} {result.skippedCount ?? 0} invalid {result.skippedCount === 1 ? 'row was' : 'rows were'} skipped.</p>
         {(result.skippedRows?.length ?? 0) > 0 && <ul className={styles.skippedRows}>{result.skippedRows!.slice(0, 10).map((row) => <li key={row.rowNumber}>Row {row.rowNumber}: {row.issues.join(', ') || 'Invalid contact'}</li>)}</ul>}
