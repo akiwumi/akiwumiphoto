@@ -1,8 +1,11 @@
 import { normalizeEmail } from './domain';
+import { categoryKey } from './categories';
 
 export interface AddressBookContact {
   id: string;
   country: string;
+  categoryId: string | null;
+  category: string | null;
   studio: string;
   name: string;
   role: string;
@@ -21,13 +24,18 @@ export function addressBookCountry(value: unknown): string {
   return typeof value === 'string' && value.trim() ? value.trim() : 'Unknown';
 }
 
-export function campaignAudienceForCountries<T extends { country: unknown }>(
+export function campaignAudienceForCountries<T extends { country: unknown; category?: unknown }>(
   recipients: T[],
   countries: readonly string[],
+  categories: readonly string[] = [],
 ): T[] {
-  if (countries.length === 0) return recipients;
+  if (countries.length === 0 && categories.length === 0) return recipients;
   const selectedCountries = new Set(countries);
-  return recipients.filter((recipient) => selectedCountries.has(addressBookCountry(recipient.country)));
+  const selectedCategories = new Set(categories.map(categoryKey));
+  return recipients.filter((recipient) => (
+    (countries.length === 0 || selectedCountries.has(addressBookCountry(recipient.country)))
+    && (categories.length === 0 || selectedCategories.has(categoryKey(recipient.category)))
+  ));
 }
 
 export function campaignAudienceSelectionForVisible<T extends { id: string }>(
@@ -41,16 +49,19 @@ export function campaignAudienceSelectionForVisible<T extends { id: string }>(
     : [...currentIds.filter((id) => !availableIds.has(id)), ...visibleAvailable.map((entry) => entry.id)];
 }
 
-export function filterAddressBookContacts<T extends Pick<AddressBookContact, 'name' | 'studio' | 'email' | 'country'>>(
+export function filterAddressBookContacts<T extends Pick<AddressBookContact, 'name' | 'studio' | 'email' | 'country'> & { category?: unknown }>(
   contacts: T[],
   query: string,
   country: string,
+  category = '',
 ): T[] {
   const normalizedQuery = query.trim().toLowerCase();
   return contacts.filter((contact) => {
-    const matchesSearch = !normalizedQuery || [contact.name, contact.studio, contact.email, addressBookCountry(contact.country)]
+    const matchesSearch = !normalizedQuery || [contact.name, contact.studio, contact.email, addressBookCountry(contact.country), categoryKey(contact.category)]
       .some((value) => value.toLowerCase().includes(normalizedQuery));
-    return matchesSearch && (!country || addressBookCountry(contact.country) === country);
+    return matchesSearch
+      && (!country || addressBookCountry(contact.country) === country)
+      && (!category || categoryKey(contact.category) === categoryKey(category));
   });
 }
 
@@ -75,7 +86,7 @@ const rows = [
 ] as const;
 
 export const ADDRESS_BOOK: AddressBookContact[] = rows.map(([id, country, studio, name, role, designerEmail, studioEmail, website]) => ({
-  id, country, studio, name, role, designerEmail, studioEmail, email: normalizeEmail(designerEmail ?? studioEmail), website,
+  id, country, categoryId: null, category: null, studio, name, role, designerEmail, studioEmail, email: normalizeEmail(designerEmail ?? studioEmail), website,
   source: SOURCE, approvedForOutreach: false, outreachStatus: 'not contacted', replied: false, suppressed: false,
 }));
 
