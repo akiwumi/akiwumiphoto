@@ -1,12 +1,16 @@
 create table if not exists public.outreach_contact_categories (
   id uuid primary key default gen_random_uuid(),
-  name text not null check (btrim(name) <> ''),
+  name text not null check (btrim(name, E' \t\n\r\f\v') <> ''),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create unique index if not exists outreach_contact_categories_name_key
-  on public.outreach_contact_categories (lower(btrim(name)));
+  on public.outreach_contact_categories (lower(btrim(name, E' \t\n\r\f\v')));
+
+create trigger update_outreach_contact_categories_updated_at
+  before update on public.outreach_contact_categories
+  for each row execute function public.update_updated_at_column();
 
 alter table public.outreach_contacts
   add column if not exists category_id uuid references public.outreach_contact_categories(id) on delete set null;

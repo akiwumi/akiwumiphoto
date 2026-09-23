@@ -1,11 +1,18 @@
 export const UNCATEGORISED_CATEGORY = 'Uncategorised';
 
+const ASCII_CATEGORY_WHITESPACE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
+
+export function trimCategoryName(value: string): string {
+  return value.replace(ASCII_CATEGORY_WHITESPACE, '');
+}
+
 export function categoryLabel(value: unknown): string {
-  return typeof value === 'string' && value.trim() ? value.trim() : UNCATEGORISED_CATEGORY;
+  const label = typeof value === 'string' ? trimCategoryName(value) : '';
+  return label || UNCATEGORISED_CATEGORY;
 }
 
 export function categoryKey(value: unknown): string {
-  return categoryLabel(value).toLocaleLowerCase();
+  return categoryLabel(value).toLowerCase();
 }
 
 export function filterByCategories<T extends { category: unknown }>(rows: T[], selected: readonly string[]): T[] {

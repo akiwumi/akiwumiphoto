@@ -12,6 +12,7 @@ export interface OutreachContact {
   company_name: string | null; city: string | null; country: string | null;
   website: string | null; source: string | null; source_url: string | null; notes: string | null;
   category_id: string | null;
+  category: string | null;
   outreach_contact_categories?: { id: string; name: string } | { id: string; name: string }[] | null;
   approved_for_outreach: boolean; contact_status: ContactStatus; suppressed_at: string | null;
   suppression_reason: string | null; replied_at: string | null; follow_up_at: string | null;
