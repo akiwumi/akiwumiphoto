@@ -32,6 +32,23 @@ test('keeps row zero as the header when a manual mapping uses unknown column nam
   assert.equal(result.rows[0].rowNumber, 2);
 });
 
+test('skips a single-cell Title row before a later manually mapped table header', () => {
+  const csv = [
+    'Title',
+    'Akiwumi Photo contacts',
+    'Contact Name,Custom Email',
+    'Ana,ana@example.com',
+  ].join('\n');
+  const result = parseWorkbook(Buffer.from(csv), {
+    'Contact Name': 'display_name',
+    'Custom Email': 'email',
+  });
+  assert.deepEqual(result.columns, ['Contact Name', 'Custom Email']);
+  assert.equal(result.rows.length, 1);
+  assert.equal(result.rows[0].rowNumber, 4);
+  assert.equal(result.rows[0].email, 'ana@example.com');
+});
+
 test('parses XLSX title rows before the detected address-book header', () => {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([

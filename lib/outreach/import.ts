@@ -22,25 +22,29 @@ const COLUMN_ALIASES: Record<CanonicalField, string[]> = {
 
 function normalizedColumn(value: string): string { return value.toLowerCase().replace(/[\s_/-]+/g, ' ').trim(); }
 
-function isKnownColumn(value: unknown): boolean {
-  if (typeof value !== 'string') return false;
+function canonicalFieldForColumn(value: unknown): CanonicalField | undefined {
+  if (typeof value !== 'string') return undefined;
   const normalized = normalizedColumn(value);
-  return (Object.entries(COLUMN_ALIASES) as [CanonicalField, string[]][]).some(([field, aliases]) =>
+  return (Object.entries(COLUMN_ALIASES) as [CanonicalField, string[]][]).find(([field, aliases]) =>
     normalizedColumn(field) === normalized || aliases.some((alias) => normalizedColumn(alias) === normalized),
-  );
+  )?.[0];
 }
 
 function findHeaderRow(sheet: XLSX.WorkSheet): number {
   const values = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null, blankrows: true });
-  return values.findIndex((row) => row.some(isKnownColumn));
+  return values.findIndex((row) => {
+    const recognizedFields = row.map(canonicalFieldForColumn);
+    return recognizedFields.includes('email') || (
+      recognizedFields.some(Boolean) && row.filter((value) => value != null && String(value).trim() !== '').length >= 2
+    );
+  });
 }
 
 export function autoMapColumns(columns: string[]): Partial<Record<string, CanonicalField>> {
   const mapping: Partial<Record<string, CanonicalField>> = {};
   for (const column of columns) {
-    const normalized = normalizedColumn(column);
-    const match = (Object.entries(COLUMN_ALIASES) as [CanonicalField, string[]][]).find(([, aliases]) => aliases.some((alias) => normalizedColumn(alias) === normalized));
-    if (match) mapping[column] = match[0];
+    const field = canonicalFieldForColumn(column);
+    if (field) mapping[column] = field;
   }
   return mapping;
 }
