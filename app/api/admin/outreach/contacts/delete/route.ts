@@ -25,15 +25,6 @@ function response(result: Result) {
   return NextResponse.json({ ok: true, ...result });
 }
 
-async function getProtectedIds(client: any, contactIds: string[]): Promise<string[]> {
-  if (!contactIds.length) return [];
-  const deliveries = await client.from('outreach_deliveries').select('contact_id').in('contact_id', contactIds);
-  if (deliveries.error) throw deliveries.error;
-  return [...new Set((deliveries.data ?? [])
-    .map((delivery: { contact_id?: unknown }) => delivery.contact_id)
-    .filter((id: unknown): id is string => typeof id === 'string' && contactIds.includes(id)) as string[])];
-}
-
 async function audit(client: any, actorId: string | null | undefined, action: string, entityType: string, entityId: string | null, metadata: Record<string, unknown>) {
   const result = await client.from('outreach_audit_log').insert({ actor_id: actorId ?? null, action, entity_type: entityType, entity_id: entityId, metadata });
   if (result.error) throw result.error;
@@ -70,26 +61,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Type the exact category name to delete it.' }, { status: 422 });
       }
 
-      const contacts = await client.from('outreach_contacts').select('id').eq('category_id', categoryId);
-      if (contacts.error) throw contacts.error;
-      const ids = (contacts.data ?? []).map((contact: { id?: unknown }) => contact.id).filter((id: unknown): id is string => typeof id === 'string');
-      const protectedIds = await getProtectedIds(client, ids);
-      const eligibleIds = ids.filter((id) => !protectedIds.includes(id));
-
-      if (eligibleIds.length) {
-        const deleted = await client.from('outreach_contacts').delete().in('id', eligibleIds);
-        if (deleted.error) throw deleted.error;
-      }
-
-      let categoryDeleted = false;
-      if (!protectedIds.length) {
-        const deletedCategory = await client.from('outreach_contact_categories').delete().eq('id', categoryId);
-        if (deletedCategory.error) throw deletedCategory.error;
-        categoryDeleted = true;
-      }
-      const result: Result = { deletedCount: eligibleIds.length, protectedCount: protectedIds.length, protectedIds, deletedIds: eligibleIds, categoryDeleted };
+      const deletion = await client.rpc('outreach_delete_contacts_guarded', { p_contact_ids: null, p_category_id: categoryId });
+      if (deletion.error) throw deletion.error;
+      const row = deletion.data?.[0] ?? {};
+      const deletedIds = Array.isArray(row.deleted_contact_ids) ? row.deleted_contact_ids : [];
+      const protectedIds = Array.isArray(row.protected_contact_ids) ? row.protected_contact_ids : [];
+      const categoryDeleted = row.category_deleted === true;
+      const requestedCount = typeof row.requested_count === 'number' ? row.requested_count : deletedIds.length + protectedIds.length;
+      const result: Result = { deletedCount: deletedIds.length, protectedCount: protectedIds.length, protectedIds, deletedIds, categoryDeleted };
       await audit(client, user?.id, 'delete_contact_category', 'outreach_contact_category', categoryId, {
-        requested_count: ids.length,
+        requested_count: requestedCount,
         deleted_count: result.deletedCount,
         protected_count: result.protectedCount,
         protected_ids: protectedIds,
@@ -100,18 +81,15 @@ export async function POST(request: Request) {
       return response(result);
     }
 
-    const contacts = await client.from('outreach_contacts').select('id').in('id', contactIds);
-    if (contacts.error) throw contacts.error;
-    const existingIds = (contacts.data ?? []).map((contact: { id?: unknown }) => contact.id).filter((id: unknown): id is string => typeof id === 'string');
-    const protectedIds = await getProtectedIds(client, existingIds);
-    const eligibleIds = existingIds.filter((id) => !protectedIds.includes(id));
-    if (eligibleIds.length) {
-      const deleted = await client.from('outreach_contacts').delete().in('id', eligibleIds);
-      if (deleted.error) throw deleted.error;
-    }
-    const result: Result = { deletedCount: eligibleIds.length, protectedCount: protectedIds.length, protectedIds, deletedIds: eligibleIds, categoryDeleted: false };
+    const deletion = await client.rpc('outreach_delete_contacts_guarded', { p_contact_ids: contactIds, p_category_id: null });
+    if (deletion.error) throw deletion.error;
+    const row = deletion.data?.[0] ?? {};
+    const deletedIds = Array.isArray(row.deleted_contact_ids) ? row.deleted_contact_ids : [];
+    const protectedIds = Array.isArray(row.protected_contact_ids) ? row.protected_contact_ids : [];
+    const requestedCount = typeof row.requested_count === 'number' ? row.requested_count : contactIds.length;
+    const result: Result = { deletedCount: deletedIds.length, protectedCount: protectedIds.length, protectedIds, deletedIds, categoryDeleted: false };
     await audit(client, user?.id, 'delete_contacts', 'outreach_contact', null, {
-      requested_count: contactIds.length,
+      requested_count: requestedCount,
       deleted_count: result.deletedCount,
       protected_count: result.protectedCount,
       protected_ids: protectedIds,
