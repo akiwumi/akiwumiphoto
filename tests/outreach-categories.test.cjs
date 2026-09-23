@@ -14,9 +14,10 @@ test('filters by selected categories and explicitly selects uncategorised contac
   const rows = [
     { id: '1', category: 'Galleries' },
     { id: '2', category: null },
-    { id: '3', category: 'Design stores' },
+    { id: '3', category: '   ' },
+    { id: '4', category: 'Design stores' },
   ];
 
-  assert.deepEqual(filterByCategories(rows, []).map((row) => row.id), ['1', '2', '3']);
-  assert.deepEqual(filterByCategories(rows, ['Galleries', 'Uncategorised']).map((row) => row.id), ['1', '2']);
+  assert.deepEqual(filterByCategories(rows, []).map((row) => row.id), ['1', '2', '3', '4']);
+  assert.deepEqual(filterByCategories(rows, ['Galleries', 'Uncategorised']).map((row) => row.id), ['1', '2', '3']);
 });
